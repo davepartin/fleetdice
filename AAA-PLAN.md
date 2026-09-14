@@ -836,8 +836,9 @@ action reachable on a phone.
   at least its top and side edges remain visible around every hull. The dock
   names the range and biggest hull in one line, then presents one 48px
   segmented Energy-or-Attack control with an OR divider and radio semantics.
-  Energy stays yellow and Attack stays red; the stronger border and tinted
-  background show the chosen side without a redundant check circle. At
+  Energy stays yellow and Attack stays red; the chosen side becomes a solid
+  semantic-color button with dark type while the other stays dark, creating a
+  clear pressed-versus-available contrast without a redundant check circle. At
   375×812 the complete dock measured 314px instead of the old
   380px allowance, the choice measured 89px, all content fit without scrolling,
   and the horizontal overflow check returned an empty list. The lab and real
