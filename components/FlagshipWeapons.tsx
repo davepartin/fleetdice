@@ -56,7 +56,7 @@ function lockedWeapons(player: PlayerState) {
 function launcherLabel(player: PlayerState, shop: boolean) {
   if (!shop) {
     const used = roundWeapon(player);
-    return used ? `Using ${DOCK_NAME[used.id]}` : "Weapon";
+    return used ? `Using ${DOCK_NAME[used.id]}` : "Flagship Weapon";
   }
   if (lockedWeapons(player).length && player.energy < TUNING.weaponChargeCost) {
     return `Need ${TUNING.weaponChargeCost} Energy to charge`;
@@ -73,7 +73,7 @@ export function FlagshipWeapons({ player, enemy, shop = false, busy, onAction }:
   const wait = shop && lockedWeapons(player).length > 0 && player.energy < TUNING.weaponChargeCost;
   return <>
     <button type="button"
-      className={`weapon-launcher${shop ? "" : " weapon-launcher-dock"}${wait ? " weapon-launcher-wait" : ""}${used && !shop ? ` weapon-launcher-using c-${TONE[used.id]}` : ""}`}
+      className={`weapon-launcher${wait ? " weapon-launcher-wait" : ""}${used && !shop ? ` weapon-launcher-using c-${TONE[used.id]}` : ""}`}
       aria-label={shop ? "Charge flagship weapons" : "Use flagship weapon"}
       aria-live={shop ? undefined : "polite"}
       onClick={() => setOpen(true)}>
