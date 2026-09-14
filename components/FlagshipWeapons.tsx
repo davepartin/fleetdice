@@ -47,6 +47,21 @@ export function WeaponReport({ yours, theirs, yourStock, enemyStock, enemyName }
   </div>;
 }
 
+function lockedWeapons(player: PlayerState) {
+  return WEAPON_IDS.filter((id) => weaponStatus(weaponsOf(player), id) === "locked");
+}
+
+function launcherLabel(player: PlayerState, shop: boolean) {
+  if (!shop) {
+    const used = roundWeapon(player);
+    return used ? `Using ${WEAPON_NAMES[used.id]}` : "Use flagship weapon";
+  }
+  if (lockedWeapons(player).length && player.energy < TUNING.weaponChargeCost) {
+    return `Need ${TUNING.weaponChargeCost} Energy to charge`;
+  }
+  return `Flagship Weapons · ${TUNING.weaponChargeCost} Energy`;
+}
+
 /** On the roll dock: the weapon already fired this volley, in words. */
 export function WeaponUsingCue({ player }: { player: PlayerState }) {
   const used = roundWeapon(player);
@@ -64,14 +79,13 @@ export function FlagshipWeapons({ player, enemy, shop = false, busy, onAction }:
 }) {
   const [open, setOpen] = useState(false);
   const used = roundWeapon(player);
+  const wait = shop && lockedWeapons(player).length > 0 && player.energy < TUNING.weaponChargeCost;
   return <>
     <button type="button"
-      className={`weapon-launcher${used && !shop ? ` weapon-launcher-using c-${TONE[used.id]}` : ""}`}
+      className={`weapon-launcher${wait ? " weapon-launcher-wait" : ""}${used && !shop ? ` weapon-launcher-using c-${TONE[used.id]}` : ""}`}
       aria-label={shop ? "Charge flagship weapons" : "Use flagship weapon"}
       onClick={() => setOpen(true)}>
-      {shop ? `Flagship Weapons · ${TUNING.weaponChargeCost} Energy`
-        : used ? `Using ${WEAPON_NAMES[used.id]}`
-        : "Flagship Weapon"}
+      {launcherLabel(player, shop)}
     </button>
     {open && <WeaponWindow player={player} enemy={enemy} shop={shop} busy={busy}
       onAction={onAction} onClose={() => setOpen(false)} />}
@@ -104,7 +118,9 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
       </header>
       <div className="weapon-window-scroll">
         <p className="weapon-guide">{shop
-          ? `${player.energy} Energy in the bank · ${TUNING.weaponChargeCost} per charge`
+          ? player.energy < TUNING.weaponChargeCost && lockedWeapons(player).length
+            ? `Need ${TUNING.weaponChargeCost} Energy to charge · ${player.energy} in the bank`
+            : `${player.energy} Energy in the bank · ${TUNING.weaponChargeCost} per charge`
           : "You may use one flagship weapon per round."}</p>
         {tips && <div className="weapon-tips">
           <p>Charge each weapon once in the shipyard for {TUNING.weaponChargeCost} Energy. Save it for any later volley. Firing costs no extra Energy.</p>

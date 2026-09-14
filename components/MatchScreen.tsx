@@ -1012,13 +1012,14 @@ function RollDock({
 
       <div className="flagship-control-row flex items-center gap-2">
         <FlagshipLine you={you} />
-
-        <FlagshipWeapons player={you} enemy={enemy} busy={busy} onAction={onWeapon} />
       </div>
       <WeaponUsingCue player={you} />
       </div>
 
       <div className="roll-dock-action">
+      {!waiting && (
+        <FlagshipWeapons player={you} enemy={enemy} busy={busy} onAction={onWeapon} />
+      )}
       {waiting ? (
         <div className="flex items-center justify-center gap-3 py-2" aria-live="polite">
           <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />

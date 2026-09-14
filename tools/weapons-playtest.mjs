@@ -6,7 +6,7 @@ import { resolve } from "node:path";
 import { serve } from "./shoot.mjs";
 import { bundlePath } from "../sim/bundle.mjs";
 const G = await import(bundlePath);
-const { newMatch, newPlayer, newBrain, applyAction, makeRng, setRng, WEAPON_IDS } = G;
+const { newMatch, newPlayer, newBrain, applyAction, makeRng, setRng, WEAPON_IDS, TUNING } = G;
 const server = await serve(resolve("out"), 4321);
 const browser = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
 const errors = [];
@@ -46,7 +46,7 @@ async function saved(page) { return page.evaluate(() => JSON.parse(localStorage.
 async function frame(page) {
   const layout = await page.evaluate(() => {
     const dialog = document.querySelector("dialog");
-    const footer = dialog?.querySelector("footer").getBoundingClientRect();
+    const footer = dialog?.querySelector("footer")?.getBoundingClientRect();
     return { overflow: document.documentElement.scrollWidth - innerWidth,
       dialogOverflow: dialog ? dialog.scrollWidth - dialog.clientWidth : 0,
       footerBottom: footer?.bottom, height: innerHeight };
@@ -55,9 +55,20 @@ async function frame(page) {
   assert.equal(layout.dialogOverflow, 0);
   if (layout.footerBottom) assert.ok(layout.footerBottom <= layout.height);
 }
+async function launcherOnScreen(page) {
+  const button = page.getByRole("button", { name: /flagship weapon/i }).first();
+  await button.waitFor({ state: "visible" });
+  const box = await button.boundingBox();
+  const vp = page.viewportSize();
+  assert.ok(box && vp, "flagship weapon control must exist");
+  assert.ok(box.y >= 0 && box.y + box.height <= vp.height,
+    `flagship weapon control at y=${box.y.toFixed(0)} h=${box.height.toFixed(0)} is off the ${vp.width}×${vp.height} screen`);
+  assert.ok(box.width >= 120, "flagship weapon control must be wide enough to tap");
+}
 try {
   for (const viewport of [{ width: 375, height: 812 }, { width: 390, height: 620 }, { width: 360, height: 780 }]) {
     const { ctx, page } = await pageWith(fixture(true), viewport);
+    await launcherOnScreen(page);
     await page.getByRole("button", { name: "Charge flagship weapons" }).click();
     await frame(page);
     assert.equal(await page.locator(".weapon-card-locked").count(), 4);
@@ -84,8 +95,24 @@ try {
     await ctx.close();
     console.log(`PASS charging/cancel/reload/short-screen ${viewport.width}x${viewport.height}`);
   }
+  {
+    const broke = fixture(true);
+    broke.players.host.energy = TUNING.weaponChargeCost - 1;
+    const { ctx, page } = await pageWith(broke, { width: 375, height: 812 });
+    await launcherOnScreen(page);
+    assert.match(
+      await page.getByRole("button", { name: "Charge flagship weapons" }).innerText(),
+      new RegExp(`Need ${TUNING.weaponChargeCost} Energy to charge`, "i"),
+    );
+    await page.getByRole("button", { name: "Charge flagship weapons" }).click();
+    assert.match(await page.locator(".weapon-guide").first().innerText(), new RegExp(`Need ${TUNING.weaponChargeCost} Energy to charge`));
+    assert.equal(await page.getByRole("button", { name: `Charge Attack for ${TUNING.weaponChargeCost} Energy`, exact: true }).isDisabled(), true);
+    await ctx.close();
+    console.log("PASS shipyard empty-state when the bank is short of a charge");
+  }
   for (const [id, name] of [["rotate", "Rotate Flagship"], ["shield", "Super Shield"], ["attack", "Attack"], ["repair", "Repair"]]) {
     const { ctx, page } = await pageWith(fixture(), { width: 375, height: 812 });
+    await launcherOnScreen(page);
     await page.getByRole("button", { name: "Use flagship weapon", exact: true }).click();
     await frame(page);
     // A real modal traps keyboard focus: Tab cannot reach Roll or Lock in.

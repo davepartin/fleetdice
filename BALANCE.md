@@ -34,6 +34,52 @@ points). This is a baseline for these AI policies, not a human balance verdict;
 Capital and how often commanders choose weapons over fleet upgrades merit
 playtester feedback before retuning.
 
+## Solo brain and weapons — 14 September 2026, after the first playable rules
+
+The costs and effects above did not move. The solo opponent was spending 6
+Energy on a charge whenever a round-number score cleared 12, before it even
+looked at a hull, and it was firing Repair because the round was 11 and Attack
+because the round was 9. Tests now fail if those calendar habits return.
+
+What changed is only the brain: a charge competes with bays and hulls in the
+same shop list, using public hulls, health, charged/used weapons and the round.
+Hidden rolls and this-volley activations are stripped through `publicMatchView`
+before the Enemy decides. Expert's race read uses that same public board, and
+counts a charged enemy Attack / Repair as a threat it can already see.
+
+Proved with `node sim/weapons.mjs 80` (400 matches a tier, each plan against
+Balanced) and `node sim/ladder.mjs 300`. The calendar brain, measured the same
+way at 40 matches a plan before the shop change, is in parentheses.
+
+| tier | charged | fired | unused at end | ⚡ weapons | ⚡ fleet | ⚡ rerolls | length |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Low | 1.68 (1.52) | 1.38 (1.40) | 0.30 (0.12) | 10.1 (9.1) | 36.7 (35.1) | 1.5 (1.7) | 13.5 (13.4) |
+| Medium | 2.00 (1.69) | 1.72 (1.49) | 0.28 (0.20) | 12.0 (10.1) | 32.3 (31.5) | 3.4 (3.4) | 12.3 (11.8) |
+| Hard | 2.77 (2.77) | 2.40 (2.37) | 0.36 (0.40) | 16.6 (16.6) | 50.5 (51.1) | 7.1 (7.2) | 11.9 (11.7) |
+| Expert | 3.21 (3.22) | 2.83 (2.76) | 0.38 (0.46) | 19.2 (19.3) | 68.1 (71.7) | 9.4 (11.6) | 12.3 (12.2) |
+
+The interesting shift is *which* charges. Attack is no longer nearly automatic
+on Low/Medium (70.8% / 69.8% charged → 53.8% / 57.8%). Super Shield, which the
+calendar almost never bought on those tiers (5.3% / 11.5%), is now 46.4% /
+56.8% — Hard 84.9%, Expert 94.8%. Rotate is charged less, not more: Expert
+67.0% → 34.1%, and a held Rotate is spent on a smaller late swing so it is
+not walked unused to the recap as often. Repair stays the wounded-flagship
+buy: a healthy four-d4 fleet with 6 Energy still buys a hull; 16 health still
+charges Repair. Those two are unit-tested, not inferred from the table.
+
+`node sim/simulate.mjs matchups 60` after the brain change, still Medium, still
+1,200 matches: mean length 12.1, median 12, range 4–17. Wolfpack 54.6%,
+Formation 53.5%, Balanced 50.8%, Command 48.1%, Capital 42.9% (±4.4–4.5).
+Capital is still the weak plan; that was already true. Difficulty rungs at 300
+matches still climb: Medium over Low 64.7% ±5.4, Hard over Medium 80.7% ±4.5,
+Expert over Hard 67.2% ±5.3, Expert over Low 95.7% ±2.3. Weapon costs were not
+touched to make those numbers.
+
+Remaining: Rotate is still the charge most often left unused when it *is*
+bought (39.2% of Expert Rotate charges, 56.9% of Hard). Super Shield is now
+the Expert default spend; whether a person would rather have that 6 Energy on
+another hull is a playtester question, not a retune.
+
 ---
 
 > ## Correction, written after the owner pushed back

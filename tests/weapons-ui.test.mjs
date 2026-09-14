@@ -40,3 +40,9 @@ test("the roll dock shows Using plus the weapon name after it fires", () => {
   assert.match(css, /\.weapon-using-cue/);
   assert.match(weapons, /weapon-launcher-using/);
 });
+
+test("the shipyard launcher says Need Energy to charge when the bank is short", () => {
+  assert.match(weapons, /Need \$\{TUNING\.weaponChargeCost\} Energy to charge/);
+  assert.match(css, /\.weapon-launcher-wait/);
+  assert.match(weapons, /Use flagship weapon/);
+});
