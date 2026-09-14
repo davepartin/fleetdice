@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
-  TUNING, WEAPON_IDS, WEAPON_NAMES, weaponAttack, weaponEffect, weaponStatus, weaponsOf, roundWeapon,
+  TUNING, WEAPON_IDS, WEAPON_NAMES, weaponEffect, weaponStatus, weaponsOf, roundWeapon,
   type MatchAction, type PlayerState, type WeaponInventory, type WeaponUse,
 } from "@/lib/engine";
 
@@ -62,17 +62,6 @@ function launcherLabel(player: PlayerState, shop: boolean) {
   return `Flagship Weapons · ${TUNING.weaponChargeCost} Energy`;
 }
 
-/** On the roll dock: the weapon already fired this volley, in words. */
-export function WeaponUsingCue({ player }: { player: PlayerState }) {
-  const used = roundWeapon(player);
-  if (!used) return null;
-  return (
-    <p className={`weapon-using-cue c-${TONE[used.id]}`} aria-live="polite">
-      Using {WEAPON_NAMES[used.id]}
-    </p>
-  );
-}
-
 export function FlagshipWeapons({ player, enemy, shop = false, busy, onAction }: {
   player: PlayerState; enemy?: PlayerState | null; shop?: boolean; busy?: boolean;
   onAction(action: MatchAction): void;
@@ -84,6 +73,7 @@ export function FlagshipWeapons({ player, enemy, shop = false, busy, onAction }:
     <button type="button"
       className={`weapon-launcher${wait ? " weapon-launcher-wait" : ""}${used && !shop ? ` weapon-launcher-using c-${TONE[used.id]}` : ""}`}
       aria-label={shop ? "Charge flagship weapons" : "Use flagship weapon"}
+      aria-live={shop ? undefined : "polite"}
       onClick={() => setOpen(true)}>
       {launcherLabel(player, shop)}
     </button>
@@ -154,7 +144,6 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
               <div className="weapon-card-top"><span className="weapon-symbol" aria-hidden="true">{ICON[id]}</span><span className="weapon-state">{STATE[status]}</span></div>
               <h3>{WEAPON_NAMES[id]}</h3>
               <p className="weapon-effect">{weaponEffect(id, player.round)}</p>
-              {id === "attack" && <p className="weapon-effect-now">+{weaponAttack(player.round)} Attack</p>}
               <button type="button" disabled={!enabled} onClick={() => {
                 if (shop) onAction({ type: "shop", operation: "weapon", weapon: id });
                 else if (id === "rotate") setRotate(true);
