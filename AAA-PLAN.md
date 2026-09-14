@@ -834,13 +834,15 @@ action reachable on a phone.
   underlines disappearing behind large hulls and the two-card choice shrinking
   the board. Each scoring cell now gets a steady four-sided orange frame, so
   at least its top and side edges remain visible around every hull. The dock
-  names the range, number count and best hull, then presents one 48px segmented
-  Energy-or-Attack control with an OR divider, selected check, and radio
-  semantics. At 375×812 the complete dock measured 314px instead of the old
+  names the range and biggest hull in one line, then presents one 48px
+  segmented Energy-or-Attack control with an OR divider and radio semantics.
+  Energy stays yellow and Attack stays red; the stronger border and tinted
+  background show the chosen side without a redundant check circle. At
+  375×812 the complete dock measured 314px instead of the old
   380px allowance, the choice measured 89px, all content fit without scrolling,
   and the horizontal overflow check returned an empty list. The lab and real
   match screenshots showed the cell frames and the 9 Energy / 12 Attack choice;
-  TypeScript, lint, all 152 tests, and the production build passed. A four-round
+  TypeScript, lint, all 153 tests, and the production build passed. A four-round
   402×874 phone playthrough then completed with no console errors or stuck
   screens; its stale flagship-button label was corrected before the clean run.
 
@@ -983,7 +985,10 @@ Add anything discovered mid-task here rather than fixing it out of order.
   needs to remember by size. Verified live: a real solo match's pre-roll
   board shows "D4" centered on every unrolled bay with no new console
   errors; `tsc --noEmit`, `pnpm lint`, `pnpm test` (29/29), and
-  `BASE_PATH= pnpm build` all pass.
+  `BASE_PATH= pnpm build` all pass. A later phone follow-up kept the same
+  angle and raised only the d8's inactive-facet strength from 0.42 to 0.48.
+  That reveals a little more of the lower octahedron without lighting its
+  hidden numbers or changing the d4, d6, d10, or flagship.
 
 ---
 

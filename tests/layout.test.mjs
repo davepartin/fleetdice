@@ -52,8 +52,17 @@ test("the straight payout is a compact, explicit one-of-two choice", () => {
   assert.match(screen, /role=\{choosable \? "radiogroup"/);
   assert.match(screen, /role=\{choosable \? "radio"/);
   assert.match(screen, /aria-checked=\{choosable \? selected/);
+  assert.match(screen, /Straight \{run\.start\}–\{run\.top\} · d\{run\.biggest\}/);
   assert.match(screen, /straight-prize-or/);
+  assert.doesNotMatch(screen, /straight-choice-detail|straight-prize-radio/);
   assert.doesNotMatch(screen, /Quick cash|Full run/);
+  assert.match(css, /\.straight-prize-energy \.straight-prize-value,[\s\S]{0,120}var\(--color-energy\)/);
+  assert.match(css, /\.straight-prize-attack \.straight-prize-value,[\s\S]{0,120}var\(--color-attack\)/);
   assert.match(css, /\.match-hud-solo \.roll-dock:has\(\.straight-prizes\)[\s\S]{0,120}314px/);
   assert.match(css, /\.match-hud-solo \.straight-prize \{[\s\S]{0,100}min-height:\s*48px/);
+});
+
+test("the d8 keeps more light on its lower facets than the other hulls", () => {
+  const die = readFileSync(new URL("../lib/three/die.ts", import.meta.url), "utf8");
+  assert.match(die, /const inactiveFacetStrength = kind === 8 \? "0\.48" : "0\.3"/);
 });
