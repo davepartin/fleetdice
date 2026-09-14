@@ -6,6 +6,7 @@ import {
   TUNING, WEAPON_IDS, WEAPON_NAMES, weaponEffect, weaponStatus, weaponsOf, roundWeapon,
   type MatchAction, type PlayerState, type WeaponInventory, type WeaponUse,
 } from "@/lib/engine";
+import { EnergyPrice } from "./ui";
 
 const ICON = { rotate: "↻", shield: "◈", attack: "✦", repair: "+" };
 const TONE = { rotate: "energy", shield: "shield", attack: "attack", repair: "repair" };
@@ -83,15 +84,9 @@ function lockedWeapons(player: PlayerState) {
   return WEAPON_IDS.filter((id) => weaponStatus(weaponsOf(player), id) === "locked");
 }
 
-function launcherLabel(player: PlayerState, shop: boolean) {
-  if (!shop) {
-    const used = roundWeapon(player);
-    return used ? `Using ${DOCK_NAME[used.id]}` : "Flagship Weapon";
-  }
-  if (lockedWeapons(player).length && player.energy < TUNING.weaponChargeCost) {
-    return `Need ${TUNING.weaponChargeCost} Energy to charge`;
-  }
-  return `Flagship Weapons · ${TUNING.weaponChargeCost} Energy`;
+function launcherLabel(player: PlayerState) {
+  const used = roundWeapon(player);
+  return used ? `Using ${DOCK_NAME[used.id]}` : "Flagship Weapon";
 }
 
 export function FlagshipWeapons({ player, enemy, shop = false, busy, onAction }: {
@@ -100,14 +95,29 @@ export function FlagshipWeapons({ player, enemy, shop = false, busy, onAction }:
 }) {
   const [open, setOpen] = useState(false);
   const used = roundWeapon(player);
-  const wait = shop && lockedWeapons(player).length > 0 && player.energy < TUNING.weaponChargeCost;
+  const locked = lockedWeapons(player);
+  const wait = shop && locked.length > 0 && player.energy < TUNING.weaponChargeCost;
+  const canCharge = shop && locked.length > 0;
+  const charged = shop && locked.length === 0;
   return <>
     <button type="button"
-      className={`weapon-launcher${wait ? " weapon-launcher-wait" : ""}${used && !shop ? ` weapon-launcher-using c-${TONE[used.id]}` : ""}`}
+      className={`weapon-launcher${shop ? " weapon-launcher-shop" : ""}${wait ? " weapon-launcher-wait" : ""}${charged ? " weapon-launcher-charged" : ""}${used && !shop ? ` weapon-launcher-using c-${TONE[used.id]}` : ""}`}
       aria-label={shop ? "Charge flagship weapons" : "Use flagship weapon"}
       aria-live={shop ? undefined : "polite"}
       onClick={() => setOpen(true)}>
-      {launcherLabel(player, shop)}
+      {shop ? (
+        <>
+          <span className="weapon-launcher-shop-label">Charge flagship weapons</span>
+          {canCharge && (
+            <EnergyPrice
+              cost={TUNING.weaponChargeCost}
+              affordable={player.energy >= TUNING.weaponChargeCost}
+            />
+          )}
+        </>
+      ) : (
+        launcherLabel(player)
+      )}
     </button>
     {open && <WeaponWindow player={player} enemy={enemy} shop={shop} busy={busy}
       onAction={onAction} onClose={() => setOpen(false)} />}

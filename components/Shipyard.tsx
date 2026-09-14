@@ -35,7 +35,7 @@ import {
 import { NOUN } from "@/lib/reference";
 import { HullShape } from "./HullShape";
 import { HelpHullPlate } from "./HelpArt";
-import { Button, Chip, HpRail, Notice } from "./ui";
+import { Button, Chip, EnergyPrice, HpRail, Notice } from "./ui";
 import { FlagshipWeapons } from "./FlagshipWeapons";
 
 const HULLS: DieSize[] = [4, 6, 8, 10];
@@ -54,21 +54,6 @@ const HULL_FACES: Record<DieSize, string> = {
   8: "rolls 1–8",
   10: "rolls 1–10",
 };
-
-/** A cool-blue Energy price. Red when you cannot afford it — never hidden. */
-function Price({ cost, affordable }: { cost: number; affordable: boolean }) {
-  return (
-    <span
-      className={`yard-price ${affordable ? "yard-price-ok" : "yard-price-no"}`}
-      aria-label={`${cost} Energy`}
-    >
-      <svg className="yard-price-icon" viewBox="0 0 16 20" aria-hidden="true">
-        <path d="M9.1 0 1.8 11.1h4.7L5.6 20l8.6-12.3H9.4L9.1 0Z" fill="currentColor" />
-      </svg>
-      <span className="t-num">{cost}</span>
-    </span>
-  );
-}
 
 function LockIcon() {
   return (
@@ -217,6 +202,12 @@ export function Shipyard({ player, enemy, enemyName, enemyHp, onAction, onDone, 
         <Chip tone="energy">{NOUN.flagship} L{player.flag.level}</Chip>
       </div>
 
+      {/* Charge sits above the fleet map so it reads as a thing to tap,
+          not a status line under the grid. Same engine action as before. */}
+      <div className="yard-charge">
+        <FlagshipWeapons player={player} enemy={enemy} shop busy={busy} onAction={onAction} />
+      </div>
+
       {/* ---------------- the board ---------------- */}
       <div className="yard-main">
       <div className="yard-board" role="group" aria-label="Your fleet">
@@ -248,7 +239,6 @@ export function Shipyard({ player, enemy, enemyName, enemyHp, onAction, onDone, 
 
       {/* ---------------- out ---------------- */}
       <div className="yard-foot yard-done">
-        <FlagshipWeapons player={player} enemy={enemy} shop busy={busy} onAction={onAction} />
         <Button tone="primary" size="lg" full onClick={onDone} disabled={busy}>
           Return to battle
         </Button>
@@ -362,7 +352,7 @@ function CellButton({
       data-dead={dead ? "" : undefined}
     >
       {body}
-      {cost !== null && <Price cost={cost} affordable={affordable} />}
+      {cost !== null && <EnergyPrice cost={cost} affordable={affordable} />}
     </button>
   );
 }
@@ -512,7 +502,7 @@ function Drawer({
                   <HullShape sides={sides} tone={can ? "live" : "ghost"} />
                 </span>
                 <span className="yard-hull-name t-num">d{sides}</span>
-                <Price cost={cost} affordable={can} />
+                <EnergyPrice cost={cost} affordable={can} />
                 <span className="yard-hull-blurb">{HULL_BLURB[sides]}</span>
               </button>
             );

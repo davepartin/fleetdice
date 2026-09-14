@@ -177,11 +177,17 @@ try {
     broke.players.host.energy = TUNING.weaponChargeCost - 1;
     const { ctx, page } = await pageWith(broke, { width: 375, height: 812 });
     await launcherOnScreen(page);
-    assert.match(
-      await page.getByRole("button", { name: "Charge flagship weapons" }).innerText(),
-      new RegExp(`Need ${TUNING.weaponChargeCost} Energy to charge`, "i"),
-    );
-    await page.getByRole("button", { name: "Charge flagship weapons" }).click();
+    const charge = page.getByRole("button", { name: "Charge flagship weapons" });
+    assert.match(await charge.innerText(), /Charge flagship weapons/i);
+    assert.equal(await page.locator(".yard-charge .yard-price-no").count(), 1);
+    assert.equal(await page.locator(".yard-foot .weapon-launcher").count(), 0);
+    const aboveBoard = await page.evaluate(() => {
+      const bar = document.querySelector(".yard-charge .weapon-launcher")?.getBoundingClientRect();
+      const board = document.querySelector(".yard-board")?.getBoundingClientRect();
+      return !!(bar && board && bar.bottom <= board.top + 1);
+    });
+    assert.equal(aboveBoard, true, "Charge flagship weapons must sit above the fleet map");
+    await charge.click();
     assert.match(await page.locator("#weapon-title").innerText(), /FLAGSHIP WEAPONS/i);
     assert.match(await page.locator(".weapon-lede").innerText(), new RegExp(`Need ${TUNING.weaponChargeCost} Energy to charge`));
     assert.equal(await page.getByRole("button", { name: `Charge Attack for ${TUNING.weaponChargeCost} Energy`, exact: true }).isDisabled(), true);

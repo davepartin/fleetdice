@@ -214,7 +214,8 @@ export function HowToPlayBody() {
         <div className="help-weapon">
           <span className="help-weapon-btn">Flagship Weapon</span>
           <p>
-            Charge each of four weapons once in the shipyard for {TUNING.weaponChargeCost} Energy.
+            Charge each of four weapons once in the shipyard with the Charge flagship weapons bar
+            at the top of the yard, {TUNING.weaponChargeCost} Energy each.
             Use one per volley after rolling: Rotate Flagship −1 or +1,
             Super Shield to halve enemy Attack before your Shields,
             Attack for round × {TUNING.weaponAttackPerRound}, or +{TUNING.weaponRepair} Repair.

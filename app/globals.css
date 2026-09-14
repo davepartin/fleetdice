@@ -6,7 +6,51 @@
    only means Attack / Shields / Energy / Repair. */
 .weapon-launcher { border: 1px solid rgb(255 255 255 / 0.14); border-radius: 14px; background: linear-gradient(180deg, rgb(255 255 255 / 0.06), rgb(255 255 255 / 0.02)); color: var(--color-hull-200, #c0c8db); font: 700 11px var(--font-body); padding: 12px 8px; text-transform: uppercase; letter-spacing: .035em; cursor: pointer; flex-shrink: 0; box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08); }
 .weapon-launcher:hover { background: linear-gradient(180deg, rgb(255 255 255 / 0.1), rgb(255 255 255 / 0.04)); }
-.yard-done > .weapon-launcher { width: 100%; margin-bottom: 8px; color: var(--color-energy); border-color: rgb(255 210 61 / 0.35); box-shadow: inset 0 1px 0 rgb(255 232 160 / 0.18), 0 0 18px -8px rgb(255 210 61 / 0.45); }
+/* Long bar above the fleet map — a tappable action, not a gold status strip. */
+.weapon-launcher-shop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.7rem 0.9rem;
+  text-transform: none;
+  letter-spacing: 0.01em;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--color-hull-100, #e3e8f2);
+  border-color: rgb(77 180 255 / 0.48);
+  background:
+    radial-gradient(circle at 8% 50%, rgb(77 180 255 / 0.14), transparent 42%),
+    linear-gradient(180deg, rgb(255 255 255 / 0.08), rgb(255 255 255 / 0.02));
+  box-shadow:
+    inset 0 1px 0 rgb(154 215 255 / 0.18),
+    0 0 18px -8px rgb(77 180 255 / 0.45);
+}
+.weapon-launcher-shop:hover {
+  background:
+    radial-gradient(circle at 8% 50%, rgb(77 180 255 / 0.2), transparent 46%),
+    linear-gradient(180deg, rgb(255 255 255 / 0.12), rgb(255 255 255 / 0.04));
+}
+.weapon-launcher-shop:active {
+  transform: scale(0.985);
+}
+.weapon-launcher-shop-label {
+  text-align: left;
+  line-height: 1.2;
+}
+.weapon-launcher-shop .yard-price {
+  position: static;
+  transform: none;
+  flex: none;
+}
+.weapon-launcher-shop.weapon-launcher-wait {
+  color: var(--color-hull-100, #e3e8f2);
+}
+.weapon-launcher-shop.weapon-launcher-charged {
+  opacity: 0.72;
+}
 /* Compact side button next to the face chip — two words stack, not clip.
    Do not nest this inside .flagship-line, and do not stretch it above Roll Fleet. */
 .flagship-control-row > .weapon-launcher {
@@ -1468,6 +1512,12 @@ button {
   display: flex;
   gap: 0.4rem;
   flex: none;
+}
+
+.yard-charge {
+  flex: none;
+  width: min(100%, 27rem);
+  margin: 0 auto;
 }
 
 /* ---------------- the nine cells ---------------- */
