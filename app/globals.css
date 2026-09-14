@@ -3,7 +3,8 @@
 /* The four flagship charges share one compact, keyboard-accessible window. */
 .weapon-launcher { border: 1px solid var(--color-hull-500, #49536d); border-radius: 10px; background: rgba(255,255,255,.04); color: var(--color-hull-200, #c0c8db); font: 700 11px var(--font-body); padding: 12px 8px; text-transform: uppercase; letter-spacing: .035em; cursor: pointer; flex-shrink: 0; }
 .weapon-launcher:hover { background: rgba(255,255,255,.1); }
-.yard-done > .weapon-launcher { width: 100%; margin-bottom: 8px; color: var(--color-energy); }
+.yard-done > .weapon-launcher,
+.roll-dock-action > .weapon-launcher { display: block; width: 100%; min-height: 44px; margin-bottom: 8px; color: var(--color-energy); }
 .weapon-window { position: fixed; inset: 0; margin: auto; padding: 0; width: min(440px, calc(100vw - 24px)); max-width: none; max-height: calc(100dvh - 32px); background: var(--color-void, #080c18); color: var(--color-hull-100, #e3e8f2); border: 1px solid var(--color-hull-500, #49536d); border-radius: 22px; box-shadow: 0 24px 80px rgba(0,0,0,.7); overflow: hidden; }
 .weapon-window::backdrop { background: rgba(2,4,12,.82); backdrop-filter: blur(5px); }
 .weapon-window-inner { display: flex; flex-direction: column; max-height: calc(100dvh - 34px); }
@@ -3217,7 +3218,8 @@ button {
 .tutorial-shell[data-awaiting="brace"] .brace-dock-action .btn-primary,
 .tutorial-shell[data-awaiting="ready"] .yard-done .btn-primary,
 .tutorial-shell[data-awaiting="ready"] .yard .btn-primary,
-.tutorial-shell[data-awaiting="token"] .flagship-control-row > .btn {
+.tutorial-shell[data-awaiting="token"] .flagship-control-row > .btn,
+.tutorial-shell[data-awaiting="token"] .weapon-launcher {
   position: relative;
   z-index: 2;
   animation: tutorial-spotlight 1.6s ease-in-out infinite;
