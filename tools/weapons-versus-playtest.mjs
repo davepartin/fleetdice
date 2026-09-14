@@ -94,9 +94,11 @@ try {
   await host.page.getByRole("button", { name: "Use Attack", exact: true }).click();
   await waitFor(async () => (await read(id)).state.players.host.weapons.attack.usedRound === 6, "host activation committed");
   await guest.page.getByRole("button", { name: "Use flagship weapon", exact: true }).click();
-  await guest.page.locator(".weapon-enemy-status summary").click();
-  assert.match(await guest.page.locator(".weapon-enemy-status").innerText(), /Attack\s+Available/);
-  assert.doesNotMatch(await guest.page.locator(".weapon-enemy-status").innerText(), /Used R6/);
+  assert.equal(await guest.page.locator(".weapon-enemy-status summary").count(), 0);
+  assert.equal(await guest.page.locator(".weapon-enemy-boxes .weapon-enemy-box").count(), 4);
+  assert.equal(await guest.page.locator(".weapon-enemy-box.weapon-attack.weapon-enemy-available").count(), 1);
+  assert.equal(await guest.page.locator(".weapon-enemy-box.weapon-attack.weapon-enemy-used").count(), 0);
+  assert.equal(await guest.page.locator('.weapon-enemy-box[aria-label="Attack · Available"]').count(), 1);
   console.log("PASS guest sees charged Attack without seeing the hidden activation");
   await guest.page.getByRole("button", { name: "Use Super Shield", exact: true }).click();
   await waitFor(async () => (await read(id)).state.players.guest.weapons.shield.usedRound === 6, "shield committed");

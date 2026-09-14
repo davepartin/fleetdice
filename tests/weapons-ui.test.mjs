@@ -12,19 +12,36 @@ const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8")
 const help = readFileSync(new URL("../lib/reference.ts", import.meta.url), "utf8");
 
 test("Attack copy is the round times two as an equation from TUNING", () => {
-  assert.match(engine, /\$\{round\} × \$\{TUNING\.weaponAttackPerRound\} = \$\{weaponAttack\(round\)\} Attack/);
+  assert.match(engine, /round \(\$\{round\}\) × \$\{TUNING\.weaponAttackPerRound\} = \$\{weaponAttack\(round\)\} Attack/);
   assert.match(weapons, /weaponEffect\(id, player\.round\)/);
   assert.doesNotMatch(weapons, /weapon-effect-now/);
   assert.doesNotMatch(weapons, /This round/);
 });
 
 test("the weapons window has one short rule line and Back, not Cancel", () => {
-  assert.match(weapons, /You may use one flagship weapon per round/);
+  assert.match(weapons, /One weapon per round\. Each weapon only once a game/);
+  assert.doesNotMatch(weapons, /You may use one flagship weapon per round/);
+  assert.doesNotMatch(weapons, /Roll your fleet before using a weapon/);
+  assert.doesNotMatch(weapons, /Your volley is locked in/);
   assert.match(weapons, />Back</);
   assert.doesNotMatch(weapons, />Cancel</);
   assert.doesNotMatch(weapons, /pressing Cancel/);
   assert.match(help, /Back closes the weapon window/);
   assert.doesNotMatch(help, /Cancel closes the weapon window/);
+});
+
+test("enemy weapon status is a four-box row, not a disclosure", () => {
+  assert.match(weapons, /EnemyWeaponRow/);
+  assert.match(weapons, /weapon-enemy-row/);
+  assert.match(weapons, /weapon-enemy-box/);
+  assert.match(weapons, /weapon-enemy-\$\{status\}/);
+  assert.doesNotMatch(weapons, /<details className="weapon-enemy-status"/);
+  assert.doesNotMatch(weapons, /weapon status<\/summary>/);
+  assert.match(css, /\.weapon-enemy-boxes \{ display: grid; grid-template-columns: repeat\(4,/);
+  assert.match(css, /\.weapon-enemy-slash/);
+  assert.match(css, /\.weapon-enemy-lock/);
+  assert.match(help, /One weapon per round, and each weapon only once a game/);
+  assert.match(help, /round \(the current round\) × \$\{TUNING\.weaponAttackPerRound\}/);
 });
 
 test("rotate directions are filled primary buttons with −1 and +1 inside", () => {

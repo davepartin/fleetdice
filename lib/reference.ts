@@ -27,6 +27,7 @@ import {
   directOf,
   slotForCell,
   FLAG_FACES,
+  weaponAttack,
   type DieSize,
   type FaceRow,
   type PlayerState,
@@ -586,11 +587,11 @@ export const HOW_TO_PLAY: readonly HelpSection[] = [
       },
       {
         kind: "text",
-        text: `Charge each flagship weapon once per game in the shipyard for ${TUNING.weaponChargeCost} Energy. Each charge can be used once, after rolling, with at most one weapon per volley. You can keep several weapons charged. Opponents see which are available, locked or used; activation stays hidden until both lock in. Back closes the weapon window without spending a charge.`,
+        text: `Charge each flagship weapon once per game in the shipyard for ${TUNING.weaponChargeCost} Energy. Each charge can be used once, after rolling, with at most one weapon per round. You can keep several weapons charged. Opponents see which are available, locked or used; activation stays hidden until both lock in. Back closes the weapon window without spending a charge.`,
       },
       {
         kind: "text",
-        text: `Rotate Flagship turns the centre die one number up or down. It wraps around, so ${FLAG_SIDES} can turn into 1 and 1 into ${FLAG_SIDES}. Attack adds the current round × ${TUNING.weaponAttackPerRound} ordinary Attack. Repair always adds ${TUNING.weaponRepair} health alongside damage, even above your previous high. Super Shield halves enemy Attack before ordinary Shields and ship blocking; odd totals round up after halving. It does not reduce Direct or War Escalation.`,
+        text: `Rotate Flagship turns the centre die one number up or down. It wraps around, so ${FLAG_SIDES} can turn into 1 and 1 into ${FLAG_SIDES}. Attack adds round (the current round) × ${TUNING.weaponAttackPerRound} ordinary Attack — on round 1 that is round (1) × ${TUNING.weaponAttackPerRound} = ${weaponAttack(1)} Attack. Repair always adds ${TUNING.weaponRepair} health alongside damage, even above your previous high. Super Shield halves enemy Attack before ordinary Shields and ship blocking; odd totals round up after halving. It does not reduce Direct or War Escalation.`,
       },
       {
         kind: "text",
@@ -616,7 +617,7 @@ export const HOW_TO_PLAY: readonly HelpSection[] = [
           },
           {
             name: "3. Flagship weapons",
-            text: `You decide whether this is the round to spend a charged flagship weapon. Each costs ${TUNING.weaponChargeCost} Energy to charge in the shipyard and can be used once per game. Use at most one per volley, after rolling and before locking in.`,
+            text: `You decide whether this is the round to spend a charged flagship weapon. Each costs ${TUNING.weaponChargeCost} Energy to charge in the shipyard. One weapon per round, and each weapon only once a game — use it after rolling and before locking in.`,
           },
           {
             name: "4. Lock in",

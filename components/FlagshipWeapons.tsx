@@ -19,6 +19,34 @@ export function weaponUseText(use: WeaponUse): string {
   return `${WEAPON_NAMES[use.id]} · +${use.amount}`;
 }
 
+function LockMark() {
+  return <svg className="weapon-enemy-lock" viewBox="0 0 16 16" aria-hidden="true">
+    <path fill="currentColor" d="M8 1.75A2.75 2.75 0 0 0 5.25 4.5V6h-.75A1.5 1.5 0 0 0 3 7.5v5A1.5 1.5 0 0 0 4.5 14h7a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 11.5 6h-.75V4.5A2.75 2.75 0 0 0 8 1.75Zm1.25 4.25h-2.5V4.5a1.25 1.25 0 1 1 2.5 0Z" />
+  </svg>;
+}
+
+/** Glanceable four-box strip: locked, charged, or spent. Same symbols as the cards. */
+export function EnemyWeaponRow({ stock, name }: { stock: WeaponInventory; name: string }) {
+  return <div className="weapon-enemy-row" aria-label={`${name} flagship weapons`}>
+    <p className="weapon-enemy-row-label">{name}</p>
+    <div className="weapon-enemy-boxes" role="list">
+      {WEAPON_IDS.map(id => {
+        const status = weaponStatus(stock, id);
+        const usedRound = stock[id].usedRound;
+        const caption = status === "used" && usedRound ? `Used · R${usedRound}` : STATE[status];
+        return <div key={id} role="listitem"
+          className={`weapon-enemy-box weapon-${id} weapon-enemy-${status}`}
+          aria-label={`${WEAPON_NAMES[id]} · ${caption}`}
+          title={`${WEAPON_NAMES[id]} · ${caption}`}>
+          <span className="weapon-symbol" aria-hidden="true">{ICON[id]}</span>
+          {status === "locked" && <LockMark />}
+          {status === "used" && <span className="weapon-enemy-slash" aria-hidden="true" />}
+        </div>;
+      })}
+    </div>
+  </div>;
+}
+
 export function WeaponStatusList({ stock, name }: { stock: WeaponInventory; name: string }) {
   return <div className="weapon-status-list" aria-label={`${name} flagship weapons`}>
     <p className="t-eyebrow">{name}</p>
@@ -113,13 +141,13 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
           ? player.energy < TUNING.weaponChargeCost && lockedWeapons(player).length
             ? `Need ${TUNING.weaponChargeCost} Energy to charge · ${player.energy} in the bank`
             : `${player.energy} Energy in the bank · ${TUNING.weaponChargeCost} per charge`
-          : "You may use one flagship weapon per round."}</p>
+          : "One weapon per round. Each weapon only once a game — use it wisely."}</p>
         {tips && <div className="weapon-tips">
           <p>Charge each weapon once in the shipyard for {TUNING.weaponChargeCost} Energy. Save it for any later volley. Firing costs no extra Energy.</p>
           <p>Both players can see charged and used weapons. Your activation stays hidden until both lock in.</p>
           <p><b>Rotate:</b> turn your flagship −1 or +1 after rolling. It can complete a straight or change your bonus.</p>
           <p><b>Super Shield:</b> halve enemy Attack before your Shields and blocking ships. An odd total rounds up after halving. Direct and War still follow their usual rules.</p>
-          <p><b>Attack:</b> add the current round × {TUNING.weaponAttackPerRound} Attack. Waiting makes it stronger; enemy defenses still apply.</p>
+          <p><b>Attack:</b> add round (the current round) × {TUNING.weaponAttackPerRound} Attack. Waiting makes it stronger; enemy defenses still apply.</p>
           <p><b>Repair:</b> add {TUNING.weaponRepair} health alongside this volley’s damage. It can save your flagship and raise your health above its previous high.</p>
           <p>Opening this window or pressing Back spends nothing. Pressing Use, or a rotation direction, spends that charge immediately.</p>
         </div>}
@@ -158,10 +186,7 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
             </section>;
           })}
         </div>
-        {!shop && player.phase !== "rolling" && <p className="weapon-guide">{player.phase === "ready" ? "Roll your fleet before using a weapon." : "Your volley is locked in."}</p>}
-        {enemy && <details className="weapon-enemy-status"><summary>{enemy.name} · weapon status</summary>
-          <WeaponStatusList stock={weaponsOf(enemy)} name={enemy.name} />
-        </details>}
+        {enemy && <EnemyWeaponRow stock={weaponsOf(enemy)} name={enemy.name} />}
       </div>
       <footer><button type="button" className="btn btn-primary w-full" onClick={onClose}>Back</button></footer>
     </div>
