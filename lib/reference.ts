@@ -617,7 +617,7 @@ export const HOW_TO_PLAY: readonly HelpSection[] = [
           },
           {
             name: "3. Flagship weapons",
-            text: `You decide whether this is the round to spend a charged flagship weapon. Each costs ${TUNING.weaponChargeCost} Energy to charge in the shipyard. One weapon per round, and each weapon only once a game — use it after rolling and before locking in.`,
+            text: `You decide whether this is the round to spend a charged flagship weapon. Each costs ${TUNING.weaponChargeCost} Energy to charge in the shipyard. Each flagship weapon once a game, but only one per round — use it after rolling and before locking in.`,
           },
           {
             name: "4. Lock in",

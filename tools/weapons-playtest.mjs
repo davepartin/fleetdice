@@ -47,13 +47,31 @@ async function frame(page) {
   const layout = await page.evaluate(() => {
     const dialog = document.querySelector("dialog");
     const footer = dialog?.querySelector("footer")?.getBoundingClientRect();
+    const inner = dialog?.querySelector(".weapon-window-inner");
+    const body = dialog?.querySelector(".weapon-window-body");
+    const lock = dialog?.querySelector(".weapon-enemy-locked .weapon-enemy-lock");
+    const icon = lock?.previousElementSibling;
+    const lockR = lock?.getBoundingClientRect();
+    const iconR = icon?.getBoundingClientRect();
     return { overflow: document.documentElement.scrollWidth - innerWidth,
       dialogOverflow: dialog ? dialog.scrollWidth - dialog.clientWidth : 0,
-      footerBottom: footer?.bottom, height: innerHeight };
+      footerBottom: footer?.bottom, height: innerHeight,
+      innerCan: inner ? inner.scrollHeight - inner.clientHeight : 0,
+      bodyCan: body ? body.scrollHeight - body.clientHeight : 0,
+      bodyOverflow: body ? getComputedStyle(body).overflowY : "",
+      lockBeside: !!(lockR && iconR && lockR.left >= iconR.right - 2),
+      hasLock: !!lock,
+    };
   });
   assert.equal(layout.overflow, 0);
   assert.equal(layout.dialogOverflow, 0);
   if (layout.footerBottom) assert.ok(layout.footerBottom <= layout.height);
+  if (layout.bodyOverflow) {
+    assert.ok(layout.innerCan <= 2, `weapon panel scrolls by ${layout.innerCan}px`);
+    assert.ok(layout.bodyCan <= 2, `weapon cards sit in a scroller (${layout.bodyCan}px)`);
+    assert.notEqual(layout.bodyOverflow, "auto");
+  }
+  if (layout.hasLock) assert.equal(layout.lockBeside, true, "lock must sit beside the icon, not over it");
 }
 async function launcherOnScreen(page) {
   const button = page.getByRole("button", { name: /flagship weapon/i }).first();
@@ -164,7 +182,7 @@ try {
       new RegExp(`Need ${TUNING.weaponChargeCost} Energy to charge`, "i"),
     );
     await page.getByRole("button", { name: "Charge flagship weapons" }).click();
-    assert.match(await page.locator(".weapon-guide").first().innerText(), new RegExp(`Need ${TUNING.weaponChargeCost} Energy to charge`));
+    assert.match(await page.locator("#weapon-title").innerText(), new RegExp(`Need ${TUNING.weaponChargeCost} Energy to charge`));
     assert.equal(await page.getByRole("button", { name: `Charge Attack for ${TUNING.weaponChargeCost} Energy`, exact: true }).isDisabled(), true);
     await ctx.close();
     console.log("PASS shipyard empty-state when the bank is short of a charge");
@@ -187,8 +205,8 @@ try {
     const { ctx, page } = await pageWith(s, { width: 390, height: 844 });
     await page.getByRole("button", { name: "Use flagship weapon", exact: true }).click();
     await frame(page);
-    assert.match(await page.locator(".weapon-guide").first().innerText(), /One weapon per round/);
-    assert.match(await page.locator(".weapon-guide").first().innerText(), /once a game/);
+    assert.match(await page.locator("#weapon-title").innerText(), /Each flagship weapon once a game/);
+    assert.match(await page.locator("#weapon-title").innerText(), /Only one per round/);
     assert.doesNotMatch(await page.locator(".weapon-window").innerText(), /Roll your fleet before using a weapon/);
     assert.match(await page.locator(".weapon-attack .weapon-effect").innerText(),
       new RegExp(String.raw`round\s*\(\s*1\s*\)\s*×\s*${TUNING.weaponAttackPerRound}\s*=\s*${TUNING.weaponAttackPerRound} Attack`));

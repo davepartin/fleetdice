@@ -38,8 +38,10 @@ export function EnemyWeaponRow({ stock, name }: { stock: WeaponInventory; name: 
           className={`weapon-enemy-box weapon-${id} weapon-enemy-${status}`}
           aria-label={`${WEAPON_NAMES[id]} · ${caption}`}
           title={`${WEAPON_NAMES[id]} · ${caption}`}>
-          <span className="weapon-symbol" aria-hidden="true">{ICON[id]}</span>
-          {status === "locked" && <LockMark />}
+          <span className="weapon-enemy-mark">
+            <span className="weapon-symbol" aria-hidden="true">{ICON[id]}</span>
+            {status === "locked" && <LockMark />}
+          </span>
           {status === "used" && <span className="weapon-enemy-slash" aria-hidden="true" />}
         </div>;
       })}
@@ -128,20 +130,23 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
   const used = roundWeapon(player);
   const canFire = player.phase === "rolling" && !used && !busy;
   const fire = (action: MatchAction) => { onAction(action); onClose(); };
+  const turning = rotate && canFire && weaponStatus(stock, "rotate") === "available";
+  const lede = shop
+    ? player.energy < TUNING.weaponChargeCost && lockedWeapons(player).length
+      ? `Need ${TUNING.weaponChargeCost} Energy to charge · ${player.energy} in the bank`
+      : `${player.energy} Energy in the bank · ${TUNING.weaponChargeCost} per charge`
+    : "Each flagship weapon once a game. Only one per round — use it wisely.";
   return createPortal(<dialog ref={dialog} className="weapon-window" aria-labelledby="weapon-title"
     onCancel={onClose} onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
     <div className="weapon-window-inner">
       <header className="weapon-window-head">
-        <div><p className="t-eyebrow">{shop ? "Shipyard" : `Round ${player.round}`}</p>
-          <h2 id="weapon-title" className="t-display">Flagship weapons</h2></div>
+        <div>
+          <p className="t-eyebrow">{shop ? "Shipyard" : `Round ${player.round}`}</p>
+          <h2 id="weapon-title" className="weapon-lede">{lede}</h2>
+        </div>
         <button type="button" className="weapon-small-button" aria-expanded={tips} onClick={() => setTips(!tips)}>Tips</button>
       </header>
-      <div className="weapon-window-scroll">
-        <p className="weapon-guide">{shop
-          ? player.energy < TUNING.weaponChargeCost && lockedWeapons(player).length
-            ? `Need ${TUNING.weaponChargeCost} Energy to charge · ${player.energy} in the bank`
-            : `${player.energy} Energy in the bank · ${TUNING.weaponChargeCost} per charge`
-          : "One weapon per round. Each weapon only once a game — use it wisely."}</p>
+      <div className="weapon-window-body">
         {tips && <div className="weapon-tips">
           <p>Charge each weapon once in the shipyard for {TUNING.weaponChargeCost} Energy. Save it for any later volley. Firing costs no extra Energy.</p>
           <p>Both players can see charged and used weapons. Your activation stays hidden until both lock in.</p>
@@ -151,7 +156,8 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
           <p><b>Repair:</b> add {TUNING.weaponRepair} health alongside this volley’s damage. It can save your flagship and raise your health above its previous high.</p>
           <p>Opening this window or pressing Back spends nothing. Pressing Use, or a rotation direction, spends that charge immediately.</p>
         </div>}
-        {rotate && canFire && weaponStatus(stock, "rotate") === "available" && <div className="weapon-rotate-controls">
+        <div className="weapon-stage">
+        {turning && <div className="weapon-rotate-controls">
           <p>Turn the flagship from {player.flag.face}:</p>
           <button type="button" className="btn btn-primary weapon-rotate-btn" autoFocus
             aria-label="Turn the flagship −1"
@@ -185,6 +191,7 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
               </button>
             </section>;
           })}
+        </div>
         </div>
       </div>
       {enemy && <EnemyWeaponRow stock={weaponsOf(enemy)} name={enemy.name} />}
