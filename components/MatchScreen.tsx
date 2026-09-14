@@ -12,7 +12,7 @@
  * both look important.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import * as THREE from "three";
 import {
   TUNING,
@@ -1011,14 +1011,18 @@ function RollDock({
       )}
 
       <div className="flagship-control-row flex items-center gap-2">
-        <FlagshipLine you={you} />
+        {/* One flagship module: face chip + a compact weapon tap. The fire
+            control used to sit full-width above Roll Fleet and read as a
+            second primary button. */}
+        <FlagshipLine you={you}>
+          {!waiting && (
+            <FlagshipWeapons player={you} enemy={enemy} busy={busy} onAction={onWeapon} />
+          )}
+        </FlagshipLine>
       </div>
       </div>
 
       <div className="roll-dock-action">
-      {!waiting && (
-        <FlagshipWeapons player={you} enemy={enemy} busy={busy} onAction={onWeapon} />
-      )}
       {waiting ? (
         <div className="flex items-center justify-center gap-3 py-2" aria-live="polite">
           <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />
@@ -1358,7 +1362,7 @@ function RevealBanner({
  * which one is actually counting is genuinely ambiguous from the art alone.
  * This says it in words.
  */
-function FlagshipLine({ you }: { you: PlayerState }) {
+function FlagshipLine({ you, children }: { you: PlayerState; children?: ReactNode }) {
   const face = FLAGSHIP_FACES.find((entry) => entry.face === you.flag.face);
   if (!face) return null;
   const level = face.levels[Math.min(2, Math.max(0, you.flag.level - 1))];
@@ -1392,11 +1396,12 @@ function FlagshipLine({ you }: { you: PlayerState }) {
       <span className="t-num shrink-0 rounded-md bg-current/20 px-2 py-0.5 text-sm">
         {face.face}
       </span>
-      <span className="min-w-0 text-sm leading-snug">
+      <span className="flagship-face-copy min-w-0 text-sm leading-snug">
         <b>{face.name}</b>
         <span className="flagship-long"> — {level?.text ?? face.short}</span>
         <span className="flagship-compact"> · {compact}</span>
       </span>
+      {children}
     </div>
   );
 }

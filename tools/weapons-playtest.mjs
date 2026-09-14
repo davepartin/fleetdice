@@ -63,7 +63,53 @@ async function launcherOnScreen(page) {
   assert.ok(box && vp, "flagship weapon control must exist");
   assert.ok(box.y >= 0 && box.y + box.height <= vp.height,
     `flagship weapon control at y=${box.y.toFixed(0)} h=${box.height.toFixed(0)} is off the ${vp.width}×${vp.height} screen`);
-  assert.ok(box.width >= 120, "flagship weapon control must be wide enough to tap");
+}
+async function assertDockWeaponLayout(page, using) {
+  const layout = await page.evaluate(() => {
+    const launcher = document.querySelector(".flagship-line .weapon-launcher");
+    const inAction = document.querySelector(".roll-dock-action .weapon-launcher");
+    const face = document.querySelector(".flagship-face-copy");
+    const chip = document.querySelector(".flagship-line");
+    const dock = document.querySelector(".roll-dock");
+    const extra = document.querySelector(".weapon-using-cue");
+    const action = document.querySelector(".roll-dock-action");
+    const lr = launcher?.getBoundingClientRect();
+    const cr = chip?.getBoundingClientRect();
+    const primaries = action ? [...action.querySelectorAll("button")].map((b) => ({
+      text: (b.textContent || "").replace(/\s+/g, " ").trim(),
+      width: b.getBoundingClientRect().width,
+    })) : [];
+    return {
+      hasDockLauncher: !!launcher,
+      hasActionLauncher: !!inAction,
+      extra: !!extra,
+      faceText: face?.textContent?.replace(/\s+/g, " ").trim() ?? "",
+      faceClip: face ? face.scrollWidth - face.clientWidth : 99,
+      chipClip: chip ? chip.scrollWidth - chip.clientWidth : 99,
+      dockClip: dock ? dock.scrollWidth - dock.clientWidth : 99,
+      launcher: lr && { y: lr.y, h: lr.height, w: lr.width, text: (launcher.textContent || "").replace(/\s+/g, " ").trim() },
+      chip: cr && { y: cr.y, h: cr.height, w: cr.width },
+      vw: innerWidth,
+      primaries,
+    };
+  });
+  assert.equal(layout.hasActionLauncher, false, "weapon must not sit in roll-dock-action above Roll Fleet");
+  assert.ok(layout.hasDockLauncher, "weapon tap must live inside the flagship chip");
+  assert.equal(layout.extra, false, "no second Using line below the chip");
+  assert.ok(layout.faceClip <= 1, `face chip clipped by ${layout.faceClip}px (${layout.faceText})`);
+  assert.ok(layout.chipClip <= 1, `flagship module clipped by ${layout.chipClip}px`);
+  assert.ok(layout.dockClip <= 1, `roll dock clipped horizontally by ${layout.dockClip}px`);
+  assert.ok(layout.launcher && layout.chip);
+  assert.ok(layout.launcher.w >= 44, `weapon tap ${layout.launcher.w.toFixed(0)}px is too small`);
+  assert.ok(layout.launcher.w < layout.vw * 0.48, `weapon tap ${layout.launcher.w.toFixed(0)}px is a 50/50 column, not a compact control`);
+  assert.ok(layout.launcher.w < layout.chip.w * 0.5, "weapon tap must not take half the flagship module");
+  assert.ok(layout.launcher.y >= layout.chip.y - 1);
+  assert.ok(layout.launcher.y + layout.launcher.h <= layout.chip.y + layout.chip.h + 1,
+    "weapon tap must share the flagship chip's height, not sit on its own row");
+  const big = layout.primaries.filter((b) => b.width >= layout.vw * 0.55);
+  assert.ok(big.length <= 2, `roll-dock-action has ${big.length} wide buttons; only Roll/Reroll/Lock in should be large`);
+  if (using) assert.match(layout.launcher.text, new RegExp(`Using ${using}`, "i"));
+  else assert.match(layout.launcher.text, /Weapon/i);
 }
 try {
   for (const viewport of [{ width: 375, height: 812 }, { width: 390, height: 620 }, { width: 360, height: 780 }]) {
@@ -124,9 +170,30 @@ try {
     await ctx.close();
     console.log("PASS Attack card shows round × 2 = N Attack");
   }
+  for (const viewport of [{ width: 390, height: 844 }, { width: 390, height: 620 }, { width: 360, height: 780 }]) {
+    const attackFace = fixture();
+    attackFace.players.host.flag.face = 6;
+    const { ctx, page } = await pageWith(attackFace, viewport);
+    await launcherOnScreen(page);
+    await assertDockWeaponLayout(page);
+    const faceText = await page.locator(".flagship-face-copy").innerText();
+    assert.match(faceText, /Attack/);
+    assert.match(faceText, /Attack per even/);
+    assert.doesNotMatch(faceText, /…|\.\.\./);
+    await page.screenshot({ path: `shots/weapons-dock-chip-${viewport.width}x${viewport.height}.png` });
+    await page.getByRole("button", { name: "Use flagship weapon", exact: true }).click();
+    await page.getByRole("button", { name: "Use Attack", exact: true }).click();
+    await assertDockWeaponLayout(page, "Attack");
+    if (viewport.width === 390 && viewport.height === 844) {
+      await page.screenshot({ path: "shots/weapons-dock-using-390x844.png" });
+    }
+    await ctx.close();
+    console.log(`PASS dock chip layout ${viewport.width}x${viewport.height}`);
+  }
   for (const [id, name] of [["rotate", "Rotate Flagship"], ["shield", "Super Shield"], ["attack", "Attack"], ["repair", "Repair"]]) {
     const { ctx, page } = await pageWith(fixture(), { width: 375, height: 812 });
     await launcherOnScreen(page);
+    await assertDockWeaponLayout(page);
     await page.getByRole("button", { name: "Use flagship weapon", exact: true }).click();
     await frame(page);
     // A real modal traps keyboard focus: Tab cannot reach Roll or Lock in.
@@ -153,14 +220,8 @@ try {
     }
     assert.equal((await saved(page)).weapons[id].usedRound, 6);
     assert.equal(await page.locator(".weapon-using-cue").count(), 0, "no second Using line above Lock in");
-    const launcher = page.locator(".roll-dock-action .weapon-launcher");
-    assert.match(await launcher.innerText(), new RegExp(`Using ${name}`, "i"));
-    const launcherBox = await launcher.boundingBox();
-    const faceBox = await page.locator(".flagship-line").boundingBox();
-    const vp = page.viewportSize();
-    assert.ok(launcherBox && faceBox && vp);
-    assert.ok(launcherBox.width >= vp.width * 0.72, "weapon status is full-width, not squeezed beside the flagship face");
-    assert.ok(Math.abs(launcherBox.y - faceBox.y) > 8, "weapon status must not share a row with the flagship face");
+    const short = { rotate: "Rotate", shield: "Shield", attack: "Attack", repair: "Repair" };
+    await assertDockWeaponLayout(page, short[id]);
     if (id === "rotate") await page.screenshot({ path: "shots/weapons-using-rotate-375.png" });
     if (id === "attack") await page.screenshot({ path: "shots/weapons-using-375.png" });
     await page.reload({ waitUntil: "networkidle" });
