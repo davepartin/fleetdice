@@ -82,6 +82,8 @@ try {
     }
     assert.equal((await saved(page)).energy, 0);
     assert.equal(await page.locator(".weapon-card-available").count(), 4);
+    assert.match(await page.locator(".weapon-attack .weapon-effect").innerText(),
+      new RegExp(String.raw`${6}\s*×\s*${TUNING.weaponAttackPerRound}\s*=\s*${6 * TUNING.weaponAttackPerRound} Attack`));
     await page.getByRole("button", { name: "Tips", exact: true }).click();
     await frame(page);
     await page.getByRole("button", { name: "Tips", exact: true }).click();
@@ -110,6 +112,18 @@ try {
     await ctx.close();
     console.log("PASS shipyard empty-state when the bank is short of a charge");
   }
+  {
+    const shop = fixture(true);
+    shop.round = 3;
+    for (const p of Object.values(shop.players)) p.round = 3;
+    const { ctx, page } = await pageWith(shop, { width: 375, height: 812 });
+    await page.getByRole("button", { name: "Charge flagship weapons" }).click();
+    assert.match(await page.locator(".weapon-attack .weapon-effect").innerText(),
+      new RegExp(String.raw`3\s*×\s*${TUNING.weaponAttackPerRound}\s*=\s*${3 * TUNING.weaponAttackPerRound} Attack`));
+    await page.screenshot({ path: "shots/weapons-attack-equation-375.png" });
+    await ctx.close();
+    console.log("PASS Attack card shows round × 2 = N Attack");
+  }
   for (const [id, name] of [["rotate", "Rotate Flagship"], ["shield", "Super Shield"], ["attack", "Attack"], ["repair", "Repair"]]) {
     const { ctx, page } = await pageWith(fixture(), { width: 375, height: 812 });
     await launcherOnScreen(page);
@@ -133,11 +147,21 @@ try {
       const direction = page.getByRole("button", { name: "Turn the flagship +1", exact: true });
       const rect = await direction.boundingBox();
       assert.ok(rect && rect.y >= 0 && rect.y + rect.height <= 812, "rotation directions must appear without scrolling");
+      assert.ok(rect.height <= 52, `rotate +1 is ${rect.height}px tall; must stay a normal primary control`);
       await page.screenshot({ path: "shots/weapons-rotate-375.png" });
       await direction.click();
     }
     assert.equal((await saved(page)).weapons[id].usedRound, 6);
-    assert.match(await page.locator(".weapon-using-cue").innerText(), new RegExp(`Using ${name}`));
+    assert.equal(await page.locator(".weapon-using-cue").count(), 0, "no second Using line above Lock in");
+    const launcher = page.locator(".roll-dock-action .weapon-launcher");
+    assert.match(await launcher.innerText(), new RegExp(`Using ${name}`, "i"));
+    const launcherBox = await launcher.boundingBox();
+    const faceBox = await page.locator(".flagship-line").boundingBox();
+    const vp = page.viewportSize();
+    assert.ok(launcherBox && faceBox && vp);
+    assert.ok(launcherBox.width >= vp.width * 0.72, "weapon status is full-width, not squeezed beside the flagship face");
+    assert.ok(Math.abs(launcherBox.y - faceBox.y) > 8, "weapon status must not share a row with the flagship face");
+    if (id === "rotate") await page.screenshot({ path: "shots/weapons-using-rotate-375.png" });
     if (id === "attack") await page.screenshot({ path: "shots/weapons-using-375.png" });
     await page.reload({ waitUntil: "networkidle" });
     await page.getByRole("button", { name: /Carry on/ }).click();

@@ -195,11 +195,11 @@ test("legacy saved battles retain their existing rotation without granting new f
   assert.equal(weaponStatus(weaponsOf(p), "rotate"), "used");
 });
 
-test("Attack weapon copy names the round formula from TUNING, not only the current total", () => {
+test("Attack weapon copy is the round times two as an equation from TUNING", () => {
   const text = G.weaponEffect("attack", 4);
-  assert.match(text, new RegExp(String.raw`This round\s*×\s*${TUNING.weaponAttackPerRound}`));
+  assert.equal(text, `4 × ${TUNING.weaponAttackPerRound} = ${4 * TUNING.weaponAttackPerRound} Attack`);
   assert.equal(G.weaponAttack(4), 4 * TUNING.weaponAttackPerRound);
-  assert.doesNotMatch(text, /^\+\d+ Attack$/);
+  assert.equal(G.weaponEffect("attack", 3), `3 × ${TUNING.weaponAttackPerRound} = ${3 * TUNING.weaponAttackPerRound} Attack`);
 });
 
 test("AI weapon decisions do not depend on hidden enemy dice", () => {
