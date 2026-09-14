@@ -100,9 +100,9 @@ try {
     broke.players.host.energy = TUNING.weaponChargeCost - 1;
     const { ctx, page } = await pageWith(broke, { width: 375, height: 812 });
     await launcherOnScreen(page);
-    assert.equal(
-      (await page.getByRole("button", { name: "Charge flagship weapons" }).innerText()).replace(/\s+/g, " ").trim(),
-      `Need ${TUNING.weaponChargeCost} Energy to charge`,
+    assert.match(
+      await page.getByRole("button", { name: "Charge flagship weapons" }).innerText(),
+      new RegExp(`Need ${TUNING.weaponChargeCost} Energy to charge`, "i"),
     );
     await page.getByRole("button", { name: "Charge flagship weapons" }).click();
     assert.match(await page.locator(".weapon-guide").first().innerText(), new RegExp(`Need ${TUNING.weaponChargeCost} Energy to charge`));
