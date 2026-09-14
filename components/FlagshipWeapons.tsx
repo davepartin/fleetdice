@@ -142,7 +142,8 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
       <header className="weapon-window-head">
         <div>
           <p className="t-eyebrow">{shop ? "Shipyard" : `Round ${player.round}`}</p>
-          <h2 id="weapon-title" className="weapon-lede">{shopLede ?? <>Each flagship weapon <b>once</b> a game. Only <b>one</b> per round.</>}</h2>
+          <h2 id="weapon-title" className="t-display">Flagship weapons</h2>
+          <p className="weapon-lede">{shopLede ?? <>Each may be used <b>once</b> per game<br />and only <b>one</b> per round.</>}</p>
         </div>
         <button type="button" className="weapon-small-button" aria-expanded={tips} onClick={() => setTips(!tips)}>Tips</button>
       </header>

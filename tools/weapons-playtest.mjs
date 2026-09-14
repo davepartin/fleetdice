@@ -182,7 +182,8 @@ try {
       new RegExp(`Need ${TUNING.weaponChargeCost} Energy to charge`, "i"),
     );
     await page.getByRole("button", { name: "Charge flagship weapons" }).click();
-    assert.match(await page.locator("#weapon-title").innerText(), new RegExp(`Need ${TUNING.weaponChargeCost} Energy to charge`));
+    assert.match(await page.locator("#weapon-title").innerText(), /FLAGSHIP WEAPONS/i);
+    assert.match(await page.locator(".weapon-lede").innerText(), new RegExp(`Need ${TUNING.weaponChargeCost} Energy to charge`));
     assert.equal(await page.getByRole("button", { name: `Charge Attack for ${TUNING.weaponChargeCost} Energy`, exact: true }).isDisabled(), true);
     await ctx.close();
     console.log("PASS shipyard empty-state when the bank is short of a charge");
@@ -205,9 +206,11 @@ try {
     const { ctx, page } = await pageWith(s, { width: 390, height: 844 });
     await page.getByRole("button", { name: "Use flagship weapon", exact: true }).click();
     await frame(page);
-    assert.match(await page.locator("#weapon-title").innerText(), /Each flagship weapon once a game/);
-    assert.match(await page.locator("#weapon-title").innerText(), /Only one per round/);
-    assert.doesNotMatch(await page.locator("#weapon-title").innerText(), /wisely|—/);
+    assert.match(await page.locator("#weapon-title").innerText(), /FLAGSHIP WEAPONS/i);
+    assert.match(await page.locator(".weapon-lede").innerText(), /Each may be used once per game/);
+    assert.match(await page.locator(".weapon-lede").innerText(), /and only one per round/);
+    assert.equal(await page.locator(".weapon-lede b").count(), 2);
+    assert.doesNotMatch(await page.locator(".weapon-lede").innerText(), /wisely|—/);
     assert.doesNotMatch(await page.locator(".weapon-window").innerText(), /Roll your fleet before using a weapon/);
     assert.match(await page.locator(".weapon-attack .weapon-effect").innerText(),
       new RegExp(String.raw`round\s*\(\s*1\s*\)\s*×\s*${TUNING.weaponAttackPerRound}\s*=\s*${TUNING.weaponAttackPerRound} Attack`));

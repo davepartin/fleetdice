@@ -35,7 +35,8 @@
 .weapon-window::backdrop { background: rgba(2,4,12,.82); backdrop-filter: blur(5px); }
 .weapon-window-inner { display: flex; flex-direction: column; height: auto; max-height: calc(100dvh - 34px); overflow: hidden; }
 .weapon-window-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; padding: 10px 12px 8px; border-bottom: 1px solid rgb(255 255 255 / 0.1); flex-shrink: 0; }
-.weapon-lede { font-size: 13px; font-weight: 600; line-height: 1.35; margin-top: 4px; color: var(--color-hull-100, #e3e8f2); text-wrap: pretty; }
+.weapon-window-head h2 { font-size: 22px; line-height: 1.15; margin-top: 4px; }
+.weapon-lede { font-size: 13px; font-weight: 600; line-height: 1.35; margin-top: 6px; color: var(--color-hull-100, #e3e8f2); text-wrap: pretty; }
 .weapon-lede b { font-weight: 800; }
 .weapon-small-button { border: 1px solid rgb(255 255 255 / 0.28); border-radius: 8px; padding: 8px 10px; min-height: 36px; cursor: pointer; font-weight: 700; background: transparent; color: inherit; flex-shrink: 0; }
 .weapon-window-body { position: relative; flex: 0 0 auto; min-height: 0; overflow: hidden; padding: 8px 12px; }
