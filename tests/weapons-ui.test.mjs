@@ -40,6 +40,8 @@ test("enemy weapon status is a four-box row, not a disclosure", () => {
   assert.match(css, /\.weapon-enemy-boxes \{ display: grid; grid-template-columns: repeat\(4,/);
   assert.match(css, /\.weapon-enemy-slash/);
   assert.match(css, /\.weapon-enemy-lock/);
+  assert.match(css, /\.weapon-enemy-box\.weapon-shield \{ --weapon-color: var\(--color-shield\)/);
+  assert.match(weapons, /EnemyWeaponRow[\s\S]{0,120}<footer>/);
   assert.match(help, /One weapon per round, and each weapon only once a game/);
   assert.match(help, /round \(the current round\) × \$\{TUNING\.weaponAttackPerRound\}/);
 });

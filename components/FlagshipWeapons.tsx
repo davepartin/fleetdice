@@ -186,8 +186,8 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
             </section>;
           })}
         </div>
-        {enemy && <EnemyWeaponRow stock={weaponsOf(enemy)} name={enemy.name} />}
       </div>
+      {enemy && <EnemyWeaponRow stock={weaponsOf(enemy)} name={enemy.name} />}
       <footer><button type="button" className="btn btn-primary w-full" onClick={onClose}>Back</button></footer>
     </div>
   </dialog>, document.body);

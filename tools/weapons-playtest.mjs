@@ -201,15 +201,19 @@ try {
       });
       const tops = boxes.map(b => b.top);
       const dialog = document.querySelector("dialog");
+      const footer = dialog?.querySelector("footer")?.getBoundingClientRect();
+      const rowBox = document.querySelector(".weapon-enemy-row")?.getBoundingClientRect();
       return {
         sameRow: Math.max(...tops) - Math.min(...tops) <= 2,
         overflow: document.documentElement.scrollWidth - innerWidth,
         dialogOverflow: dialog ? dialog.scrollWidth - dialog.clientWidth : 0,
+        aboveFooter: !!(rowBox && footer && rowBox.bottom <= footer.top + 1),
       };
     });
     assert.equal(row.sameRow, true, "enemy weapon boxes must sit on one row");
     assert.equal(row.overflow, 0);
     assert.equal(row.dialogOverflow, 0);
+    assert.equal(row.aboveFooter, true, "enemy row must sit above Back, not under it");
     await page.screenshot({ path: "shots/weapons-panel-round1-locked-390x844.png" });
     await ctx.close();
     console.log("PASS round 1 locked panel copy, Attack equation, four-box enemy row");
@@ -233,17 +237,21 @@ try {
         const boxes = [...document.querySelectorAll(".weapon-enemy-box")].map(el => el.getBoundingClientRect());
         const tops = boxes.map(b => b.top);
         const dialog = document.querySelector("dialog");
+        const footer = dialog?.querySelector("footer")?.getBoundingClientRect();
+        const rowBox = document.querySelector(".weapon-enemy-row")?.getBoundingClientRect();
         return {
           count: boxes.length,
           sameRow: Math.max(...tops) - Math.min(...tops) <= 2,
           overflow: document.documentElement.scrollWidth - innerWidth,
           dialogOverflow: dialog ? dialog.scrollWidth - dialog.clientWidth : 0,
+          aboveFooter: !!(rowBox && footer && rowBox.bottom <= footer.top + 1),
         };
       });
       assert.equal(row.count, 4);
       assert.equal(row.sameRow, true);
       assert.equal(row.overflow, 0);
       assert.equal(row.dialogOverflow, 0);
+      assert.equal(row.aboveFooter, true, "enemy row must sit above Back, not under it");
       await page.screenshot({ path: `shots/weapons-enemy-row-mixed-${viewport.width}x${viewport.height}.png` });
       await ctx.close();
       console.log(`PASS mixed enemy row ${viewport.width}x${viewport.height}`);
