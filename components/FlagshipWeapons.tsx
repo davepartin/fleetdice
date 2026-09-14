@@ -10,6 +10,8 @@ import {
 const ICON = { rotate: "↻", shield: "◈", attack: "✦", repair: "+" };
 const TONE = { rotate: "energy", shield: "shield", attack: "attack", repair: "repair" };
 const STATE = { locked: "Locked", available: "Available", used: "Used" };
+/** Short names for the compact dock tap. Full names stay in the window. */
+const DOCK_NAME = { rotate: "Rotate", shield: "Shield", attack: "Attack", repair: "Repair" };
 
 export function weaponUseText(use: WeaponUse): string {
   if (use.id === "rotate") return `Rotate Flagship · ${use.from ?? "?"} → ${use.to ?? "?"}`;
@@ -54,7 +56,7 @@ function lockedWeapons(player: PlayerState) {
 function launcherLabel(player: PlayerState, shop: boolean) {
   if (!shop) {
     const used = roundWeapon(player);
-    return used ? `Using ${WEAPON_NAMES[used.id]}` : "Use flagship weapon";
+    return used ? `Using ${DOCK_NAME[used.id]}` : "Weapon";
   }
   if (lockedWeapons(player).length && player.energy < TUNING.weaponChargeCost) {
     return `Need ${TUNING.weaponChargeCost} Energy to charge`;
@@ -71,7 +73,7 @@ export function FlagshipWeapons({ player, enemy, shop = false, busy, onAction }:
   const wait = shop && lockedWeapons(player).length > 0 && player.energy < TUNING.weaponChargeCost;
   return <>
     <button type="button"
-      className={`weapon-launcher${wait ? " weapon-launcher-wait" : ""}${used && !shop ? ` weapon-launcher-using c-${TONE[used.id]}` : ""}`}
+      className={`weapon-launcher${shop ? "" : " weapon-launcher-dock"}${wait ? " weapon-launcher-wait" : ""}${used && !shop ? ` weapon-launcher-using c-${TONE[used.id]}` : ""}`}
       aria-label={shop ? "Charge flagship weapons" : "Use flagship weapon"}
       aria-live={shop ? undefined : "polite"}
       onClick={() => setOpen(true)}>

@@ -37,12 +37,27 @@ test("rotate directions are filled primary buttons with −1 and +1 inside", () 
 });
 
 test("weapon status lives only on the launcher, not a second Using line", () => {
-  assert.match(weapons, /Using \$\{WEAPON_NAMES\[used\.id\]\}/);
+  assert.match(weapons, /Using \$\{DOCK_NAME\[used\.id\]\}/);
   assert.match(weapons, /weapon-launcher-using/);
+  assert.match(weapons, /weapon-launcher-dock/);
   assert.match(match, /roll-dock-action/);
   assert.doesNotMatch(match, /WeaponUsingCue/);
   assert.doesNotMatch(weapons, /weapon-using-cue/);
   assert.doesNotMatch(css, /\.weapon-using-cue/);
+});
+
+test("the roll-dock weapon tap sits in the flagship chip, not above Roll Fleet", () => {
+  const dock = match.match(/flagship-control-row[\s\S]+?roll-dock-action/);
+  assert.ok(dock, "flagship row must come before the primary action");
+  assert.match(dock[0], /FlagshipWeapons/);
+  assert.match(dock[0], /FlagshipLine/);
+  assert.doesNotMatch(match, /roll-dock-action[\s\S]{0,240}FlagshipWeapons/);
+  assert.doesNotMatch(css, /\.roll-dock-action\s*>\s*\.weapon-launcher/);
+  assert.match(css, /\.weapon-launcher-dock \{[^}]*max-width:\s*6\.75rem/);
+  assert.doesNotMatch(weapons, /Use flagship weapon<\/button>/);
+  assert.match(weapons, /return used \? `Using \$\{DOCK_NAME\[used\.id\]\}` : "Weapon"/);
+  const how = readFileSync(new URL("../components/HowToPlay.tsx", import.meta.url), "utf8");
+  assert.match(how, /help-weapon-btn">Weapon</);
 });
 
 test("the shipyard launcher says Need Energy to charge when the bank is short", () => {
