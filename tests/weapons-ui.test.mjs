@@ -123,7 +123,7 @@ test("the centre flagship tile spells the level and uses the d6 square, not a st
   const yard = readFileSync(new URL("../components/Shipyard.tsx", import.meta.url), "utf8");
   assert.match(yard, /FLAGSHIP_LEVEL_WORDS/);
   assert.match(yard, /\{NOUN\.flagship\} Level \{levelName\}/);
-  assert.match(yard, /upgrade → Level \$\{nextName\}/);
+  assert.match(yard, /→ Level \$\{nextName\}/);
   assert.match(yard, /HullShape sides=\{FLAG_HULL\}/);
   assert.doesNotMatch(yard, /★/);
   assert.doesNotMatch(yard, /L\$\{offer\.level\} → L/);

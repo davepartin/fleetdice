@@ -88,6 +88,8 @@ try {
         flagClip: flag ? flag.scrollWidth - flag.clientWidth : 0,
         nameClip: name ? name.scrollWidth - name.clientWidth : 0,
         nameInside: !!(fr && nr && nr.left >= fr.left - 1 && nr.right <= fr.right + 1),
+        boardAboveFoot: !!(br && document.querySelector(".yard-foot") &&
+          br.bottom <= document.querySelector(".yard-foot").getBoundingClientRect().top + 2),
       };
     });
 
@@ -97,13 +99,14 @@ try {
     assert.equal(layout.aboveBoard, true, "charge bar must sit above the fleet map");
     assert.equal(layout.footLauncher, false);
     assert.match(layout.name, /Flagship Level One/i);
-    assert.match(layout.sub, /upgrade → Level Two/i);
+    assert.match(layout.sub, /→ Level Two/i);
     assert.equal(layout.hasStar, false);
     assert.equal(layout.hasSquare, true);
     assert.equal(layout.overflow, 0);
     assert.ok(layout.flagClip <= 1, `flagship tile clipped by ${layout.flagClip}px`);
     assert.ok(layout.nameClip <= 1, `flagship name clipped by ${layout.nameClip}px`);
     assert.equal(layout.nameInside, true, "Flagship Level One must stay inside the centre tile");
+    assert.equal(layout.boardAboveFoot, true, "the fleet map must sit above Return to battle");
 
     await save(page, `shipyard_charge_${vp.width}x${vp.height}`);
     console.log(`PASS shipyard ${vp.width}x${vp.height}`, layout);

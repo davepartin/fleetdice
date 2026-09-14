@@ -293,7 +293,7 @@ function CellButton({
           {NOUN.flagship} Level {levelName}
         </span>
         <span className="yard-cell-sub yard-cell-sub-plain">
-          {nextName ? `upgrade → Level ${nextName}` : "max flagship"}
+          {nextName ? `→ Level ${nextName}` : "max flagship"}
         </span>
       </>
     );
