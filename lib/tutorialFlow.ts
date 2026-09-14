@@ -270,6 +270,9 @@ export function startTutorialMatch(): MatchState {
   match.players.guest = newPlayer("enemy", "Rival fleet", "ready");
   match.players.host.phase = "ready";
   match.players.host.name = "You";
+  // The guided lesson supplies one training charge; real battles buy it.
+  match.players.host.weapons!.rotate.chargedRound = 1;
+  match.players.host.flag.token = true;
   match.status = "active";
   match.players.guest.hp = 45;
   match.players.guest.maxHp = 45;

@@ -1,5 +1,41 @@
 # Fleet Dice 3 — balance notes
 
+## Four flagship weapons — owner-directed beta rules, 14 September 2026
+
+Each weapon costs 6 Energy to charge in the shipyard, once per weapon per match.
+Multiple charges can be held, but only one weapon can be activated per volley,
+after rolling and before locking in. New battles start with all four locked.
+Existing saved battles retain their original rotation entitlement.
+
+- Rotate Flagship: the existing −1/+1 face change, including wraparound.
+- Super Shield: removes half incoming ordinary Attack before normal Shields
+  and blocking. Odd totals leave the extra point incoming. Direct and War are
+  unchanged. The report separates Super Shield from ordinary Shields.
+- Attack: adds the firing round × 2 ordinary Attack, including when defending
+  with Super Shield. Buying early does not freeze the value.
+- Repair: always adds 20 health in the same settlement as damage. Dave
+  explicitly confirmed there is no health ceiling; this weapon can overheal.
+
+Charging and previous use are public; an activation stays hidden in the player
+view until both commanders submit. Each round records both weapon inventories
+and activations at reveal, so a slower report cannot show next-round purchases.
+Solo uses the same costs and limits, choosing with public fleet information.
+
+These prices/effects are the owner's chosen starting rules, not a claim of
+measured balance. Earlier matchup and difficulty percentages below describe
+previous rules. Evaluate weapon use, fleet investment and match length before
+making further changes to these numbers.
+
+Initial automated check: `node sim/simulate.mjs matchups 60` completed 1,200
+seeded medium matches across the five plans. Mean length was 11.9 rounds,
+median 12, range 4–18. Aggregate win rates were Balanced 54.4%, Wolfpack 52.3%,
+Formation 50.4%, Command 50.2%, and Capital 42.7% (roughly ±4.4–4.5 percentage
+points). This is a baseline for these AI policies, not a human balance verdict;
+Capital and how often commanders choose weapons over fleet upgrades merit
+playtester feedback before retuning.
+
+---
+
 > ## Correction, written after the owner pushed back
 >
 > An earlier version of this file said the three-in-a-row-down prize was

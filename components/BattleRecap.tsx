@@ -9,7 +9,8 @@
  */
 
 import type { PlayerState } from "@/lib/engine";
-import { shipInSlot, slotForCell } from "@/lib/engine";
+import { shipInSlot, slotForCell, weaponsOf } from "@/lib/engine";
+import { WeaponStatusList } from "./FlagshipWeapons";
 import { NOUN } from "@/lib/reference";
 import { HelpFlagFace, HelpHullPlate, HelpShipFace } from "./HelpArt";
 import { href } from "@/lib/paths";
@@ -296,6 +297,12 @@ export function BattleRecap({
         </div>
 
         {them && <LastRound you={you} them={them} enemyName={enemyName} />}
+
+        <div className="panel recap-stats">
+          <p className="t-eyebrow">Flagship weapons</p>
+          <WeaponStatusList stock={weaponsOf(you)} name="You" />
+          {them && <WeaponStatusList stock={weaponsOf(them)} name={enemyName} />}
+        </div>
 
         <div className="recap-fleets">
           <FleetPanel player={you} name="You" you />

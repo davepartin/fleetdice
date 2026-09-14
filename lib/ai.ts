@@ -40,6 +40,12 @@ import {
   tally,
   upgradeCost,
   upgradeTarget,
+  weaponsOf,
+  weaponStatus,
+  roundWeapon,
+  weaponAttack,
+  publicMatchView,
+  type WeaponId,
 } from "./engine";
 
 export type Plan = "width" | "capital" | "command" | "balanced" | "formation";
@@ -504,7 +510,7 @@ export function chooseFlagToken(
   pressure: number,
   threshold = 6,
 ): -1 | 1 | null {
-  if (!player.flag.token || player.phase !== "rolling") return null;
+  if (weaponStatus(weaponsOf(player), "rotate") !== "available" || roundWeapon(player) || player.phase !== "rolling") return null;
   const ctx = { hpRatio: player.hp / player.maxHp, pressure };
   const now = valueOfTally(tally(player.dice, player.flag.level), ctx);
   let best: { direction: -1 | 1; score: number } | null = null;
@@ -902,6 +908,43 @@ export function raceCaution(base: number, read: Read | null): number {
   return Math.max(0.1, Math.min(0.85, base + urgencyOf(read) * 0.22));
 }
 
+/** Public hulls and charged weapons only. Never inspect an unrevealed roll. */
+function expectedEnemyAttack(enemy: PlayerState | null, round: number): number {
+  if (!enemy) return 0;
+  const fleet = activeShips(enemy, round).reduce((sum, ship) => sum + (ship.sides + 2) / 4, 0);
+  const charged = weaponStatus(weaponsOf(enemy), "attack") === "available";
+  return fleet * 1.5 + (charged ? weaponAttack(round) * 0.5 : 0);
+}
+
+export function chooseWeaponCharge(player: PlayerState, enemy: PlayerState | null): WeaponId | null {
+  if (player.energy < TUNING.weaponChargeCost || (player.round < 3 && player.hp > 30)) return null;
+  const expected = expectedEnemyAttack(enemy, player.round);
+  const scores: [WeaponId, number][] = [
+    ["repair", player.hp <= 30 ? 24 : player.round >= 6 ? 14 : 5],
+    ["attack", weaponAttack(player.round) + ((enemy?.hp ?? 60) <= 25 ? 8 : 0)],
+    ["shield", expected / 2 + (player.hp <= 30 ? 4 : 0)],
+    ["rotate", player.ships.length * player.flag.level + 5],
+  ];
+  return scores.filter(([id, score]) => weaponStatus(weaponsOf(player), id) === "locked" && score >= 12)
+    .sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+}
+
+export function chooseCombatWeapon(player: PlayerState, enemy: PlayerState | null, pressure: number, tokenThreshold: number): MatchAction | null {
+  if (roundWeapon(player)) return null;
+  const available = (id: WeaponId) => weaponStatus(weaponsOf(player), id) === "available";
+  const own = tally(player.dice, player.flag.level, player.straightTake);
+  const expected = expectedEnemyAttack(enemy, player.round);
+  const vulnerable = player.hp + own.heal - Math.max(0, expected - own.defense);
+  if (available("repair") && (vulnerable < 22 || player.round >= 11)) return { type: "weapon", weapon: "repair" };
+  if (available("shield") && expected > own.defense + 12 && (player.hp < 40 || player.round >= 8)) return { type: "weapon", weapon: "shield" };
+  const rotate = chooseFlagToken(player, pressure, tokenThreshold);
+  if (rotate) return { type: "flag-token", direction: rotate };
+  if (available("attack") && (player.round >= 9 || (enemy?.hp ?? 60) <= own.attack + own.direct + weaponAttack(player.round))) {
+    return { type: "weapon", weapon: "attack" };
+  }
+  return null;
+}
+
 /**
  * Everything the opponent wants to do from wherever it currently stands.
  * Call it repeatedly until it returns an empty list.
@@ -927,9 +970,12 @@ export function nextActions(state: MatchState, side: SideId, brain: Brain): Matc
   const knobs = DIFFICULTY[brain.difficulty];
   const read = knobs.readsOpponent ? readOpponent(state, side) : null;
   const pressure = racePressure(pressureOf(state, side), read);
+  const publicEnemy = publicMatchView(state, side).players[side === "host" ? "guest" : "host"];
 
   switch (player.phase) {
     case "shop": {
+      const charge = chooseWeaponCharge(player, publicEnemy);
+      if (charge) return [{ type: "shop", operation: "weapon", weapon: charge }];
       return [
         ...planShopping(
           player,
@@ -946,6 +992,10 @@ export function nextActions(state: MatchState, side: SideId, brain: Brain): Matc
       return [{ type: "roll", dice: [] }];
     case "rolling": {
       const actions: MatchAction[] = [];
+      if (roundWeapon(player)) {
+        const take = chooseStraightTake(player, pressure);
+        return [...(take === null ? [] : [{ type: "straight-take" as const, take }]), { type: "submit" }];
+      }
       const free = player.rolls < TUNING.rollsPerRound;
       // Out of rolls entirely: the engine refuses one, so don't queue it. With
       // nothing else queued the match would simply stop.
@@ -997,8 +1047,8 @@ export function nextActions(state: MatchState, side: SideId, brain: Brain): Matc
               expectedValue(player.dice, new Set(), player.flag.level, ctx, knobs.samples);
         if (affordable && gain / cost >= bar) return [{ type: "roll", dice: ids }];
       }
-      const token = chooseFlagToken(player, pressure, knobs.tokenThreshold);
-      if (token) actions.push({ type: "flag-token", direction: token });
+      const weapon = chooseCombatWeapon(player, publicEnemy, pressure, knobs.tokenThreshold);
+      if (weapon) return [weapon];
       const take = chooseStraightTake(player, pressure);
       if (take !== null) actions.push({ type: "straight-take", take });
       actions.push({ type: "submit" });

@@ -176,18 +176,12 @@ test("using the flagship weapon drops reroll selection so Lock in is next", () =
   const src = read("../components/MatchScreen.tsx");
   assert.match(src, /selectionAfterFlagToken/,
     "the weapon must go through the helper that empties the reroll set");
-  const onToken = src.match(/onToken=\{\(direction\) => \{[\s\S]*?\}\}/);
+  const onToken = src.match(/onWeapon=\{\(action\) => \{[\s\S]*?\}\}/);
   assert.ok(onToken, "the roll dock should still send the flagship weapon");
   assert.match(onToken[0], /setSelected\(selectionAfterFlagToken/,
     "using the weapon must clear selection before the next primary tap");
-  assert.match(onToken[0], /flag-token/,
+  assert.match(onToken[0], /send\(action\)/,
     "clearing selection must happen on the weapon path, not a different action");
 });
 
-test("the weapon popover disables reroll and lock-in while it is open", () => {
-  const src = read("../components/MatchScreen.tsx");
-  assert.match(src, /disabled=\{busy \|\| !canReroll \|\| tokenOpen\}/,
-    "Reroll must not fire while the player is aiming the weapon");
-  assert.match(src, /disabled=\{busy \|\| tokenOpen\}/,
-    "Lock in must not fire while the weapon popover is open");
-});
+// Modal isolation is exercised with real clicks in tools/weapons-playtest.mjs.

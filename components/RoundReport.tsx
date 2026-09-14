@@ -11,6 +11,7 @@
 
 import type { RoundReport as Report } from "@/lib/engine";
 import { Button, Notice, TallyStrip } from "./ui";
+import { WeaponReport } from "./FlagshipWeapons";
 
 export type BoxKind = "attack" | "shield" | "direct" | "repair";
 
@@ -109,7 +110,8 @@ export function RoundReportCard({
   // then ships subtract from *that* combined total, then direct is added on
   // completely separately — nothing, not shields or ships, blocks Direct.
   // Repair is the very last step, after all of that damage is applied.
-  const shieldsStopped = Math.max(0, (enemy?.attack ?? 0) + report.escalation - report.incoming);
+  const superShieldStopped = report.superShieldStopped ?? 0;
+  const shieldsStopped = Math.max(0, (enemy?.attack ?? 0) - superShieldStopped + report.escalation - report.incoming);
 
   // Nothing was blockable this round, so the block screen never appeared. That
   // is correct — ships can only step in front of attack, and there was none
@@ -138,6 +140,10 @@ export function RoundReportCard({
           <HpBox value={report.hpBefore} />
           <span className="c-dim">−</span>
           <Box kind="attack" value={enemy?.attack ?? 0} />
+          {superShieldStopped > 0 && <>
+            <span className="c-dim">+</span>
+            <span title="Super Shield"><Box kind="shield" value={superShieldStopped} /> <small className="c-shield">Super</small></span>
+          </>}
           {shieldsStopped > 0 && (
             <>
               <span className="c-dim">+</span>
@@ -174,13 +180,15 @@ export function RoundReportCard({
 
         {nothingToBlock && (
           <p className="report-noblock">
-            No blocking — your <b className="c-shield">Shields {report.tally.defense}</b> stopped
+            No blocking — your <b className="c-shield">{superShieldStopped > 0 ? "Super Shield and Shields" : `Shields ${report.tally.defense}`}</b> stopped
             their <b className="c-attack">Attack {enemy?.attack ?? 0}</b>.
           </p>
         )}
 
-        <p className="t-eyebrow mb-1 mt-2.5">{enemyName} rolled</p>
+        <p className="t-eyebrow mb-1 mt-2.5">{enemyName} volley</p>
         <TallyStrip tally={enemy} />
+        <WeaponReport yours={report.weapon} theirs={report.enemyWeapon}
+          yourStock={report.weapons} enemyStock={report.enemyWeapons} enemyName={enemyName} />
       </div>
 
       {!survived && (

@@ -46,6 +46,7 @@ import { Shipyard } from "./Shipyard";
 import { RoundReportCard } from "./RoundReport";
 import { BattleRecap } from "./BattleRecap";
 import { SeatReturn } from "./SeatReturn";
+import { FlagshipWeapons } from "./FlagshipWeapons";
 
 type Props = {
   controller: MatchController;
@@ -688,6 +689,7 @@ export function MatchScreen({ controller, onExit, title, subtitle }: Props) {
             <div className="yard-portal">
               <Shipyard
                 player={you}
+                enemy={them}
                 enemyName={enemyName}
                 enemyHp={them?.hp ?? 0}
                 onAction={(action) => {
@@ -758,13 +760,14 @@ export function MatchScreen({ controller, onExit, title, subtitle }: Props) {
                 send({ type: "submit" });
               }}
               onTake={(take) => send({ type: "straight-take", take })}
-              onToken={(direction) => {
+              enemy={them}
+              onWeapon={(action) => {
                 audio.play("flagship-ring");
                 // The weapon is not a roll. Leaving the reroll set armed made
                 // the primary button still say Reroll, and the next tap threw
                 // the flagship the player had just turned.
                 setSelected(selectionAfterFlagToken());
-                send({ type: "flag-token", direction });
+                send(action);
               }}
               onClearSelection={() => setSelected(new Set())}
             />
@@ -944,7 +947,8 @@ function RollDock({
   onReroll,
   onSubmit,
   onTake,
-  onToken,
+  onWeapon,
+  enemy,
   onClearSelection,
   showPrizes,
 }: {
@@ -964,10 +968,10 @@ function RollDock({
   onReroll(): void;
   onSubmit(): void;
   onTake(take: number): void;
-  onToken(direction: -1 | 1): void;
+  onWeapon(action: MatchAction): void;
+  enemy: PlayerState | null;
   onClearSelection(): void;
 }) {
-  const [tokenOpen, setTokenOpen] = useState(false);
   const notRolled = you.phase === "ready";
   const run = you.dice.length ? bestRun(you.dice) : null;
   const prizes = run ? straightPrizeTakes(run) : [];
@@ -1009,36 +1013,8 @@ function RollDock({
       <div className="flagship-control-row flex items-center gap-2">
         <FlagshipLine you={you} />
 
-        {you.flag.token && you.phase === "rolling" && (
-          <Button
-            tone="ghost"
-            size="sm"
-            onClick={() => setTokenOpen(true)}
-            disabled={busy}
-            ariaLabel="Use flagship weapon"
-          >
-            Flagship Weapon
-          </Button>
-        )}
+        <FlagshipWeapons player={you} enemy={enemy} busy={busy} onAction={onWeapon} />
       </div>
-
-      {tokenOpen && you.flag.token && you.phase === "rolling" && (
-        <div className="flagship-token-popover panel" role="dialog" aria-label="Flagship weapon controls">
-          <p className="t-eyebrow c-energy">Flagship weapon · once per {NOUN.game}</p>
-          <p className="mt-1 text-sm text-white">Turn the flagship one face.</p>
-          <div className="mt-3 grid grid-cols-3 gap-2">
-            <Button tone="ghost" size="lg" onClick={() => { onToken(-1); setTokenOpen(false); }} disabled={busy}>
-              −1 face
-            </Button>
-            <Button tone="ghost" size="lg" onClick={() => setTokenOpen(false)}>
-              Cancel
-            </Button>
-            <Button tone="ghost" size="lg" onClick={() => { onToken(1); setTokenOpen(false); }} disabled={busy}>
-              +1 face
-            </Button>
-          </div>
-        </div>
-      )}
       </div>
 
       <div className="roll-dock-action">
@@ -1057,7 +1033,7 @@ function RollDock({
         <div className="flex gap-2">
           {selected.size > 0 ? (
             <>
-              <Button tone="ghost" size="lg" onClick={onClearSelection} disabled={busy || tokenOpen}>
+              <Button tone="ghost" size="lg" onClick={onClearSelection} disabled={busy}>
                 Clear
               </Button>
               <Button
@@ -1065,7 +1041,7 @@ function RollDock({
                 size="lg"
                 full
                 onClick={onReroll}
-                disabled={busy || !canReroll || tokenOpen}
+                disabled={busy || !canReroll}
                 className={`reroll-action ${!canReroll ? "reroll-unaffordable" : ""}`}
                 ariaLabel={
                   outOfRolls
@@ -1109,7 +1085,7 @@ function RollDock({
             </>
           ) : (
             <>
-              <Button tone="primary" size="lg" full onClick={onSubmit} disabled={busy || tokenOpen}>
+              <Button tone="primary" size="lg" full onClick={onSubmit} disabled={busy}>
                 Lock in
               </Button>
             </>

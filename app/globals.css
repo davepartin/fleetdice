@@ -1,5 +1,50 @@
 @import "tailwindcss";
 
+/* The four flagship charges share one compact, keyboard-accessible window. */
+.weapon-launcher { border: 1px solid var(--color-hull-500, #49536d); border-radius: 10px; background: rgba(255,255,255,.04); color: var(--color-hull-200, #c0c8db); font: 700 11px var(--font-body); padding: 12px 8px; text-transform: uppercase; letter-spacing: .035em; cursor: pointer; flex-shrink: 0; }
+.weapon-launcher:hover { background: rgba(255,255,255,.1); }
+.yard-done > .weapon-launcher { width: 100%; margin-bottom: 8px; color: var(--color-energy); }
+.weapon-window { position: fixed; inset: 0; margin: auto; padding: 0; width: min(440px, calc(100vw - 24px)); max-width: none; max-height: calc(100dvh - 32px); background: var(--color-void, #080c18); color: var(--color-hull-100, #e3e8f2); border: 1px solid var(--color-hull-500, #49536d); border-radius: 22px; box-shadow: 0 24px 80px rgba(0,0,0,.7); overflow: hidden; }
+.weapon-window::backdrop { background: rgba(2,4,12,.82); backdrop-filter: blur(5px); }
+.weapon-window-inner { display: flex; flex-direction: column; max-height: calc(100dvh - 34px); }
+.weapon-window-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 16px; border-bottom: 1px solid rgba(255,255,255,.12); flex-shrink: 0; }
+.weapon-window-head h2 { font-size: 22px; line-height: 1.15; margin-top: 4px; }
+.weapon-small-button, .weapon-rotate-controls button { border: 1px solid rgba(255,255,255,.28); border-radius: 8px; padding: 10px 12px; min-height: 44px; cursor: pointer; font-weight: 700; }
+.weapon-window-scroll { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 16px; }
+.weapon-guide { font-size: 13px; line-height: 1.4; color: var(--color-hull-200, #c0c8db); margin-bottom: 12px; }
+.weapon-card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.weapon-card { --weapon-color: var(--color-energy); display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 12px; border: 1px solid rgba(255,255,255,.18); border-radius: 14px; background: rgba(255,255,255,.025); }
+.weapon-shield { --weapon-color: var(--color-shield); }
+.weapon-attack { --weapon-color: var(--color-attack); }
+.weapon-repair { --weapon-color: var(--color-repair); }
+.weapon-card-top { display: flex; justify-content: space-between; align-items: center; gap: 4px; }
+.weapon-symbol { font: 900 22px var(--font-body); color: var(--weapon-color); }
+.weapon-state { font-size: 11px; font-weight: 700; }
+.weapon-card h3 { font-size: 16px; font-weight: 800; line-height: 1.15; }
+.weapon-effect { color: var(--weapon-color); font-size: 13px; font-weight: 700; }
+.weapon-card button { margin-top: auto; border: 1px solid var(--weapon-color); border-radius: 8px; padding: 8px 4px; min-height: 44px; font-size: 11px; font-weight: 800; color: var(--weapon-color); cursor: pointer; }
+.weapon-card-available { border: 2px solid var(--weapon-color); padding: 11px; background: color-mix(in srgb, var(--weapon-color) 12%, var(--color-void, #080c18)); }
+.weapon-card-available .weapon-state { color: var(--weapon-color); }
+.weapon-card-available button:enabled { background: var(--weapon-color); color: #090d17; }
+.weapon-card button:disabled { cursor: default; border-color: rgba(255,255,255,.15); color: var(--color-hull-300, #8996b2); }
+.weapon-card-used { background: rgba(0,0,0,.2); border-style: dashed; }
+.weapon-card-used .weapon-symbol, .weapon-card-used .weapon-effect { color: var(--color-hull-300, #8996b2); }
+.weapon-window footer { flex-shrink: 0; padding: 12px 16px; border-top: 1px solid rgba(255,255,255,.12); }
+.weapon-cancel { width: 100%; min-height: 44px; padding: 12px; border-radius: 12px; background: var(--color-primary, #f4f1e8); color: #151518; font-weight: 800; cursor: pointer; }
+.weapon-tips { display: grid; gap: 10px; font-size: 13px; line-height: 1.5; margin-bottom: 16px; }
+.weapon-tips b { color: var(--color-primary, #f4f1e8); }
+.weapon-rotate-controls { margin: 12px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.weapon-rotate-controls p { grid-column: 1 / -1; font-size: 13px; }
+.weapon-enemy-status { margin-top: 16px; font-size: 13px; }
+.weapon-status-list { display: grid; gap: 6px; padding: 12px 0; }
+.weapon-status-row { display: grid; grid-template-columns: 1fr auto; gap: 3px 8px; font-size: 13px; }
+.weapon-status-row > span:last-of-type { font-size: 11px; align-self: center; }
+.weapon-status-row small { grid-column: 1 / -1; color: var(--color-hull-300, #8996b2); font-size: 11px; }
+.weapon-status-used > span:first-child { color: var(--color-hull-300, #8996b2); }
+.weapon-report { display: grid; gap: 6px; font-size: 13px; margin-top: 12px; }
+.weapon-report summary, .weapon-enemy-status summary { cursor: pointer; color: var(--color-hull-200, #c0c8db); }
+.weapon-window button:focus-visible, .weapon-launcher:focus-visible { outline: 2px solid white; outline-offset: 3px; }
+
 .seat-return-notice { display: block; max-width: 100%; margin: 8px auto 0; padding: 8px 12px; border: 1px solid #ffd23d55; border-radius: 8px; background: #121824; color: #f4f1e8; font-size: 13px; line-height: 1.4; text-align: center; }
 .recovery-screen { min-height: 100dvh; max-width: 480px; margin: auto; padding: 24px; display: flex; flex-direction: column; justify-content: center; gap: 24px; color: #f4f1e8; background: #090d15; }
 .recovery-screen h1 { font-size: 22px; font-weight: 700; }

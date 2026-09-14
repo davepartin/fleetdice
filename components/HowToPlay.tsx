@@ -214,8 +214,12 @@ export function HowToPlayBody() {
         <div className="help-weapon">
           <span className="help-weapon-btn">Flagship Weapon</span>
           <p>
-            Once a game, after rolling, this turns the flagship one number up
-            or down — often the nudge that completes a straight or a line.
+            Charge each of four weapons once in the shipyard for {TUNING.weaponChargeCost} Energy.
+            Use one per volley after rolling: Rotate Flagship −1 or +1,
+            Super Shield to halve enemy Attack before your Shields,
+            Attack for round × {TUNING.weaponAttackPerRound}, or +{TUNING.weaponRepair} Repair.
+            Repair can raise your health above its previous high. Super Shield does not reduce Direct or War.
+            Charged weapons are public; activation reveals when both players lock in.
           </p>
         </div>
       </Card>

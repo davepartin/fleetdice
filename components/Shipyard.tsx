@@ -36,6 +36,7 @@ import { NOUN } from "@/lib/reference";
 import { HullShape } from "./HullShape";
 import { HelpHullPlate } from "./HelpArt";
 import { Button, Chip, HpRail, Notice } from "./ui";
+import { FlagshipWeapons } from "./FlagshipWeapons";
 
 const HULLS: DieSize[] = [4, 6, 8, 10];
 
@@ -157,12 +158,13 @@ type Props = {
   player: PlayerState;
   enemyName: string;
   enemyHp: number;
+  enemy?: PlayerState | null;
   onAction(action: MatchAction): void;
   onDone(): void;
   busy?: boolean;
 };
 
-export function Shipyard({ player, enemyName, enemyHp, onAction, onDone, busy }: Props) {
+export function Shipyard({ player, enemy, enemyName, enemyHp, onAction, onDone, busy }: Props) {
   const [selected, setSelected] = useState<number | null>(null);
   const energy = player.energy;
 
@@ -246,6 +248,7 @@ export function Shipyard({ player, enemyName, enemyHp, onAction, onDone, busy }:
 
       {/* ---------------- out ---------------- */}
       <div className="yard-foot yard-done">
+        <FlagshipWeapons player={player} enemy={enemy} shop busy={busy} onAction={onAction} />
         <Button tone="primary" size="lg" full onClick={onDone} disabled={busy}>
           Return to battle
         </Button>
