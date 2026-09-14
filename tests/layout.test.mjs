@@ -69,7 +69,7 @@ test("the straight payout is a compact, explicit one-of-two choice", () => {
 
 test("the d8 keeps more light on its lower facets than the other hulls", () => {
   const die = readFileSync(new URL("../lib/three/die.ts", import.meta.url), "utf8");
-  assert.match(die, /const inactiveFacetStrength = kind === 8 \? "0\.48" : "0\.3"/);
+  assert.match(die, /const inactiveFacetStrength = kind === 8 \? "0\.65" : "0\.3"/);
 });
 
 test("a wide window letterboxes to the same phone column, and a phone stays full-bleed", () => {

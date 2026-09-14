@@ -98,8 +98,35 @@ test("Flagship Weapon sits beside the face chip, not nested in it and not above 
   assert.match(how, /help-weapon-btn">Flagship Weapon</);
 });
 
-test("the shipyard launcher says Need Energy to charge when the bank is short", () => {
-  assert.match(weapons, /Need \$\{TUNING\.weaponChargeCost\} Energy to charge/);
+test("the shipyard charge control is a top bar with the upgrade Energy chip", () => {
+  const yard = readFileSync(new URL("../components/Shipyard.tsx", import.meta.url), "utf8");
+  const ui = readFileSync(new URL("../components/ui.tsx", import.meta.url), "utf8");
+  assert.match(yard, /className="yard-charge"/);
+  assert.match(yard, /yard-charge[\s\S]{0,180}FlagshipWeapons/);
+  assert.doesNotMatch(yard, /yard-foot[\s\S]{0,220}FlagshipWeapons/);
+  assert.match(weapons, />Charge flagship weapons</);
+  assert.match(weapons, /<EnergyPrice/);
+  assert.match(weapons, /cost=\{TUNING\.weaponChargeCost\}/);
+  assert.match(ui, /export function EnergyPrice/);
+  assert.match(css, /\.weapon-launcher-shop \{/);
+  assert.match(css, /\.yard-charge \{/);
+  assert.doesNotMatch(css, /\.yard-done\s*>\s*\.weapon-launcher/);
   assert.match(css, /\.weapon-launcher-wait/);
+  assert.match(weapons, /Need \$\{TUNING\.weaponChargeCost\} Energy to charge/);
   assert.match(weapons, /Use flagship weapon/);
+  assert.match(help, /Charge flagship weapons bar sits at the top of the yard/);
+  const how = readFileSync(new URL("../components/HowToPlay.tsx", import.meta.url), "utf8");
+  assert.match(how, /Charge flagship weapons bar/);
+});
+
+test("the centre flagship tile spells the level and uses the d6 square, not a star", () => {
+  const yard = readFileSync(new URL("../components/Shipyard.tsx", import.meta.url), "utf8");
+  assert.match(yard, /FLAGSHIP_LEVEL_WORDS/);
+  assert.match(yard, /\{NOUN\.flagship\} Level \{levelName\}/);
+  assert.match(yard, /→ Level \$\{nextName\}/);
+  assert.match(yard, /HullShape sides=\{FLAG_HULL\}/);
+  assert.doesNotMatch(yard, /★/);
+  assert.doesNotMatch(yard, /L\$\{offer\.level\} → L/);
+  assert.doesNotMatch(yard, /yard-cell-art yard-cell-flag/);
+  assert.match(css, /\.yard-cell-flag \.yard-cell-art svg path/);
 });

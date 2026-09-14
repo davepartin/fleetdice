@@ -409,6 +409,21 @@ export function Chip({
   );
 }
 
+/** The cool-blue Energy price on shipyard tiles — red when you cannot afford it. */
+export function EnergyPrice({ cost, affordable }: { cost: number; affordable: boolean }) {
+  return (
+    <span
+      className={`yard-price ${affordable ? "yard-price-ok" : "yard-price-no"}`}
+      aria-label={`${cost} Energy`}
+    >
+      <svg className="yard-price-icon" viewBox="0 0 16 20" aria-hidden="true">
+        <path d="M9.1 0 1.8 11.1h4.7L5.6 20l8.6-12.3H9.4L9.1 0Z" fill="currentColor" />
+      </svg>
+      <span className="t-num">{cost}</span>
+    </span>
+  );
+}
+
 /** The four-digit room code, big enough to read across a room. */
 export function RoomCode({ code }: { code: string }) {
   return (
