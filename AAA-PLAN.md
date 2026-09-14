@@ -1,5 +1,19 @@
 # AAA-PLAN.md — the direction we are building to
 
+## Owner-requested flagship weapons — 14 September 2026
+
+- [x] Four shipyard charges at 6 Energy each; once per weapon per match and one
+  activation per volley. Rotate ±1, Super Shield halves Attack before Shields,
+  Attack is round × 2, Repair is an uncapped +20. Tips/Cancel, three visible
+  states, opponent readiness, reveal snapshots, round and final summaries.
+  Verify all effects, secrecy in player views, saved battles and duplicate
+  receipts, solo AI, real phone controls and local two-player persistence.
+  **Proved:** 164 tests, lint and production build pass; four-round phone
+  playthrough is clean; charging/Cancel/reload fit 375×812 (3×), 390×620 and
+  360×780, with all four uses and summaries verified at 375×812. Two browser seats against local Firebase
+  pass double-tap charging, private activation, reconnect and combat reports
+  with the existing rules. 1,200 seeded AI matches complete; see `BALANCE.md`.
+
 **This file is the plan. If you are an AI working on Fleet Dice 3, read this before you touch anything, and check your work against it before you hand it back.**
 
 Fleet Dice 3 is a good game that does not yet look like one. The mechanics are

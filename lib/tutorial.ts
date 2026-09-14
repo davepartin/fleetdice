@@ -310,7 +310,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     id: "token_teach",
     eyebrow: "Flagship weapon",
     title: "Nudge the flagship once",
-    body: "Once per battle you may turn the centre die one face up or down. Tap Flagship weapon, then +1 face — that turns your 4 into a 5 and completes 1–2–3–4–5.",
+    body: `Training has charged Rotate Flagship for you. In a real battle, each of four weapons costs ${TUNING.weaponChargeCost} Energy to charge in the shipyard and can be used once. Tap Flagship weapon, Use weapon under Rotate Flagship, then +1 face to complete 1–2–3–4–5.`,
     allow: { token: [1] },
     script: {
       kind: "board",

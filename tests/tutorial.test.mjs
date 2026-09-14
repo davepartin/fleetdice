@@ -136,6 +136,8 @@ test("token nudge completes a five-straight on d4 faces", () => {
   const match = newMatch("t", "0000", "you", "You", "solo");
   match.players.guest = newPlayer("e", "E", "ready");
   match.players.host.phase = "ready";
+  match.players.host.weapons.rotate.chargedRound = 1;
+  match.players.host.flag.token = true;
   applyAction(match, "host", { type: "roll", dice: [] });
   const host = match.players.host;
   const bySlot = (slot) => host.ships.find((s) => s.slot === slot);

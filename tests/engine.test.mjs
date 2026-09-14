@@ -655,6 +655,8 @@ test("the slower commander on the report still sees the volley, not the next rol
 test("using the flagship weapon keeps the flag die's id, so leftover selection would still fire", () => {
   setRng(makeRng(1));
   const state = freshMatch(1);
+  state.players.host.weapons.rotate.chargedRound = 1;
+  state.players.host.flag.token = true;
   applyAction(state, "host", { type: "roll", dice: [] });
   const flag = state.players.host.dice.find((die) => die.flag);
   assert.equal(flag.id, "flag");

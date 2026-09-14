@@ -58,7 +58,7 @@ const AWAIT_HINT: Record<string, string> = {
   shopSlot: "Tap a glowing locked bay",
   shopBuy: "Tap the glowing empty bay",
   shopUpgrade: "Tap a glowing d4 to upgrade",
-  token: "Tap Flagship weapon, then +1 face",
+  token: "Tap Flagship weapon, use Rotate Flagship, then +1 face",
 };
 
 function FaceStrip({ stepId }: { stepId: TutorialStepId }) {

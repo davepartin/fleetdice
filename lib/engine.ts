@@ -11,6 +11,15 @@
 export type SideId = "host" | "guest";
 export type DieSize = 4 | 6 | 8 | 10;
 
+export const WEAPON_IDS = ["rotate", "shield", "attack", "repair"] as const;
+export type WeaponId = (typeof WEAPON_IDS)[number];
+export type WeaponUse = { id: WeaponId; round: number; amount: number; from?: number; to?: number };
+export type WeaponInventory = Record<WeaponId, {
+  chargedRound: number | null;
+  usedRound: number | null;
+  use?: WeaponUse;
+}>;
+
 export type PlayerPhase =
   | "waiting"
   | "shop"
@@ -98,6 +107,12 @@ export type RoundReport = {
   /** What the enemy showed this round, for the reveal screen. */
   enemyTally: Tally | null;
   enemyDice: DieValue[];
+  weapon?: WeaponUse | null;
+  enemyWeapon?: WeaponUse | null;
+  weapons?: WeaponInventory;
+  enemyWeapons?: WeaponInventory;
+  /** Attack removed before ordinary Shields. Never includes Direct or War. */
+  superShieldStopped?: number;
 };
 
 /** The other fleet as it stood when this volley locked, faces and hulls. */
@@ -107,6 +122,8 @@ export type VolleySnapshot = {
   ships: Ship[];
   open: boolean[];
   flag: { level: number; face: number; token: boolean };
+  weapons?: WeaponInventory;
+  weapon?: WeaponUse | null;
 };
 
 export type PlayerState = {
@@ -120,6 +137,9 @@ export type PlayerState = {
   open: boolean[];
   ships: Ship[];
   flag: { level: number; face: number; token: boolean };
+  /** Optional only for battles saved before the weapon system was introduced. */
+  weapons?: WeaponInventory;
+  weaponThisRound?: WeaponUse | null;
   /** Combat round this commander is currently playing. */
   round: number;
   phase: PlayerPhase;
@@ -186,9 +206,11 @@ export type MatchAction =
   | { type: "shop"; operation: "buy"; sides: DieSize; slotIndex: number }
   | { type: "shop"; operation: "slot"; slotIndex: number }
   | { type: "shop"; operation: "flagship" }
+  | { type: "shop"; operation: "weapon"; weapon: WeaponId }
   | { type: "ready" }
   | { type: "roll"; dice: string[] }
   | { type: "flag-token"; direction: -1 | 1 }
+  | { type: "weapon"; weapon: Exclude<WeaponId, "rotate"> }
   | { type: "straight-take"; take: number }
   | { type: "submit" }
   | { type: "brace"; ships: string[] }
@@ -209,6 +231,9 @@ export const TUNING = {
   startSlots: 4,
   /** Energy in the bank at the start. */
   startEnergy: 0,
+  weaponChargeCost: 6,
+  weaponAttackPerRound: 2,
+  weaponRepair: 20,
   /** Free rolls a round. */
   rollsPerRound: 3,
   /**
@@ -481,7 +506,9 @@ export function newPlayer(uid: string, name: string, phase: PlayerPhase): Player
       disabledRound: null,
       slot,
     })),
-    flag: { level: 1, face: 1, token: true },
+    flag: { level: 1, face: 1, token: false },
+    weapons: newWeapons(),
+    weaponThisRound: null,
     round: 1,
     phase,
     rolls: 0,
@@ -588,6 +615,50 @@ export function emptyOpenSlots(player: PlayerState): number[] {
 }
 export function activeShips(player: PlayerState, round: number): Ship[] {
   return player.ships.filter((ship) => ship.disabledRound !== round);
+}
+
+export function newWeapons(): WeaponInventory {
+  return Object.fromEntries(WEAPON_IDS.map((id) => [id, { chargedRound: null, usedRound: null }])) as WeaponInventory;
+}
+
+/** Old battles keep their existing free rotation; new battles charge all four. */
+export function weaponsOf(player: Pick<PlayerState, "weapons" | "flag">): WeaponInventory {
+  if (player.weapons) return player.weapons;
+  const legacy = newWeapons();
+  legacy.rotate = { chargedRound: 0, usedRound: player.flag.token ? null : 0 };
+  return legacy;
+}
+
+export function weaponStatus(stock: WeaponInventory, id: WeaponId): "locked" | "available" | "used" {
+  if (stock[id].usedRound !== null) return "used";
+  return stock[id].chargedRound === null ? "locked" : "available";
+}
+
+export function roundWeapon(player: PlayerState): WeaponUse | null {
+  return player.weaponThisRound?.round === player.round ? player.weaponThisRound : null;
+}
+
+export function weaponAttack(round: number): number { return round * TUNING.weaponAttackPerRound; }
+
+export const WEAPON_NAMES: Record<WeaponId, string> = {
+  rotate: "Rotate Flagship", shield: "Super Shield", attack: "Attack", repair: "Repair",
+};
+
+export function weaponEffect(id: WeaponId, round: number): string {
+  return { rotate: "−1 or +1 face", shield: "½ enemy Attack", attack: `+${weaponAttack(round)} Attack`, repair: `+${TUNING.weaponRepair} Repair` }[id];
+}
+
+/** Preview and submitted totals share the exact same weapon bonuses. */
+function withWeapon(player: PlayerState, result: Tally): Tally {
+  const used = roundWeapon(player);
+  if (used?.id === "attack") result.attack += used.amount;
+  if (used?.id === "repair") result.heal += used.amount;
+  return result;
+}
+
+export function superShieldReduction(player: PlayerState, attack: number): number {
+  // Odd Attack leaves the extra point incoming: 21 becomes 11.
+  return roundWeapon(player)?.id === "shield" ? Math.floor(attack / 2) : 0;
 }
 /**
  * The flagship's own health is a separate number from what stands in front
@@ -782,7 +853,7 @@ export function tally(
 }
 
 export function previewTally(player: PlayerState, take?: number | null): Tally {
-  return tally(player.dice, player.flag.level, take ?? player.straightTake);
+  return withWeapon(player, tally(player.dice, player.flag.level, take ?? player.straightTake));
 }
 
 export function escalationFor(round: number): number {
@@ -816,6 +887,11 @@ export function applyAction(state: MatchState, side: SideId, action: MatchAction
     case "flag-token":
       handleFlagToken(player, action.direction);
       break;
+    case "weapon":
+      if (action.weapon === "shield" || action.weapon === "attack" || action.weapon === "repair") {
+        activateWeapon(player, action.weapon);
+      } else throw new Error("Choose a flagship weapon.");
+      break;
     case "straight-take":
       handleStraightTake(player, action.take);
       break;
@@ -838,6 +914,17 @@ export function applyAction(state: MatchState, side: SideId, action: MatchAction
 
 function handleShop(player: PlayerState, action: Extract<MatchAction, { type: "shop" }>) {
   if (player.phase !== "shop") throw new Error("The shipyard is only open between rounds.");
+
+  if (action.operation === "weapon") {
+    if (!WEAPON_IDS.includes(action.weapon)) throw new Error("Choose a flagship weapon.");
+    const stock = weaponsOf(player);
+    if (weaponStatus(stock, action.weapon) !== "locked") throw new Error("Each weapon can be charged only once per match.");
+    spend(player, TUNING.weaponChargeCost);
+    player.weapons = structuredClone(stock);
+    player.weapons[action.weapon].chargedRound = player.round;
+    if (action.weapon === "rotate") player.flag.token = true;
+    return;
+  }
 
   if (action.operation === "slot") {
     const slot = action.slotIndex;
@@ -882,6 +969,7 @@ function prepareRound(player: PlayerState) {
   player.tally = null;
   player.incomingVolley = null;
   player.report = null;
+  player.weaponThisRound = null;
 }
 
 function handleRoll(player: PlayerState, chosen: string[]) {
@@ -926,16 +1014,30 @@ function handleRoll(player: PlayerState, chosen: string[]) {
 }
 
 function handleFlagToken(player: PlayerState, direction: -1 | 1) {
-  if (player.phase !== "rolling" || player.rolls < 1) {
-    throw new Error("Roll your fleet before using the Flagship Token.");
-  }
-  if (!player.flag.token) throw new Error("Your Flagship Token is already spent.");
+  if (direction !== -1 && direction !== 1) throw new Error("Turn the flagship one face forward or backward.");
+  activateWeapon(player, "rotate");
   const next = ((player.flag.face - 1 + direction + 6) % 6) + 1;
+  const use = player.weaponThisRound!;
+  use.from = player.flag.face;
+  use.to = next;
+  use.amount = direction;
   player.flag.face = next;
   const flag = player.dice.find((die) => die.flag);
   if (flag) flag.value = next;
   player.flag.token = false;
   player.straightTake = null;
+}
+
+function activateWeapon(player: PlayerState, id: WeaponId) {
+  if (player.phase !== "rolling" || player.rolls < 1) throw new Error("Roll your fleet before using a flagship weapon.");
+  if (roundWeapon(player)) throw new Error("Only one flagship weapon can be used per volley.");
+  const stock = weaponsOf(player);
+  if (weaponStatus(stock, id) !== "available") throw new Error("Charge this weapon in the shipyard first. Used weapons cannot recharge.");
+  const use: WeaponUse = { id, round: player.round, amount: id === "attack" ? weaponAttack(player.round) : id === "repair" ? TUNING.weaponRepair : 0 };
+  player.weapons = structuredClone(stock);
+  player.weapons[id].usedRound = player.round;
+  player.weapons[id].use = use;
+  player.weaponThisRound = use;
 }
 
 function handleStraightTake(player: PlayerState, take: number) {
@@ -949,7 +1051,7 @@ function handleStraightTake(player: PlayerState, take: number) {
 
 function handleSubmit(player: PlayerState) {
   if (player.phase !== "rolling") throw new Error("Roll your fleet before locking in.");
-  player.tally = tally(player.dice, player.flag.level, player.straightTake);
+  player.tally = previewTally(player);
   player.phase = "submitted";
 }
 
@@ -965,9 +1067,17 @@ function resolveSubmissions(state: MatchState) {
 
   // Shields stop dice. They do not stop the war. Ships can still step in
   // front of the extra, but a full shield wall no longer swallows it.
-  host.incoming = Math.max(0, (guest.tally?.attack ?? 0) - (host.tally?.defense ?? 0)) + escalation;
+  const hostSuperShield = superShieldReduction(host, guest.tally?.attack ?? 0);
+  const guestSuperShield = superShieldReduction(guest, host.tally?.attack ?? 0);
+  for (const [player, amount] of [[host, hostSuperShield], [guest, guestSuperShield]] as const) {
+    if (roundWeapon(player)?.id === "shield") {
+      player.weaponThisRound!.amount = amount;
+      if (player.weapons?.shield.use) player.weapons.shield.use.amount = amount;
+    }
+  }
+  host.incoming = Math.max(0, (guest.tally?.attack ?? 0) - hostSuperShield - (host.tally?.defense ?? 0)) + escalation;
   host.directIncoming = guest.tally?.direct ?? 0;
-  guest.incoming = Math.max(0, (host.tally?.attack ?? 0) - (guest.tally?.defense ?? 0)) + escalation;
+  guest.incoming = Math.max(0, (host.tally?.attack ?? 0) - guestSuperShield - (guest.tally?.defense ?? 0)) + escalation;
   guest.directIncoming = host.tally?.direct ?? 0;
 
   host.stats.damageDealt += guest.incoming;
@@ -976,8 +1086,8 @@ function resolveSubmissions(state: MatchState) {
   guest.stats.directDealt += host.directIncoming;
   // Shields only ever block up to what actually arrived — the unused rest
   // of a big roll of odds isn't a stat worth crediting.
-  host.stats.shieldsBlocked += Math.max(0, (guest.tally?.attack ?? 0) + escalation - host.incoming);
-  guest.stats.shieldsBlocked += Math.max(0, (host.tally?.attack ?? 0) + escalation - guest.incoming);
+  host.stats.shieldsBlocked += Math.max(0, (guest.tally?.attack ?? 0) - hostSuperShield + escalation - host.incoming);
+  guest.stats.shieldsBlocked += Math.max(0, (host.tally?.attack ?? 0) - guestSuperShield + escalation - guest.incoming);
   for (const player of [host, guest]) {
     if (player.tally?.run) player.stats.straights += 1;
     for (const line of player.tally?.lines ?? []) {
@@ -1086,6 +1196,11 @@ function settlePlayer(state: MatchState, player: PlayerState) {
     dice: player.dice.map((die) => ({ ...die })),
     enemyTally: volley ? structuredClone(volley.tally) : null,
     enemyDice: volley ? volley.dice.map((die) => ({ ...die })) : [],
+    weapon: structuredClone(roundWeapon(player)),
+    enemyWeapon: structuredClone(volley?.weapon ?? null),
+    weapons: structuredClone(weaponsOf(player)),
+    enemyWeapons: structuredClone(volley?.weapons ?? newWeapons()),
+    superShieldStopped: superShieldReduction(player, volley?.tally.attack ?? 0),
   };
   player.phase = "report";
 }
@@ -1156,6 +1271,7 @@ function handleContinue(state: MatchState, player: PlayerState) {
   // round and both have locked in. If the other commander dies while blocking,
   // finishIfNeeded ends the match wherever this one has got to.
   player.round += 1;
+  player.weaponThisRound = null;
   player.phase = "shop";
   player.rolls = 0;
   player.dice = [];
@@ -1196,6 +1312,8 @@ export function snapshotVolley(enemy: PlayerState | null | undefined): VolleySna
     ships: enemy.ships.map((ship) => ({ ...ship })),
     open: enemy.open.slice(),
     flag: { ...enemy.flag },
+    weapons: structuredClone(weaponsOf(enemy)),
+    weapon: structuredClone(roundWeapon(enemy)),
   };
 }
 
@@ -1216,6 +1334,8 @@ function freezeEnemyToVolley(you: PlayerState, them: PlayerState): void {
     if (snap.ships) them.ships = snap.ships.map((ship) => ({ ...ship }));
     if (snap.open) them.open = snap.open.slice();
     if (snap.flag) them.flag = { ...snap.flag };
+    if (snap.weapons) them.weapons = structuredClone(snap.weapons);
+    them.weaponThisRound = structuredClone(snap.weapon ?? null);
     them.round = you.round;
     return;
   }
@@ -1234,6 +1354,20 @@ export function publicMatchView(state: MatchState, viewer: SideId): MatchState {
   if (them && you && state.status === "active" && !revealed) {
     them.dice = [];
     them.tally = null;
+    // Readiness is public; spending the charge is private until this volley.
+    // Hide rotation too, including its legacy token and changed face.
+    if (them.phase === "rolling" || them.phase === "submitted") {
+      const used = roundWeapon(them);
+      if (used) {
+        const stock = structuredClone(weaponsOf(them));
+        stock[used.id].usedRound = null;
+        delete stock[used.id].use;
+        them.weapons = stock;
+        if (used.id === "rotate") them.flag.token = true;
+      }
+      them.flag.face = 1;
+    }
+    them.weaponThisRound = null;
   }
   // The post-attack screen shows both fleets on purpose — that is this
   // volley's reveal. Once the other commander has walked on to the shipyard

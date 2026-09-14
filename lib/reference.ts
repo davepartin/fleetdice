@@ -573,7 +573,7 @@ export const HOW_TO_PLAY: readonly HelpSection[] = [
   {
     id: "flagship",
     title: "Your flagship",
-    summary: `It never fights. Its face each round boosts your fleet, its level sets the size of that boost (${joinWords([1, 2, 3].map((level) => String(flagBonusSize(level))))}), and once a game you may turn it one number.`,
+    summary: `Its die never fights. Its face boosts your fleet, its level sets the size of that boost (${joinWords([1, 2, 3].map((level) => String(flagBonusSize(level))))}), and four optional weapons cost ${TUNING.weaponChargeCost} Energy each to charge.`,
     blocks: [
       {
         kind: "text",
@@ -586,7 +586,11 @@ export const HOW_TO_PLAY: readonly HelpSection[] = [
       },
       {
         kind: "text",
-        text: `You also carry one Flagship Token. Once a game, after you have rolled, you may turn the flagship one number up or down. It wraps around, so ${FLAG_SIDES} can turn into 1 and 1 can turn into ${FLAG_SIDES}. That one nudge is often what completes a straight or a formation.`,
+        text: `Charge each flagship weapon once per game in the shipyard for ${TUNING.weaponChargeCost} Energy. Each charge can be used once, after rolling, with at most one weapon per volley. You can keep several weapons charged. Opponents see which are available, locked or used; activation stays hidden until both lock in. Cancel closes the weapon window without spending a charge.`,
+      },
+      {
+        kind: "text",
+        text: `Rotate Flagship turns the centre die one number up or down. It wraps around, so ${FLAG_SIDES} can turn into 1 and 1 into ${FLAG_SIDES}. Attack adds the current round × ${TUNING.weaponAttackPerRound} ordinary Attack. Repair always adds ${TUNING.weaponRepair} health alongside damage, even above your previous high. Super Shield halves enemy Attack before ordinary Shields and ship blocking; odd totals round up after halving. It does not reduce Direct or War Escalation.`,
       },
       {
         kind: "text",
@@ -611,8 +615,8 @@ export const HOW_TO_PLAY: readonly HelpSection[] = [
             text: `You decide what to keep. The first roll throws your whole fleet and your flagship. After that you may pick any dice and throw them again. You get ${TUNING.rollsPerRound} rolls a round for nothing, which is the opening throw plus ${TUNING.rollsPerRound - 1} free rerolls. Past that, each die you throw again costs 1 Energy out of the same purse you shop with.`,
           },
           {
-            name: "3. The Flagship Token",
-            text: "You decide whether this is the round. Turning the flagship one number is once a game, and it can only be done after you have rolled.",
+            name: "3. Flagship weapons",
+            text: `You decide whether this is the round to spend a charged flagship weapon. Each costs ${TUNING.weaponChargeCost} Energy to charge in the shipyard and can be used once per game. Use at most one per volley, after rolling and before locking in.`,
           },
           {
             name: "4. Lock in",
@@ -620,7 +624,7 @@ export const HOW_TO_PLAY: readonly HelpSection[] = [
           },
           {
             name: "5. The volley",
-            text: "Nothing to decide. Both boards turn over. Your Attack minus their Shields is what arrives from the dice. After round 8 the war adds extra on top of that, and Shields cannot stop the extra. Shields you did not need are simply wasted; they do not carry over. Direct is added on afterwards and Shields do nothing about it.",
+            text: `Both boards and activated weapons turn over. Super Shield, if used, halves enemy Attack first. Ordinary Shields then subtract from Attack. After round ${TUNING.escalateAfterRound} the war adds extra on top, which neither kind of Shield stops. Unused Shields do not carry over. Direct is added separately and neither Shields nor blocking ships stop it.`,
           },
           {
             name: "6. Block",
@@ -769,7 +773,7 @@ export const TIPS: readonly Tip[] = [
     text: `Shields above what the enemy throws are thrown away; Direct never is. A ${die(BIG)} showing ${BIG} fires ${directOf(BIG)} Direct on its own, and no shield and no blocking ship takes any of it off.`,
   },
   {
-    title: "Save the token for a straight, not a nudge",
+    title: "Rotate Flagship can complete a straight",
     text: `Turning the flagship one number is worth a small bonus at best, but it can be the difference between no straight and ${straightReward(TUNING.runMax, BIG).label}. Hold it until the board is one number short of a run.`,
   },
   {
