@@ -47,15 +47,29 @@ export function WeaponReport({ yours, theirs, yourStock, enemyStock, enemyName }
   </div>;
 }
 
+function lockedWeapons(player: PlayerState) {
+  return WEAPON_IDS.filter((id) => weaponStatus(weaponsOf(player), id) === "locked");
+}
+
+function launcherLabel(player: PlayerState, shop: boolean) {
+  if (!shop) return "Use flagship weapon";
+  if (lockedWeapons(player).length && player.energy < TUNING.weaponChargeCost) {
+    return `Need ${TUNING.weaponChargeCost} Energy to charge`;
+  }
+  return `Flagship Weapons · ${TUNING.weaponChargeCost} Energy`;
+}
+
 export function FlagshipWeapons({ player, enemy, shop = false, busy, onAction }: {
   player: PlayerState; enemy?: PlayerState | null; shop?: boolean; busy?: boolean;
   onAction(action: MatchAction): void;
 }) {
   const [open, setOpen] = useState(false);
+  const wait = shop && lockedWeapons(player).length > 0 && player.energy < TUNING.weaponChargeCost;
   return <>
-    <button type="button" className="weapon-launcher" aria-label={shop ? "Charge flagship weapons" : "Use flagship weapon"}
+    <button type="button" className={`weapon-launcher${wait ? " weapon-launcher-wait" : ""}`}
+      aria-label={shop ? "Charge flagship weapons" : "Use flagship weapon"}
       onClick={() => setOpen(true)}>
-      {shop ? `Flagship Weapons · ${TUNING.weaponChargeCost} Energy` : "Flagship Weapon"}
+      {launcherLabel(player, shop)}
     </button>
     {open && <WeaponWindow player={player} enemy={enemy} shop={shop} busy={busy}
       onAction={onAction} onClose={() => setOpen(false)} />}
@@ -88,7 +102,9 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
       </header>
       <div className="weapon-window-scroll">
         <p className="weapon-guide">{shop
-          ? `${player.energy} Energy in the bank · ${TUNING.weaponChargeCost} per charge`
+          ? player.energy < TUNING.weaponChargeCost && lockedWeapons(player).length
+            ? `Need ${TUNING.weaponChargeCost} Energy to charge · ${player.energy} in the bank`
+            : `${player.energy} Energy in the bank · ${TUNING.weaponChargeCost} per charge`
           : used ? `You used ${WEAPON_NAMES[used.id]} this volley. Other weapons stay charged.`
           : "One weapon per volley. Each weapon once per match."}</p>
         {tips && <div className="weapon-tips">

@@ -6,7 +6,7 @@ import { resolve } from "node:path";
 import { serve } from "./shoot.mjs";
 import { bundlePath } from "../sim/bundle.mjs";
 const G = await import(bundlePath);
-const { newMatch, newPlayer, newBrain, applyAction, makeRng, setRng, WEAPON_IDS } = G;
+const { newMatch, newPlayer, newBrain, applyAction, makeRng, setRng, WEAPON_IDS, TUNING } = G;
 const server = await serve(resolve("out"), 4321);
 const browser = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
 const errors = [];
@@ -94,6 +94,21 @@ try {
     assert.ok(await page.getByRole("button", { name: "Charge Attack for 6 Energy", exact: true }).isDisabled());
     await ctx.close();
     console.log(`PASS charging/cancel/reload/short-screen ${viewport.width}x${viewport.height}`);
+  }
+  {
+    const broke = fixture(true);
+    broke.players.host.energy = TUNING.weaponChargeCost - 1;
+    const { ctx, page } = await pageWith(broke, { width: 375, height: 812 });
+    await launcherOnScreen(page);
+    assert.equal(
+      (await page.getByRole("button", { name: "Charge flagship weapons" }).innerText()).replace(/\s+/g, " ").trim(),
+      `Need ${TUNING.weaponChargeCost} Energy to charge`,
+    );
+    await page.getByRole("button", { name: "Charge flagship weapons" }).click();
+    assert.match(await page.locator(".weapon-guide").first().innerText(), new RegExp(`Need ${TUNING.weaponChargeCost} Energy to charge`));
+    assert.equal(await page.getByRole("button", { name: `Charge Attack for ${TUNING.weaponChargeCost} Energy`, exact: true }).isDisabled(), true);
+    await ctx.close();
+    console.log("PASS shipyard empty-state when the bank is short of a charge");
   }
   for (const [id, name] of [["rotate", "Rotate Flagship"], ["shield", "Super Shield"], ["attack", "Attack"], ["repair", "Repair"]]) {
     const { ctx, page } = await pageWith(fixture(), { width: 375, height: 812 });
