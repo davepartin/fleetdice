@@ -108,9 +108,10 @@ test("the shipyard charge control is a filled top button with the upgrade Energy
   assert.match(weapons, /<EnergyPrice/);
   assert.match(weapons, /cost=\{TUNING\.weaponChargeCost\}/);
   assert.match(ui, /export function EnergyPrice/);
-  assert.match(css, /\.weapon-launcher-shop \{/);
-  assert.match(css, /\.weapon-launcher-shop \{[\s\S]*?background:[\s\S]*?var\(--color-buy\)/);
-  assert.match(css, /\.weapon-launcher-shop \{[\s\S]*?color:\s*var\(--color-buy-ink\)/);
+  assert.match(css, /\.weapon-launcher\.weapon-launcher-shop \{/);
+  assert.match(css, /\.weapon-launcher\.weapon-launcher-shop \{[\s\S]*?background:[\s\S]*?var\(--color-buy\)/);
+  assert.match(css, /\.weapon-launcher\.weapon-launcher-shop \{[\s\S]*?color:\s*var\(--color-buy-ink\)/);
+  assert.match(css, /\.weapon-launcher\.weapon-launcher-shop:hover \{[\s\S]*?var\(--color-buy\)/);
   assert.match(css, /\.yard-charge \{/);
   assert.doesNotMatch(css, /\.yard-done\s*>\s*\.weapon-launcher/);
   assert.doesNotMatch(css, /\.yard-board \{ width: min\(86%/);

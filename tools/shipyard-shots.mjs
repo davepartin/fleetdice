@@ -10,7 +10,7 @@ const G = await import(bundlePath);
 const { newMatch, newPlayer, newBrain, makeRng, setRng, applyAction, WEAPON_IDS, TUNING } = G;
 
 const ART = "/opt/cursor/artifacts/screenshots";
-const DOCS = resolve("docs/shipyard-polish");
+const DOCS = resolve("docs/pr54");
 await mkdir("shots", { recursive: true });
 await mkdir(ART, { recursive: true });
 await mkdir(DOCS, { recursive: true });
@@ -75,6 +75,7 @@ try {
     await page.goto("http://localhost:4323/solo/?q=low", { waitUntil: "networkidle" });
     await page.getByRole("button", { name: /Carry on/ }).click();
     await page.getByRole("button", { name: "Charge flagship weapons" }).waitFor({ state: "visible" });
+    await page.mouse.move(0, 0);
 
     const layout = await page.evaluate(() => {
       const charge = document.querySelector(".yard-charge .weapon-launcher");
@@ -138,7 +139,11 @@ try {
       Math.abs(layout.boardLeft - layout.chargeLeft) <= 2,
       `fleet map left ${layout.boardLeft} must match charge left ${layout.chargeLeft}`,
     );
-    assert.match(layout.chargeBg, /gradient/i, "charge control must be a filled button, not an outline");
+    assert.match(
+      layout.chargeBg,
+      /rgb\(205,\s*189,\s*245\)/,
+      `charge control must keep the filled buy colour, not the ghost hover (${layout.chargeBg})`,
+    );
 
     await save(page, `shipyard_charge_${vp.width}x${vp.height}`);
     console.log(`PASS shipyard ${vp.width}x${vp.height}`, layout);
@@ -212,16 +217,6 @@ try {
     await save(page, "shipyard_desktop_1280x800");
     console.log("PASS desktop phone column", desktop);
     await ctx.close();
-  }
-
-  {
-    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3 });
-    const page = await ctx.newPage();
-    await page.goto("http://localhost:4323/lab/?q=high", { waitUntil: "networkidle" });
-    await page.waitForTimeout(1600);
-    await save(page, "d8_lit_board_390x844");
-    await ctx.close();
-    console.log("PASS d8 board lighting shot");
   }
 
   console.log("PASS shipyard polish shots");
