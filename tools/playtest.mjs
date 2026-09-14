@@ -168,9 +168,9 @@ async function run(browser, viewport, label, errors) {
       await shot(page, `${pad(round)}d-brace`, label);
       await tap(page, "Send");
       await page.waitForTimeout(1800);
-    } else if (await visible(page, "Take it on the flagship", 900)) {
+    } else if (await visible(page, "Take it all on the flagship", 900)) {
       await shot(page, `${pad(round)}d-brace`, label);
-      await tap(page, "Take it on the flagship");
+      await tap(page, "Take it all on the flagship");
       await page.waitForTimeout(1800);
     }
 
