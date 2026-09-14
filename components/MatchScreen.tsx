@@ -12,7 +12,7 @@
  * both look important.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import {
   TUNING,
@@ -1011,14 +1011,8 @@ function RollDock({
       )}
 
       <div className="flagship-control-row flex items-center gap-2">
-        {/* One flagship module: face chip + a compact weapon tap. The fire
-            control used to sit full-width above Roll Fleet and read as a
-            second primary button. */}
-        <FlagshipLine you={you}>
-          {!waiting && (
-            <FlagshipWeapons player={you} enemy={enemy} busy={busy} onAction={onWeapon} />
-          )}
-        </FlagshipLine>
+        <FlagshipLine you={you} />
+        <FlagshipWeapons player={you} enemy={enemy} busy={busy} onAction={onWeapon} />
       </div>
       </div>
 
@@ -1362,7 +1356,7 @@ function RevealBanner({
  * which one is actually counting is genuinely ambiguous from the art alone.
  * This says it in words.
  */
-function FlagshipLine({ you, children }: { you: PlayerState; children?: ReactNode }) {
+function FlagshipLine({ you }: { you: PlayerState }) {
   const face = FLAGSHIP_FACES.find((entry) => entry.face === you.flag.face);
   if (!face) return null;
   const level = face.levels[Math.min(2, Math.max(0, you.flag.level - 1))];
@@ -1401,7 +1395,6 @@ function FlagshipLine({ you, children }: { you: PlayerState; children?: ReactNod
         <span className="flagship-long"> — {level?.text ?? face.short}</span>
         <span className="flagship-compact"> · {compact}</span>
       </span>
-      {children}
     </div>
   );
 }

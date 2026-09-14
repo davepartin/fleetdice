@@ -212,7 +212,7 @@ export function HowToPlayBody() {
         {/* The one control on the roll screen that is not self-explanatory,
             shown as the button it actually is rather than described. */}
         <div className="help-weapon">
-          <span className="help-weapon-btn">Weapon</span>
+          <span className="help-weapon-btn">Flagship Weapon</span>
           <p>
             Charge each of four weapons once in the shipyard for {TUNING.weaponChargeCost} Energy.
             Use one per volley after rolling: Rotate Flagship −1 or +1,
