@@ -80,7 +80,7 @@ try {
   for (const [page, name] of [[host.page, "Attack"], [guest.page, "Super Shield"]]) {
     await page.getByRole("button", { name: "Charge flagship weapons" }).click();
     await page.getByRole("button", { name: `Charge ${name} for 6 Energy`, exact: true }).dblclick({ force: true });
-    await page.getByRole("button", { name: "Cancel", exact: true }).click();
+    await page.getByRole("button", { name: "Back", exact: true }).click();
     await page.getByRole("button", { name: "Return to battle", exact: true }).click();
     await page.getByRole("button", { name: /^Roll Fleet/ }).click();
   }
@@ -107,7 +107,7 @@ try {
   await guest.page.reload({ waitUntil: "domcontentloaded" });
   await guest.page.getByRole("button", { name: "Use flagship weapon", exact: true }).click();
   assert.equal(await guest.page.locator(".weapon-card-used").count(), 1);
-  await guest.page.getByRole("button", { name: "Cancel", exact: true }).click();
+  await guest.page.getByRole("button", { name: "Back", exact: true }).click();
   console.log("PASS connection loss and reload retain the used charge and occupied seat");
 
   for (const page of [host.page, guest.page]) await page.getByRole("button", { name: "Lock in", exact: true }).click();

@@ -46,7 +46,7 @@ import { Shipyard } from "./Shipyard";
 import { RoundReportCard } from "./RoundReport";
 import { BattleRecap } from "./BattleRecap";
 import { SeatReturn } from "./SeatReturn";
-import { FlagshipWeapons } from "./FlagshipWeapons";
+import { FlagshipWeapons, WeaponUsingCue } from "./FlagshipWeapons";
 
 type Props = {
   controller: MatchController;
@@ -1013,6 +1013,7 @@ function RollDock({
       <div className="flagship-control-row flex items-center gap-2">
         <FlagshipLine you={you} />
       </div>
+      <WeaponUsingCue player={you} />
       </div>
 
       <div className="roll-dock-action">

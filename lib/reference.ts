@@ -586,7 +586,7 @@ export const HOW_TO_PLAY: readonly HelpSection[] = [
       },
       {
         kind: "text",
-        text: `Charge each flagship weapon once per game in the shipyard for ${TUNING.weaponChargeCost} Energy. Each charge can be used once, after rolling, with at most one weapon per volley. You can keep several weapons charged. Opponents see which are available, locked or used; activation stays hidden until both lock in. Cancel closes the weapon window without spending a charge.`,
+        text: `Charge each flagship weapon once per game in the shipyard for ${TUNING.weaponChargeCost} Energy. Each charge can be used once, after rolling, with at most one weapon per volley. You can keep several weapons charged. Opponents see which are available, locked or used; activation stays hidden until both lock in. Back closes the weapon window without spending a charge.`,
       },
       {
         kind: "text",
