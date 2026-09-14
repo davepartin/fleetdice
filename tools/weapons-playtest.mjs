@@ -61,10 +61,10 @@ try {
     await page.getByRole("button", { name: "Charge flagship weapons" }).click();
     await frame(page);
     assert.equal(await page.locator(".weapon-card-locked").count(), 4);
-    const beforeCancel = await saved(page);
-    await page.getByRole("button", { name: "Cancel", exact: true }).click();
-    assert.deepEqual((await saved(page)).weapons, beforeCancel.weapons);
-    assert.equal((await saved(page)).energy, beforeCancel.energy);
+    const beforeBack = await saved(page);
+    await page.getByRole("button", { name: "Back", exact: true }).click();
+    assert.deepEqual((await saved(page)).weapons, beforeBack.weapons);
+    assert.equal((await saved(page)).energy, beforeBack.energy);
     await page.getByRole("button", { name: "Charge flagship weapons" }).click();
     for (const name of ["Rotate Flagship", "Super Shield", "Attack", "Repair"]) {
       await page.getByRole("button", { name: `Charge ${name} for 6 Energy`, exact: true }).click();
@@ -75,7 +75,7 @@ try {
     await frame(page);
     await page.getByRole("button", { name: "Tips", exact: true }).click();
     await page.screenshot({ path: `shots/weapons-charged-${viewport.width}x${viewport.height}.png` });
-    await page.getByRole("button", { name: "Cancel", exact: true }).click();
+    await page.getByRole("button", { name: "Back", exact: true }).click();
     await page.reload({ waitUntil: "networkidle" });
     await page.getByRole("button", { name: /Carry on/ }).click();
     await page.getByRole("button", { name: "Charge flagship weapons" }).click();
@@ -103,19 +103,22 @@ try {
     assert.doesNotMatch(await page.locator(".weapon-enemy-status").innerText(), /Used R6/);
     await page.getByRole("button", { name: `Use ${name}`, exact: true }).click();
     if (id === "rotate") {
-      const direction = page.getByRole("button", { name: "+1 face", exact: true });
+      const direction = page.getByRole("button", { name: "Turn the flagship +1", exact: true });
       const rect = await direction.boundingBox();
       assert.ok(rect && rect.y >= 0 && rect.y + rect.height <= 812, "rotation directions must appear without scrolling");
+      await page.screenshot({ path: "shots/weapons-rotate-375.png" });
       await direction.click();
     }
     assert.equal((await saved(page)).weapons[id].usedRound, 6);
+    assert.match(await page.locator(".weapon-using-cue").innerText(), new RegExp(`Using ${name}`));
+    if (id === "attack") await page.screenshot({ path: "shots/weapons-using-375.png" });
     await page.reload({ waitUntil: "networkidle" });
     await page.getByRole("button", { name: /Carry on/ }).click();
     await page.getByRole("button", { name: "Use flagship weapon", exact: true }).click();
     assert.equal(await page.locator(".weapon-card-used").count(), 1);
     assert.equal(await page.locator(".weapon-card-available button:enabled").count(), 0);
     if (id === "attack") await page.screenshot({ path: "shots/weapons-used-375.png" });
-    await page.getByRole("button", { name: "Cancel", exact: true }).click();
+    await page.getByRole("button", { name: "Back", exact: true }).click();
     await page.getByRole("button", { name: "Lock in", exact: true }).click();
     await page.waitForTimeout(3200);
     const block = page.getByRole("button", { name: /Take.*flagship/i });
