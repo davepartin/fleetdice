@@ -45,6 +45,9 @@ import {
   roundWeapon,
   weaponAttack,
   publicMatchView,
+  opponentOf,
+  escalationFor,
+  WEAPON_IDS,
   type WeaponId,
 } from "./engine";
 
@@ -523,7 +526,10 @@ export function chooseFlagToken(
     if (!best || score > best.score) best = { direction, score };
   }
   // Only spend the once-a-match token on a swing worth this difficulty's bar.
-  if (!best || best.score < now + threshold) return null;
+  // After round 9 the charge is running out of volleys; a smaller nudge beats
+  // taking six Energy unused to the recap.
+  const bar = player.round >= 9 ? Math.min(threshold, 1.6) : threshold;
+  if (!best || best.score < now + bar) return null;
   return best.direction;
 }
 
@@ -574,7 +580,8 @@ type Buy =
   | { kind: "slot"; slotIndex: number; cost: number }
   | { kind: "ship"; sides: DieSize; slotIndex: number; cost: number }
   | { kind: "upgrade"; shipId: string; from: DieSize; cost: number }
-  | { kind: "flagship"; cost: number };
+  | { kind: "flagship"; cost: number }
+  | { kind: "weapon"; weapon: WeaponId; cost: number };
 
 function affordableBuys(player: PlayerState): Buy[] {
   const out: Buy[] = [];
@@ -604,6 +611,13 @@ function affordableBuys(player: PlayerState): Buy[] {
   }
   const flagCost = flagshipUpgradeCost(player.flag.level);
   if (flagCost !== null && flagCost <= player.energy) out.push({ kind: "flagship", cost: flagCost });
+  if (TUNING.weaponChargeCost <= player.energy) {
+    for (const id of WEAPON_IDS) {
+      if (weaponStatus(weaponsOf(player), id) === "locked") {
+        out.push({ kind: "weapon", weapon: id, cost: TUNING.weaponChargeCost });
+      }
+    }
+  }
   return out;
 }
 
@@ -646,6 +660,7 @@ function buyScore(
   plan: Plan,
   round: number,
   urgency = 0,
+  enemy: PlayerState | null = null,
 ): number {
   const shipCount = player.ships.length;
   let worth: number;
@@ -675,6 +690,10 @@ function buyScore(
     if (plan === "capital") bias = 1.45;
     if (plan === "width") bias = 0.75;
     if (plan === "formation") bias = buy.from === 4 ? 1.25 : 1;
+  } else if (buy.kind === "weapon") {
+    const scored = weaponChargeScore(player, buy.weapon, round, enemy, plan, urgency);
+    worth = scored.worth;
+    bias = scored.bias;
   } else {
     // A flagship level pays on every round still to come, so it is worth most
     // early and close to nothing once a match is nearly over.
@@ -692,7 +711,7 @@ function buyScore(
   // that ends the match before the long game matters. A bay that pays in three
   // rounds, or a flagship level that pays in five, is worth less to a
   // commander who does not have three rounds.
-  if (urgency !== 0) {
+  if (urgency !== 0 && buy.kind !== "weapon") {
     if (buy.kind === "ship") bias *= 1 + urgency * 0.4;
     else if (buy.kind === "upgrade") bias *= 1 - urgency * 0.3;
     else if (buy.kind === "slot") bias *= 1 - urgency * 0.35;
@@ -700,6 +719,48 @@ function buyScore(
   }
 
   return (worth / Math.max(1, cost)) * bias;
+}
+
+/**
+ * What a once-a-match charge is worth, in the same “points of damage” the
+ * shipyard already uses. Public hulls, health and charged weapons only.
+ *
+ * A healthy thin fleet should still buy a hull: these numbers are set so a
+ * d4 beats a speculative Repair, and a wounded flagship reverses that.
+ */
+function weaponChargeScore(
+  player: PlayerState,
+  id: WeaponId,
+  round: number,
+  enemy: PlayerState | null,
+  plan: Plan,
+  urgency: number,
+): { worth: number; bias: number } {
+  const hpRatio = player.hp / Math.max(1, player.maxHp);
+  const panic = 1 + (1 - hpRatio) * 1.4;
+  let worth = 0;
+  let bias = 1;
+  if (id === "repair") {
+    const need = Math.max(0.15, (0.85 - hpRatio) / 0.85);
+    worth = TUNING.weaponRepair * WEIGHTS.heal * panic * need;
+    if (round >= 8) worth *= 1.2;
+  } else if (id === "attack") {
+    // Charging now, firing later: price the typical spend round, not this one.
+    worth = weaponAttack(Math.max(round + 1, 7)) * 0.45;
+    if (player.ships.length < 5) bias *= 0.45;
+    if ((enemy?.hp ?? TUNING.hp) <= 28) bias *= 1.35;
+    if (urgency > 0) bias *= 1 + urgency * 0.4;
+  } else if (id === "shield") {
+    worth = expectedEnemyAttack(enemy, round) * 0.5 * WEIGHTS.defense * panic;
+    if (hpRatio > 0.7 && round < 7) bias *= 0.45;
+    if (urgency > 0) bias *= 1 + urgency * 0.25;
+  } else {
+    worth = 1.6 + Math.max(0, player.ships.length - 5) * 0.55 * player.flag.level;
+    if (player.ships.length < 6) bias *= 0.3;
+    if (plan === "formation" || plan === "command") bias *= 1.15;
+    if (plan === "capital") bias *= 0.65;
+  }
+  return { worth, bias };
 }
 
 /** One shopping trip. Returns the actions to apply, in order. */
@@ -718,17 +779,19 @@ export function planShopping(
   greed = 1,
   rerollReserve = 2,
   urgency = 0,
+  enemy: PlayerState | null = null,
 ): MatchAction[] {
   const actions: MatchAction[] = [];
   const scratch = structuredClone(player);
-  // Keep a little back for paid rerolls once the fleet is established.
-  const reserve = scratch.ships.length >= 6 ? rerollReserve : 0;
+  // Keep a little back for paid rerolls once the fleet is established. A
+  // commander already losing the race spends the bank instead of hoarding it.
+  const reserve = scratch.ships.length >= 6 && urgency < 0.45 ? rerollReserve : 0;
 
   for (let step = 0; step < 8; step += 1) {
     const buys = affordableBuys(scratch).filter((buy) => buy.cost <= scratch.energy - reserve);
     if (!buys.length) break;
     const ranked = buys
-      .map((buy) => ({ buy, score: buyScore(scratch, buy, plan, round, urgency) }))
+      .map((buy) => ({ buy, score: buyScore(scratch, buy, plan, round, urgency, enemy) }))
       .sort((a, b) => b.score - a.score);
     const pick =
       greed >= 1 || random() < greed
@@ -749,6 +812,12 @@ export function planShopping(
       scratch.energy -= buy.cost;
       const ship = scratch.ships.find((candidate) => candidate.id === buy.shipId);
       if (ship) ship.sides = upgradeTarget(ship.sides) ?? ship.sides;
+    } else if (buy.kind === "weapon") {
+      actions.push({ type: "shop", operation: "weapon", weapon: buy.weapon });
+      scratch.energy -= buy.cost;
+      scratch.weapons = structuredClone(weaponsOf(scratch));
+      scratch.weapons[buy.weapon].chargedRound = round;
+      if (buy.weapon === "rotate") scratch.flag.token = true;
     } else {
       actions.push({ type: "shop", operation: "flagship" });
       scratch.energy -= buy.cost;
@@ -849,22 +918,34 @@ export type Read = {
 };
 
 export function readOpponent(state: MatchState, side: SideId): Read | null {
-  const you = state.players[side];
-  const them = state.players[side === "host" ? "guest" : "host"];
+  // Public board only — hulls, health, charged/used weapons. The live roll
+  // and this-volley activation stay hidden until both lock in.
+  const view = publicMatchView(state, side);
+  const you = view.players[side];
+  const them = view.players[opponentOf(side)];
   if (!you || !them) return null;
+  return readPublicFleets(you, them);
+}
 
+function readPublicFleets(you: PlayerState, them: PlayerState): Read {
   const mine = fleetAverages(you, you.round);
   const theirs = fleetAverages(them, them.round);
   const escalation =
     you.round > TUNING.escalateAfterRound
       ? (you.round - TUNING.escalateAfterRound) * TUNING.escalateStep
       : 0;
+  const chargedAttack = weaponStatus(weaponsOf(them), "attack") === "available";
+  const chargedRepair = weaponStatus(weaponsOf(them), "repair") === "available";
 
-  const incoming = Math.max(0, theirs.attack - mine.shield) + theirs.direct + escalation;
+  const incoming =
+    Math.max(0, theirs.attack - mine.shield) +
+    theirs.direct +
+    escalation +
+    (chargedAttack ? weaponAttack(you.round) * 0.5 : 0);
   const outgoing = Math.max(0, mine.attack - theirs.shield) + mine.direct + escalation;
   const rounds = (hp: number, rate: number) => (rate <= 0.01 ? Infinity : hp / rate);
   const roundsAgainstMe = rounds(you.hp, incoming);
-  const roundsAgainstThem = rounds(them.hp, outgoing);
+  const roundsAgainstThem = rounds(them.hp + (chargedRepair ? TUNING.weaponRepair * 0.5 : 0), outgoing);
 
   // Both unreachable is a stalemate, not an edge for anyone.
   const edge =
@@ -910,36 +991,76 @@ export function raceCaution(base: number, read: Read | null): number {
 
 /** Public hulls and charged weapons only. Never inspect an unrevealed roll. */
 function expectedEnemyAttack(enemy: PlayerState | null, round: number): number {
-  if (!enemy) return 0;
-  const fleet = activeShips(enemy, round).reduce((sum, ship) => sum + (ship.sides + 2) / 4, 0);
+  if (!enemy) return 8;
+  const fleet = fleetAverages(enemy, round);
   const charged = weaponStatus(weaponsOf(enemy), "attack") === "available";
-  return fleet * 1.5 + (charged ? weaponAttack(round) * 0.5 : 0);
+  return fleet.attack + (charged ? weaponAttack(round) * 0.5 : 0);
 }
 
-export function chooseWeaponCharge(player: PlayerState, enemy: PlayerState | null): WeaponId | null {
-  if (player.energy < TUNING.weaponChargeCost || (player.round < 3 && player.hp > 30)) return null;
-  const expected = expectedEnemyAttack(enemy, player.round);
-  const scores: [WeaponId, number][] = [
-    ["repair", player.hp <= 30 ? 24 : player.round >= 6 ? 14 : 5],
-    ["attack", weaponAttack(player.round) + ((enemy?.hp ?? 60) <= 25 ? 8 : 0)],
-    ["shield", expected / 2 + (player.hp <= 30 ? 4 : 0)],
-    ["rotate", player.ships.length * player.flag.level + 5],
-  ];
-  return scores.filter(([id, score]) => weaponStatus(weaponsOf(player), id) === "locked" && score >= 12)
-    .sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+/**
+ * Charge a weapon when it beats the other shipyard options, not because the
+ * calendar said so. Same scoring the shopping loop uses.
+ */
+export function chooseWeaponCharge(
+  player: PlayerState,
+  enemy: PlayerState | null,
+  plan: Plan = "balanced",
+  urgency = 0,
+): WeaponId | null {
+  if (player.energy < TUNING.weaponChargeCost) return null;
+  const ranked = affordableBuys(player)
+    .map((buy) => ({ buy, score: buyScore(player, buy, plan, player.round, urgency, enemy) }))
+    .sort((a, b) => b.score - a.score);
+  const best = ranked[0];
+  if (!best || best.buy.kind !== "weapon" || best.score < 1.15) return null;
+  return best.buy.weapon;
 }
 
-export function chooseCombatWeapon(player: PlayerState, enemy: PlayerState | null, pressure: number, tokenThreshold: number): MatchAction | null {
+export function chooseCombatWeapon(
+  player: PlayerState,
+  enemy: PlayerState | null,
+  pressure: number,
+  tokenThreshold: number,
+): MatchAction | null {
   if (roundWeapon(player)) return null;
   const available = (id: WeaponId) => weaponStatus(weaponsOf(player), id) === "available";
   const own = tally(player.dice, player.flag.level, player.straightTake);
   const expected = expectedEnemyAttack(enemy, player.round);
-  const vulnerable = player.hp + own.heal - Math.max(0, expected - own.defense);
-  if (available("repair") && (vulnerable < 22 || player.round >= 11)) return { type: "weapon", weapon: "repair" };
-  if (available("shield") && expected > own.defense + 12 && (player.hp < 40 || player.round >= 8)) return { type: "weapon", weapon: "shield" };
+  const netIncoming = Math.max(0, expected - own.defense);
+  const hpAfter = player.hp + own.heal - netIncoming;
+  const enemyHp = enemy?.hp ?? TUNING.hp;
+  const theirShield = enemy ? fleetAverages(enemy, player.round).shield : 6;
+  const war = escalationFor(player.round);
+  const punch = (extra = 0) => Math.max(0, own.attack + extra - theirShield) + own.direct + war;
+  const attackBonus = weaponAttack(player.round);
+  const theyDie = punch(0) >= enemyHp;
+  const theyDieWithAttack = punch(attackBonus) >= enemyHp;
+  const weDie = hpAfter <= 0;
+
+  // Finish them this volley. If they already die without it, keep the charge
+  // unless this is a mutual kill — extra Attack can win the simultaneous-death
+  // comparison.
+  if (available("attack") && theyDieWithAttack && (!theyDie || weDie)) {
+    return { type: "weapon", weapon: "attack" };
+  }
+
+  if (available("repair")) {
+    const afterRepair = player.hp + own.heal + TUNING.weaponRepair - netIncoming;
+    const saves = hpAfter <= 0 && afterRepair > 0;
+    const threatened = hpAfter < 18;
+    const woundedLate = player.round >= 10 && player.hp <= player.maxHp * 0.55;
+    if (saves || threatened || woundedLate) return { type: "weapon", weapon: "repair" };
+  }
+
+  if (available("shield") && expected > own.defense + 8 && (hpAfter < 36 || expected > own.defense + 16)) {
+    return { type: "weapon", weapon: "shield" };
+  }
+
   const rotate = chooseFlagToken(player, pressure, tokenThreshold);
   if (rotate) return { type: "flag-token", direction: rotate };
-  if (available("attack") && (player.round >= 9 || (enemy?.hp ?? 60) <= own.attack + own.direct + weaponAttack(player.round))) {
+
+  // A held Attack grows +2 a round. Spend it when waiting is the bigger risk.
+  if (available("attack") && player.round >= 8 && (pressure > 0.55 || player.round >= 12 || enemyHp <= punch(attackBonus) + 10)) {
     return { type: "weapon", weapon: "attack" };
   }
   return null;
@@ -968,14 +1089,13 @@ export function nextActions(state: MatchState, side: SideId, brain: Brain): Matc
   }
 
   const knobs = DIFFICULTY[brain.difficulty];
-  const read = knobs.readsOpponent ? readOpponent(state, side) : null;
+  const view = publicMatchView(state, side);
+  const publicEnemy = view.players[opponentOf(side)];
+  const read = knobs.readsOpponent && publicEnemy ? readPublicFleets(player, publicEnemy) : null;
   const pressure = racePressure(pressureOf(state, side), read);
-  const publicEnemy = publicMatchView(state, side).players[side === "host" ? "guest" : "host"];
 
   switch (player.phase) {
     case "shop": {
-      const charge = chooseWeaponCharge(player, publicEnemy);
-      if (charge) return [{ type: "shop", operation: "weapon", weapon: charge }];
       return [
         ...planShopping(
           player,
@@ -984,6 +1104,7 @@ export function nextActions(state: MatchState, side: SideId, brain: Brain): Matc
           knobs.greed,
           knobs.rerollReserve,
           urgencyOf(read),
+          publicEnemy,
         ),
         { type: "ready" },
       ];

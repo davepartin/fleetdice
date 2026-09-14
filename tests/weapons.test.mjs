@@ -4,7 +4,7 @@ import { bundlePath } from "../sim/bundle.mjs";
 const G = await import(bundlePath);
 const { newMatch, newPlayer, applyAction, previewTally, publicMatchView, weaponsOf, weaponStatus,
   WEAPON_IDS, TUNING, tally, makeRng, setRng, parseSoloSave, newBrain, checkMove,
-  superShieldReduction, chooseCombatWeapon } = G;
+  superShieldReduction, chooseCombatWeapon, nextActions, planShopping } = G;
 
 function match(round = 4) {
   setRng(makeRng(481));
@@ -202,4 +202,152 @@ test("AI weapon decisions do not depend on hidden enemy dice", () => {
   enemy.dice.forEach(d => d.value = 1);
   enemy.tally = { attack: 9999, heal: 9999, defense: 9999 };
   assert.deepEqual(chooseCombatWeapon(p, enemy, .7, 6), action);
+});
+
+test("a healthy thin fleet spends six Energy on a hull, not a flagship weapon", () => {
+  setRng(makeRng(9));
+  const s = match(6);
+  const p = s.players.guest;
+  p.energy = 6;
+  p.hp = 60;
+  p.maxHp = 60;
+  const acts = nextActions(s, "guest", newBrain("balanced", "hard"));
+  assert.equal(
+    acts.some((a) => a.type === "shop" && a.operation === "weapon"),
+    false,
+    "full health and four d4s should buy fleet, not a 6 Energy charge",
+  );
+  assert.ok(
+    acts.some((a) => a.type === "shop" && (a.operation === "buy" || a.operation === "upgrade" || a.operation === "slot")),
+    "the six Energy has to land on the fleet",
+  );
+});
+
+test("a wounded flagship charges Repair before another hull", () => {
+  setRng(makeRng(9));
+  const s = match(7);
+  const p = s.players.guest;
+  p.energy = 6;
+  p.hp = 16;
+  p.maxHp = 60;
+  const acts = nextActions(s, "guest", newBrain("balanced", "hard"));
+  assert.equal(acts[0]?.type, "shop");
+  assert.equal(acts[0]?.operation, "weapon");
+  assert.equal(acts[0]?.weapon, "repair");
+});
+
+test("Repair is not fired just because the round number is high", () => {
+  const s = match(11);
+  charge(s, "host", "repair");
+  rollBoth(s);
+  faces(s.players.host, [1, 1, 1, 1], 6);
+  s.players.host.hp = 55;
+  s.players.guest.hp = 50;
+  const enemy = publicMatchView(s, "host").players.guest;
+  const action = chooseCombatWeapon(s.players.host, enemy, 0.25, 4);
+  assert.ok(!action || action.weapon !== "repair", "55 health is not a Repair volley");
+});
+
+test("Repair fires when this volley actually threatens the flagship", () => {
+  const s = match(8);
+  charge(s, "host", "repair");
+  rollBoth(s);
+  faces(s.players.host, [1, 1, 1, 1], 6);
+  s.players.host.hp = 12;
+  const enemy = publicMatchView(s, "host").players.guest;
+  const action = chooseCombatWeapon(s.players.host, enemy, 0.4, 4);
+  assert.equal(action?.type, "weapon");
+  assert.equal(action?.weapon, "repair");
+});
+
+test("Attack is not fired just because the round number is nine", () => {
+  const s = match(9);
+  charge(s, "host", "attack");
+  rollBoth(s);
+  faces(s.players.host, [1, 1, 1, 1], 6);
+  s.players.host.hp = 50;
+  s.players.guest.hp = 50;
+  const enemy = publicMatchView(s, "host").players.guest;
+  const action = chooseCombatWeapon(s.players.host, enemy, 0.2, 4);
+  assert.ok(!action || action.weapon !== "attack", "a weak roll into 50 health is not an Attack volley");
+});
+
+test("Attack fires when the extra hits would finish the other flagship", () => {
+  const s = match(9);
+  charge(s, "host", "attack");
+  rollBoth(s);
+  faces(s.players.host, [6, 6, 6, 6], 6);
+  s.players.guest.hp = 10;
+  const enemy = publicMatchView(s, "host").players.guest;
+  const action = chooseCombatWeapon(s.players.host, enemy, 0.3, 4);
+  assert.equal(action?.type, "weapon");
+  assert.equal(action?.weapon, "attack");
+});
+
+test("a charged Rotate is spent on a modest late swing rather than held unused", () => {
+  for (const [round, expectFire] of [[4, false], [10, true]]) {
+    const s = match(round);
+    charge(s, "host", "rotate");
+    rollBoth(s);
+    faces(s.players.host, [4, 4, 1, 1], 5);
+    const action = chooseCombatWeapon(s.players.host, publicMatchView(s, "host").players.guest, 0.2, 6);
+    if (expectFire) {
+      assert.equal(action?.type, "flag-token", `round ${round} should spend the token`);
+      assert.equal(action?.direction, -1);
+    } else {
+      assert.ok(!action || action.type !== "flag-token", `round ${round} still waits for a real swing`);
+    }
+  }
+});
+
+test("the Enemy times weapons from the public board, never a hidden activation", () => {
+  const s = match(9);
+  for (const id of WEAPON_IDS) {
+    charge(s, "guest", id);
+    charge(s, "host", id);
+  }
+  rollBoth(s);
+  s.players.guest.rolls = TUNING.rollsPerRound + TUNING.paidRollsPerRound;
+  s.players.guest.energy = 0;
+  const brain = newBrain("balanced", "expert");
+  const before = nextActions(s, "guest", brain);
+  s.players.host.dice.forEach((d) => { d.value = 10; });
+  s.players.host.tally = { attack: 9999, heal: 9999, defense: 0, energy: 0, direct: 99, face: 6, flagBonus: { attack: 0, defense: 0, energy: 0, heal: 0, direct: 0 }, run: null, lines: [] };
+  s.players.host.weaponThisRound = { id: "attack", round: 9, amount: 18 };
+  s.players.host.weapons.attack.usedRound = 9;
+  s.players.host.weapons.attack.use = s.players.host.weaponThisRound;
+  assert.deepEqual(nextActions(s, "guest", brain), before);
+});
+
+test("charging, firing and a later shipyard visit all survive a saved battle", () => {
+  const s = match(5);
+  charge(s, "host", "repair");
+  rollBoth(s);
+  applyAction(s, "host", { type: "weapon", weapon: "repair" });
+  let saved = parseSoloSave(JSON.stringify({ schema: 1, savedAt: Date.now(), state: s, brain: newBrain("balanced") }));
+  assert.equal(saved.state.players.host.weapons.repair.usedRound, 5);
+  assert.equal(saved.state.players.host.weaponThisRound.id, "repair");
+  settle(s);
+  applyAction(s, "host", { type: "continue" });
+  s.players.host.energy = 6;
+  charge(s, "host", "attack");
+  saved = parseSoloSave(JSON.stringify({ schema: 1, savedAt: Date.now(), state: s, brain: newBrain("balanced") }));
+  assert.equal(weaponStatus(saved.state.players.host.weapons, "repair"), "used");
+  assert.equal(weaponStatus(saved.state.players.host.weapons, "attack"), "available");
+  assert.equal(saved.state.players.host.weapons.repair.usedRound, 5);
+  assert.equal(saved.state.players.host.energy, 0);
+});
+
+test("Formation still buys a hull with 6 Energy after weapons entered the shop", () => {
+  const player = newPlayer("f", "F", "shop");
+  player.energy = 6;
+  player.round = 3;
+  player.open[0] = true;
+  player.open[2] = true;
+  player.ships = player.ships.filter((ship) => ship.slot !== 1);
+  player.ships.push({ id: "corner2", sides: 4, disabledRound: null, slot: 2 });
+  const acts = planShopping(player, "formation", 3, 1, 0);
+  const buy = acts.find((a) => a.type === "shop" && a.operation === "buy");
+  assert.ok(buy, "a live line still beats charging a weapon");
+  assert.equal(buy.slotIndex, 1);
 });

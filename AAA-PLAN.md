@@ -14,6 +14,16 @@
   pass double-tap charging, private activation, reconnect and combat reports
   with the existing rules. 1,200 seeded AI matches complete; see `BALANCE.md`.
 
+- [x] **Solo opponent spends and fires those weapons from the public board.**
+  Charges compete with hulls in the shipyard. Repair is not fired because the
+  round is 11; Attack is not fired because the round is 9. Hidden rolls and
+  this-volley activations are stripped before the Enemy decides.
+  **Proved:** `tests/weapons.test.mjs` covers hull-before-charge, wounded Repair,
+  calendar non-fires, lethal Attack, late Rotate, public-info `nextActions`, and
+  save/reload of a spent then later charged weapon. `node sim/weapons.mjs 80`
+  and `node sim/ladder.mjs 300` printed the rates in `BALANCE.md`. Weapon
+  costs and effects unchanged.
+
 **This file is the plan. If you are an AI working on Fleet Dice 3, read this before you touch anything, and check your work against it before you hand it back.**
 
 Fleet Dice 3 is a good game that does not yet look like one. The mechanics are
