@@ -853,8 +853,7 @@ function StraightPrizes({
   return (
     <section className="straight-choice" aria-label="Straight reward">
       <div className="straight-choice-heading">
-        <span className="t-eyebrow c-run">Straight {run.start}–{run.top}</span>
-        <span className="straight-choice-detail">{run.length} numbers · d{run.biggest} hull</span>
+        <span className="t-eyebrow c-run">Straight {run.start}–{run.top} · d{run.biggest}</span>
       </div>
       <p className="sr-only" id="straight-choice-help">
         {choosable
@@ -886,14 +885,6 @@ function StraightPrizes({
               <span className="straight-prize-value">{amount}</span>
               <span className="straight-prize-kind">{STAT_LABEL[kind]}</span>
             </span>
-            <span className="straight-prize-length">
-              {choosable ? `${take} numbers` : "payout"}
-            </span>
-            {choosable && (
-              <span className="straight-prize-radio" aria-hidden="true">
-                {selected ? "✓" : ""}
-              </span>
-            )}
           </button>
         );
       })}
