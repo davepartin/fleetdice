@@ -5,6 +5,10 @@
  * bar, a pinch-zoom, and turning the phone on its side all change a different
  * number. Layout that trusts `window.innerWidth` alone will fit one phone and
  * clip another. Everything that frames the board should ask here instead.
+ *
+ * Wide laptop/desktop windows are a special case: the CSS letterboxes the
+ * game into a phone-width column, so the numbers we hand the HUD and the
+ * renderer are that column, not the monitor.
  */
 
 export type VisibleViewport = {
@@ -17,9 +21,15 @@ export type VisibleViewport = {
   scale: number;
 };
 
+/** Playable column on a wide window. Real phones keep their own width. */
+export const PHONE_FRAME_WIDTH = 390;
+
+/** Short side at or below this is a phone (or a phone on its side). */
+export const PHONE_LAYOUT_MAX = 640;
+
 export function visibleViewport(): VisibleViewport {
   if (typeof window === "undefined") {
-    return { width: 390, height: 844, offsetLeft: 0, offsetTop: 0, scale: 1 };
+    return { width: PHONE_FRAME_WIDTH, height: 844, offsetLeft: 0, offsetTop: 0, scale: 1 };
   }
   const view = window.visualViewport;
   const scale = view?.scale || 1;
@@ -35,17 +45,30 @@ export function visibleViewport(): VisibleViewport {
   };
 }
 
-/** True when the short side of the visible screen is phone-sized. */
+/** True when both sides are bigger than a phone, so CSS letterboxes. */
+export function isWideWindow(view?: Pick<VisibleViewport, "width" | "height">): boolean {
+  const size = view ?? visibleViewport();
+  return size.width > PHONE_LAYOUT_MAX && size.height > PHONE_LAYOUT_MAX;
+}
+
+/** True when the playable column is phone-sized — a real phone, or a letterboxed desktop. */
 export function isPhoneLayout(): boolean {
-  if (typeof window === "undefined") return false;
+  if (typeof window === "undefined") return true;
   const view = visibleViewport();
-  return Math.min(view.width, view.height) <= 640;
+  if (isWideWindow(view)) return true;
+  return Math.min(view.width, view.height) <= PHONE_LAYOUT_MAX;
+}
+
+/** Width the HUD, canvas and dialogs should pretend the screen is. */
+export function layoutWidth(view: Pick<VisibleViewport, "width" | "height"> = visibleViewport()): number {
+  return isWideWindow(view) ? PHONE_FRAME_WIDTH : view.width;
 }
 
 /** Write the visible screen onto :root and notify the renderer. */
 export function syncViewportCss(root: HTMLElement = document.documentElement): VisibleViewport {
   const view = visibleViewport();
-  root.style.setProperty("--vv-width", `${view.width}px`);
+  root.style.setProperty("--vv-width", `${layoutWidth(view)}px`);
   root.style.setProperty("--vv-height", `${view.height}px`);
+  root.classList.toggle("fd-phone-frame", isWideWindow(view));
   return view;
 }
