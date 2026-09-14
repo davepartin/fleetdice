@@ -191,11 +191,13 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
               <div className="weapon-card-top"><span className="weapon-symbol" aria-hidden="true">{ICON[id]}</span><span className="weapon-state">{STATE[status]}</span></div>
               <h3>{WEAPON_NAMES[id]}</h3>
               <p className="weapon-effect">{weaponEffect(id, player.round)}</p>
-              <button type="button" disabled={!enabled} onClick={() => {
-                if (shop) onAction({ type: "shop", operation: "weapon", weapon: id });
-                else if (id === "rotate") setRotate(true);
-                else fire({ type: "weapon", weapon: id });
-              }} aria-label={shop ? `Charge ${WEAPON_NAMES[id]} for ${TUNING.weaponChargeCost} Energy` : `Use ${WEAPON_NAMES[id]}`}>
+              <button type="button" disabled={!enabled}
+                className={shop && status === "available" ? "weapon-btn-charged" : undefined}
+                onClick={() => {
+                  if (shop) onAction({ type: "shop", operation: "weapon", weapon: id });
+                  else if (id === "rotate") setRotate(true);
+                  else fire({ type: "weapon", weapon: id });
+                }} aria-label={shop ? `Charge ${WEAPON_NAMES[id]} for ${TUNING.weaponChargeCost} Energy` : `Use ${WEAPON_NAMES[id]}`}>
                 {status === "used" ? `Used${stock[id].usedRound ? ` · Round ${stock[id].usedRound}` : ""}`
                   : shop ? status === "available" ? "Charged" : `Charge · ${TUNING.weaponChargeCost} Energy`
                   : status === "locked" ? "Charge in shipyard" : used ? "Next volley" : "Use weapon"}

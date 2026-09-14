@@ -107,6 +107,13 @@ test("a wide window letterboxes to the same phone column, and a phone stays full
     /\.yard \{[\s\S]{0,280}grid-template-columns:\s*minmax\(0,\s*1fr\) minmax\(0,\s*1\.05fr\)/,
   );
 
+  // The 3×3 fleet map stays the full phone column. #53's short-phone 86%
+  // width put gutters beside the grid on ordinary Safari viewports.
+  assert.doesNotMatch(css, /\.yard-board \{[^}]*min\(86%/);
+  const yardBoard = css.match(/^\.yard-board \{[\s\S]*?^\}/m);
+  assert.ok(yardBoard, "yard-board sizing block is missing");
+  assert.match(yardBoard[0], /width:\s*min\(100%,\s*27rem\)/);
+
   // A modal dialog lives in the top layer, so it must size to the column,
   // not the monitor — 100vw on a laptop is 1280px and overflows the frame.
   assert.match(css, /\.weapon-window \{[^}]*width:\s*min\(440px, calc\(var\(--vv-width\) - 24px\)\)/);

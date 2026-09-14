@@ -98,7 +98,7 @@ test("Flagship Weapon sits beside the face chip, not nested in it and not above 
   assert.match(how, /help-weapon-btn">Flagship Weapon</);
 });
 
-test("the shipyard charge control is a top bar with the upgrade Energy chip", () => {
+test("the shipyard charge control is a filled top button with the upgrade Energy chip", () => {
   const yard = readFileSync(new URL("../components/Shipyard.tsx", import.meta.url), "utf8");
   const ui = readFileSync(new URL("../components/ui.tsx", import.meta.url), "utf8");
   assert.match(yard, /className="yard-charge"/);
@@ -108,15 +108,30 @@ test("the shipyard charge control is a top bar with the upgrade Energy chip", ()
   assert.match(weapons, /<EnergyPrice/);
   assert.match(weapons, /cost=\{TUNING\.weaponChargeCost\}/);
   assert.match(ui, /export function EnergyPrice/);
-  assert.match(css, /\.weapon-launcher-shop \{/);
+  assert.match(css, /\.weapon-launcher\.weapon-launcher-shop \{/);
+  assert.match(css, /\.weapon-launcher\.weapon-launcher-shop \{[\s\S]*?background:[\s\S]*?var\(--color-buy\)/);
+  assert.match(css, /\.weapon-launcher\.weapon-launcher-shop \{[\s\S]*?color:\s*var\(--color-buy-ink\)/);
+  assert.match(css, /\.weapon-launcher\.weapon-launcher-shop:hover \{[\s\S]*?var\(--color-buy\)/);
   assert.match(css, /\.yard-charge \{/);
   assert.doesNotMatch(css, /\.yard-done\s*>\s*\.weapon-launcher/);
+  assert.doesNotMatch(css, /\.yard-board \{ width: min\(86%/);
   assert.match(css, /\.weapon-launcher-wait/);
   assert.match(weapons, /Need \$\{TUNING\.weaponChargeCost\} Energy to charge/);
   assert.match(weapons, /Use flagship weapon/);
-  assert.match(help, /Charge flagship weapons bar sits at the top of the yard/);
+  assert.match(help, /Charge flagship weapons button sits at the top of the yard/);
   const how = readFileSync(new URL("../components/HowToPlay.tsx", import.meta.url), "utf8");
-  assert.match(how, /Charge flagship weapons bar/);
+  assert.match(how, /Charge flagship weapons button/);
+});
+
+test("Charged weapon controls are a coloured fill, not a dead black button", () => {
+  assert.match(weapons, /className=\{shop && status === "available" \? "weapon-btn-charged"/);
+  assert.match(weapons, /status === "available" \? "Charged"/);
+  const charged = css.match(/\.weapon-card > button\.weapon-btn-charged:disabled \{[\s\S]*?\}/);
+  assert.ok(charged, "Charged button needs its own disabled style");
+  assert.match(charged[0], /var\(--weapon-color\)/);
+  assert.match(charged[0], /#090d17/);
+  assert.doesNotMatch(charged[0], /rgb\(0 0 0/);
+  assert.match(css, /\.weapon-launcher-shop\.weapon-launcher-charged \{[\s\S]*?opacity:\s*1/);
 });
 
 test("the centre flagship tile spells the level and uses the d6 square, not a star", () => {
