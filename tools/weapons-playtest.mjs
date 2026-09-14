@@ -207,6 +207,7 @@ try {
     await frame(page);
     assert.match(await page.locator("#weapon-title").innerText(), /Each flagship weapon once a game/);
     assert.match(await page.locator("#weapon-title").innerText(), /Only one per round/);
+    assert.doesNotMatch(await page.locator("#weapon-title").innerText(), /wisely|—/);
     assert.doesNotMatch(await page.locator(".weapon-window").innerText(), /Roll your fleet before using a weapon/);
     assert.match(await page.locator(".weapon-attack .weapon-effect").innerText(),
       new RegExp(String.raw`round\s*\(\s*1\s*\)\s*×\s*${TUNING.weaponAttackPerRound}\s*=\s*${TUNING.weaponAttackPerRound} Attack`));

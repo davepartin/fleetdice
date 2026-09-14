@@ -19,7 +19,9 @@ test("Attack copy is the round times two as an equation from TUNING", () => {
 });
 
 test("the weapons window has one short rule line and Back, not Cancel", () => {
-  assert.match(weapons, /Each flagship weapon once a game\. Only one per round/);
+  assert.match(weapons, /Each flagship weapon <b>once<\/b> a game\. Only <b>one<\/b> per round/);
+  assert.doesNotMatch(weapons, /use it wisely/);
+  assert.doesNotMatch(weapons, /Only one per round —/);
   assert.doesNotMatch(weapons, /t-display">Flagship weapons/);
   assert.doesNotMatch(weapons, /You may use one flagship weapon per round/);
   assert.doesNotMatch(weapons, /Roll your fleet before using a weapon/);
@@ -47,7 +49,7 @@ test("enemy weapon status is a four-box row, not a disclosure", () => {
   assert.doesNotMatch(css, /\.weapon-enemy-locked \.weapon-symbol \{[^}]*opacity/);
   assert.doesNotMatch(css, /\.weapon-enemy-lock \{[^}]*position: absolute/);
   assert.match(weapons, /EnemyWeaponRow[\s\S]{0,120}<footer>/);
-  assert.match(help, /Each flagship weapon once a game, but only one per round/);
+  assert.match(help, /Each flagship weapon once a game\. Only one per round/);
   assert.match(help, /round \(the current round\) × \$\{TUNING\.weaponAttackPerRound\}/);
 });
 

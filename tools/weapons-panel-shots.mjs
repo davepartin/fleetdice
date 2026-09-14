@@ -123,6 +123,7 @@ try {
     const row = await measureRow(page);
     assert.match(row.guide, /Each flagship weapon once a game/);
     assert.match(row.guide, /Only one per round/);
+    assert.doesNotMatch(row.guide, /wisely|—/);
     assert.doesNotMatch(await page.locator(".weapon-window").innerText(), /Roll your fleet before using a weapon/);
     assert.doesNotMatch(await page.locator(".weapon-window").innerText(), /FLAGSHIP WEAPONS/);
     assert.match(row.attack, new RegExp(String.raw`round\s*\(\s*1\s*\)\s*×\s*${TUNING.weaponAttackPerRound}\s*=\s*${TUNING.weaponAttackPerRound} Attack`));

@@ -131,18 +131,18 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
   const canFire = player.phase === "rolling" && !used && !busy;
   const fire = (action: MatchAction) => { onAction(action); onClose(); };
   const turning = rotate && canFire && weaponStatus(stock, "rotate") === "available";
-  const lede = shop
+  const shopLede = shop
     ? player.energy < TUNING.weaponChargeCost && lockedWeapons(player).length
       ? `Need ${TUNING.weaponChargeCost} Energy to charge · ${player.energy} in the bank`
       : `${player.energy} Energy in the bank · ${TUNING.weaponChargeCost} per charge`
-    : "Each flagship weapon once a game. Only one per round — use it wisely.";
+    : null;
   return createPortal(<dialog ref={dialog} className="weapon-window" aria-labelledby="weapon-title"
     onCancel={onClose} onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
     <div className="weapon-window-inner">
       <header className="weapon-window-head">
         <div>
           <p className="t-eyebrow">{shop ? "Shipyard" : `Round ${player.round}`}</p>
-          <h2 id="weapon-title" className="weapon-lede">{lede}</h2>
+          <h2 id="weapon-title" className="weapon-lede">{shopLede ?? <>Each flagship weapon <b>once</b> a game. Only <b>one</b> per round.</>}</h2>
         </div>
         <button type="button" className="weapon-small-button" aria-expanded={tips} onClick={() => setTips(!tips)}>Tips</button>
       </header>
