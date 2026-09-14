@@ -118,3 +118,15 @@ test("the shipyard charge control is a top bar with the upgrade Energy chip", ()
   const how = readFileSync(new URL("../components/HowToPlay.tsx", import.meta.url), "utf8");
   assert.match(how, /Charge flagship weapons bar/);
 });
+
+test("the centre flagship tile spells the level and uses the d6 square, not a star", () => {
+  const yard = readFileSync(new URL("../components/Shipyard.tsx", import.meta.url), "utf8");
+  assert.match(yard, /FLAGSHIP_LEVEL_WORDS/);
+  assert.match(yard, /\{NOUN\.flagship\} Level \{levelName\}/);
+  assert.match(yard, /upgrade → Level \$\{nextName\}/);
+  assert.match(yard, /HullShape sides=\{FLAG_HULL\}/);
+  assert.doesNotMatch(yard, /★/);
+  assert.doesNotMatch(yard, /L\$\{offer\.level\} → L/);
+  assert.doesNotMatch(yard, /yard-cell-art yard-cell-flag/);
+  assert.match(css, /\.yard-cell-flag \.yard-cell-art svg path/);
+});

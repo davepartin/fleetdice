@@ -248,8 +248,9 @@ export function createDie(kind: DieKind, font: string, scale = 1, cellSize = 0, 
   const material = shared.material.clone();
   let activeFaceUniform: { value: number } | null = null;
   // The d8's lower facet is the small visual cue that separates its octahedron
-  // from a d4. Keep it in shadow, but let it hold a little more of its colour.
-  const inactiveFacetStrength = kind === 8 ? "0.48" : "0.3";
+  // from a d4. Keep it in shadow, but let it hold about two thirds of its colour
+  // so the diamond reads as a diamond, not a triangle.
+  const inactiveFacetStrength = kind === 8 ? "0.65" : "0.3";
   material.onBeforeCompile = (shader) => {
     // onBeforeCompile fires lazily, on this die's first real draw call — by
     // then `value` (declared below) already holds whatever face was set

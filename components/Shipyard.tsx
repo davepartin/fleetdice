@@ -19,6 +19,7 @@ import {
   type MatchAction,
   type PlayerState,
   type Ship,
+  FLAG_FACES,
   TUNING,
   cellForSlot,
   flagshipUpgradeCost,
@@ -39,6 +40,12 @@ import { Button, Chip, EnergyPrice, HpRail, Notice } from "./ui";
 import { FlagshipWeapons } from "./FlagshipWeapons";
 
 const HULLS: DieSize[] = [4, 6, 8, 10];
+const FLAG_HULL: DieSize = FLAG_FACES.length as DieSize;
+const FLAGSHIP_LEVEL_WORDS = ["One", "Two", "Three"] as const;
+
+function flagshipLevelWord(level: number): string {
+  return FLAGSHIP_LEVEL_WORDS[level - 1] ?? String(level);
+}
 
 /** What a ship is for, in one line, so a price is never just a number. */
 const HULL_BLURB: Record<DieSize, string> = {
@@ -272,13 +279,21 @@ function CellButton({
     cost = offer.cost;
     affordable = cost !== null && cost <= energy;
     state = "flag";
-    label = `${NOUN.flagship}, level ${offer.level}`;
+    const levelName = flagshipLevelWord(offer.level);
+    const nextName = cost === null ? null : flagshipLevelWord(offer.level + 1);
+    label =
+      `${NOUN.flagship}, Level ${levelName}` +
+      (nextName ? `, upgrade to Level ${nextName}` : ", at maximum");
     body = (
       <>
-        <span className="yard-cell-art yard-cell-flag">★</span>
-        <span className="yard-cell-name">{NOUN.flagship}</span>
-        <span className="yard-cell-sub">
-          {cost === null ? "Level 3 · max" : `L${offer.level} → L${offer.level + 1}`}
+        <span className="yard-cell-art">
+          <HullShape sides={FLAG_HULL} tone="live" />
+        </span>
+        <span className="yard-cell-name">
+          {NOUN.flagship} Level {levelName}
+        </span>
+        <span className="yard-cell-sub yard-cell-sub-plain">
+          {nextName ? `upgrade → Level ${nextName}` : "max flagship"}
         </span>
       </>
     );
@@ -414,16 +429,17 @@ function Drawer({
         <DrawerHead title="Your flagship" onClose={onClose} />
         {cost === null ? (
           <p className="yard-copy">
-            Level 3 is as far as it goes. Every face already adds{" "}
+            Level {flagshipLevelWord(3)} is as far as it goes. Every face already adds{" "}
             <b className="c-energy">{flagBonusSize(3)}</b>.
           </p>
         ) : (
           <>
             <p className="yard-copy">
-              Level {offer.level} → {offer.level + 1}. Every one of its six faces goes from adding{" "}
+              Level {flagshipLevelWord(offer.level)} → Level {flagshipLevelWord(offer.level + 1)}. Every one of its{" "}
+              {FLAG_FACES.length} faces goes from adding{" "}
               <b className="c-energy">{flagBonusSize(offer.level)}</b> to{" "}
-              <b className="c-energy">{flagBonusSize(offer.level + 1)}</b>. One purchase, all six
-              faces.
+              <b className="c-energy">{flagBonusSize(offer.level + 1)}</b>. One purchase, all{" "}
+              {FLAG_FACES.length} faces.
             </p>
             <PurchaseButton
               verb="Level up"

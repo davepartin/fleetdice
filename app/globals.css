@@ -1630,10 +1630,20 @@ button {
   font-size: var(--text-xl);
   line-height: 1;
 }
-.yard-cell-flag.yard-cell-art,
-.yard-cell .yard-cell-flag {
-  color: var(--color-flag-glow);
-  text-shadow: 0 0 16px rgb(255 210 61 / 0.7);
+.yard-cell-flag .yard-cell-art svg path {
+  fill: var(--color-flag-glow);
+  stroke: rgb(255 244 200 / 0.92);
+  filter: drop-shadow(0 0 10px rgb(255 210 61 / 0.55));
+}
+.yard-cell-flag .yard-cell-name,
+.yard-cell-flag .yard-cell-sub {
+  width: 100%;
+  text-align: center;
+}
+.yard-cell-flag .yard-cell-name {
+  text-wrap: balance;
+  line-height: 1.15;
+  padding-inline: 0.12rem;
 }
 .yard-cell-empty-art {
   color: var(--color-direct-glow);
