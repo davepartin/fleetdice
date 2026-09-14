@@ -62,7 +62,8 @@ async function measureRow(page) {
     const dialog = document.querySelector("dialog");
     const inner = document.querySelector(".weapon-window-inner");
     const body = document.querySelector(".weapon-window-body");
-    const guide = document.querySelector("#weapon-title")?.innerText ?? "";
+    const title = document.querySelector("#weapon-title")?.innerText ?? "";
+    const guide = document.querySelector(".weapon-lede")?.innerText ?? "";
     const attack = document.querySelector(".weapon-attack .weapon-effect")?.innerText ?? "";
     const footer = dialog?.querySelector("footer")?.getBoundingClientRect();
     const rowBox = document.querySelector(".weapon-enemy-row")?.getBoundingClientRect();
@@ -87,6 +88,7 @@ async function measureRow(page) {
       bodyOverflow: body ? getComputedStyle(body).overflowY : "",
       boxW: boxes[0]?.width ?? 0,
       boxH: boxes[0]?.height ?? 0,
+      title,
       guide,
       attack,
       aboveFooter: !!(rowBox && footer && rowBox.bottom <= footer.top + 1),
@@ -121,14 +123,14 @@ try {
     const { ctx, page } = await pageWith(roundOne(), { width: 390, height: 844 });
     await page.getByRole("button", { name: "Use flagship weapon", exact: true }).click();
     const row = await measureRow(page);
-    assert.match(row.guide, /Each flagship weapon once a game/);
-    assert.match(row.guide, /Only one per round/);
+    assert.match(row.title, /FLAGSHIP WEAPONS/i);
+    assert.match(row.guide, /Each may be used once per game/);
+    assert.match(row.guide, /and only one per round/);
     assert.doesNotMatch(row.guide, /wisely|—/);
     assert.doesNotMatch(await page.locator(".weapon-window").innerText(), /Roll your fleet before using a weapon/);
-    assert.doesNotMatch(await page.locator(".weapon-window").innerText(), /FLAGSHIP WEAPONS/);
     assert.match(row.attack, new RegExp(String.raw`round\s*\(\s*1\s*\)\s*×\s*${TUNING.weaponAttackPerRound}\s*=\s*${TUNING.weaponAttackPerRound} Attack`));
     assert.equal(await page.locator(".weapon-enemy-locked").count(), 4);
-    await saveShot(page, "weapons_panel_compact_locked_390x844");
+    await saveShot(page, "weapons_panel_title_locked_390x844");
     console.log("round1", row);
     await ctx.close();
   }
@@ -141,7 +143,7 @@ try {
     assert.equal(await page.locator(".weapon-enemy-box.weapon-attack.weapon-enemy-used").count(), 1);
     assert.equal(await page.locator(".weapon-enemy-box.weapon-repair.weapon-enemy-locked").count(), 1);
     assert.match(row.attack, new RegExp(String.raw`round\s*\(\s*6\s*\)\s*×\s*${TUNING.weaponAttackPerRound}\s*=\s*${12} Attack`));
-    await saveShot(page, `weapons_panel_compact_mixed_${vp.width}x${vp.height}`);
+    await saveShot(page, `weapons_panel_title_mixed_${vp.width}x${vp.height}`);
     console.log(`mixed ${vp.width}x${vp.height}`, row);
     await ctx.close();
   }

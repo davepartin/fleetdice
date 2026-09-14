@@ -18,11 +18,12 @@ test("Attack copy is the round times two as an equation from TUNING", () => {
   assert.doesNotMatch(weapons, /This round/);
 });
 
-test("the weapons window has one short rule line and Back, not Cancel", () => {
-  assert.match(weapons, /Each flagship weapon <b>once<\/b> a game\. Only <b>one<\/b> per round/);
+test("the weapons window has a FLAGSHIP WEAPONS title, two rule lines, and Back, not Cancel", () => {
+  assert.match(weapons, /t-display">Flagship weapons/);
+  assert.match(weapons, /Each may be used <b>once<\/b> per game<br \/>and only <b>one<\/b> per round/);
   assert.doesNotMatch(weapons, /use it wisely/);
-  assert.doesNotMatch(weapons, /Only one per round —/);
-  assert.doesNotMatch(weapons, /t-display">Flagship weapons/);
+  assert.doesNotMatch(weapons, /per round —/);
+  assert.doesNotMatch(weapons, /Each flagship weapon <b>once<\/b> a game/);
   assert.doesNotMatch(weapons, /You may use one flagship weapon per round/);
   assert.doesNotMatch(weapons, /Roll your fleet before using a weapon/);
   assert.doesNotMatch(weapons, /Your volley is locked in/);
@@ -49,7 +50,7 @@ test("enemy weapon status is a four-box row, not a disclosure", () => {
   assert.doesNotMatch(css, /\.weapon-enemy-locked \.weapon-symbol \{[^}]*opacity/);
   assert.doesNotMatch(css, /\.weapon-enemy-lock \{[^}]*position: absolute/);
   assert.match(weapons, /EnemyWeaponRow[\s\S]{0,120}<footer>/);
-  assert.match(help, /Each flagship weapon once a game\. Only one per round/);
+  assert.match(help, /Each may be used once per game and only one per round/);
   assert.match(help, /round \(the current round\) × \$\{TUNING\.weaponAttackPerRound\}/);
 });
 
@@ -59,6 +60,7 @@ test("the weapons panel does not put the four cards in a scrolling pane", () => 
   assert.doesNotMatch(css, /\.weapon-window-scroll/);
   assert.match(weapons, /weapon-window-body/);
   assert.match(css, /\.weapon-lede \{/);
+  assert.match(css, /\.weapon-window-head h2 \{ font-size: 22px/);
 });
 
 test("rotate directions are filled primary buttons with −1 and +1 inside", () => {
