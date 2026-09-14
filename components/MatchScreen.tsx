@@ -854,19 +854,20 @@ function StraightPrizes({
     <section className="straight-choice" aria-label="Straight reward">
       <div className="straight-choice-heading">
         <span className="t-eyebrow c-run">Straight {run.start}–{run.top}</span>
-        <span className="text-xs c-dim">{run.length} numbers · best hull d{run.biggest}</span>
+        <span className="straight-choice-detail">{run.length} numbers · d{run.biggest} hull</span>
       </div>
-      <p className="straight-choice-copy">
+      <p className="sr-only" id="straight-choice-help">
         {choosable
-          ? "Choose quick Energy now or the strongest Attack payout."
+          ? `Choose one payout: Energy for the first ${TUNING.runMin} numbers or Attack for the full straight.`
           : "This run pays once, using its biggest ship."}
       </p>
       <div
         className={`straight-prizes${prizes.length === 1 ? " straight-prizes-one" : ""}`}
-        role={choosable ? "group" : undefined}
+        role={choosable ? "radiogroup" : undefined}
         aria-label={choosable ? "Choose a straight prize" : "Straight prize"}
+        aria-describedby="straight-choice-help"
       >
-      {prizes.map((take, index) => {
+      {prizes.map((take) => {
         const reward = previewTally(you, take).run?.reward ?? run.reward;
         const selected = take === chosenTake;
         const kind = reward.kind === "attack" ? "attack" : "energy";
@@ -877,17 +878,26 @@ function StraightPrizes({
             type="button"
             onClick={choosable ? () => onTake(take) : undefined}
             className={`straight-prize straight-prize-${kind}${selected ? " straight-prize-on" : ""}`}
-            aria-pressed={choosable ? selected : undefined}
+            role={choosable ? "radio" : undefined}
+            aria-checked={choosable ? selected : undefined}
             disabled={!choosable}
           >
-            <span className="t-eyebrow straight-prize-length">
-              {choosable ? (index === 0 ? "Quick cash" : "Full run") : "Straight"}
+            <span className="straight-prize-main">
+              <span className="straight-prize-value">{amount}</span>
+              <span className="straight-prize-kind">{STAT_LABEL[kind]}</span>
             </span>
-            <span className="t-display text-xl straight-prize-value">{amount}</span>
-            <span className="t-eyebrow straight-prize-kind">{STAT_LABEL[kind]} · {take} numbers</span>
+            <span className="straight-prize-length">
+              {choosable ? `${take} numbers` : "payout"}
+            </span>
+            {choosable && (
+              <span className="straight-prize-radio" aria-hidden="true">
+                {selected ? "✓" : ""}
+              </span>
+            )}
           </button>
         );
       })}
+      {choosable && <span className="straight-prize-or" aria-hidden="true">OR</span>}
       </div>
     </section>
   );

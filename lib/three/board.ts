@@ -165,25 +165,42 @@ export function createBoard(side: BoardSide, font: string): Board {
     emptyMarkers.push(marker);
   }
 
-  // The orange bar that marks a die as part of the straight.
-  const runBars: THREE.Mesh[] = [];
+  // A straight marks the whole board cell. The old underline disappeared
+  // behind d8/d10 silhouettes at phone size; a frame keeps its top and side
+  // edges visible even when the die covers the lower edge.
+  const runFrames: THREE.Group[] = [];
+  const runFrameMaterial = new THREE.MeshBasicMaterial({
+    color: 0xff9d2e, // --color-run
+    transparent: true,
+    opacity: 0.9,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    depthTest: true,
+  });
   for (let cell = 0; cell < 9; cell += 1) {
-    const bar = new THREE.Mesh(
-      new THREE.PlaneGeometry(CELL * 0.7, 0.13),
-      new THREE.MeshBasicMaterial({
-        color: 0xff9d2e, // --color-run
-        transparent: true,
-        opacity: 0,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      }),
-    );
-    bar.rotation.x = -Math.PI / 2;
+    const frame = new THREE.Group();
+    const span = CELL * 0.84;
+    const edge = CELL * 0.42;
+    const thickness = 0.11;
+    const addEdge = (width: number, depth: number, x: number, z: number) => {
+      const edgeMesh = new THREE.Mesh(
+        new THREE.PlaneGeometry(width, depth),
+        runFrameMaterial,
+      );
+      edgeMesh.rotation.x = -Math.PI / 2;
+      edgeMesh.position.set(x, 0, z);
+      edgeMesh.renderOrder = 2;
+      frame.add(edgeMesh);
+    };
+    addEdge(span, thickness, 0, -edge);
+    addEdge(span, thickness, 0, edge);
+    addEdge(thickness, span, -edge, 0);
+    addEdge(thickness, span, edge, 0);
     const centre = cellCentre(cell);
-    bar.position.set(centre.x, 0.014, centre.z + CELL * 0.4);
-    bar.visible = false;
-    group.add(bar);
-    runBars.push(bar);
+    frame.position.set(centre.x, 0.052, centre.z);
+    frame.visible = false;
+    group.add(frame);
+    runFrames.push(frame);
   }
 
   const lineFlashes: { mesh: THREE.Mesh; life: number }[] = [];
@@ -308,8 +325,8 @@ export function createBoard(side: BoardSide, font: string): Board {
     },
     setRunCells(cells) {
       const wanted = new Set(cells);
-      runBars.forEach((bar, cell) => {
-        bar.visible = wanted.has(cell);
+      runFrames.forEach((frame, cell) => {
+        frame.visible = wanted.has(cell);
       });
     },
     setFormations(formations) {
@@ -372,10 +389,6 @@ export function createBoard(side: BoardSide, font: string): Board {
         }
       }
 
-      for (const bar of runBars) {
-        if (!bar.visible) continue;
-        (bar.material as THREE.MeshBasicMaterial).opacity = 0.78;
-      }
     },
     dispose() {
       clearFormations();

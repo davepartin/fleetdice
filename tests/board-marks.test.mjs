@@ -14,6 +14,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const arena = readFileSync(new URL("../lib/three/arena.ts", import.meta.url), "utf8");
+const board = readFileSync(new URL("../lib/three/board.ts", import.meta.url), "utf8");
 
 test("formation rails are drawn on both decks, not just your own", () => {
   // The old shape gated the lines on `playerDeck`; the guard is that no
@@ -40,6 +41,19 @@ test("the run marker is still yours alone", () => {
     arena,
     /const run = showRun && playerDeck \?/,
     "the orange run marker stays on your own deck — it reads as damage on theirs",
+  );
+});
+
+test("a straight surrounds each scoring cell instead of hiding under its die", () => {
+  assert.match(board, /const runFrames: THREE\.Group\[\] = \[\]/);
+  assert.match(board, /addEdge\(span, thickness, 0, -edge\)/, "the frame needs a top edge");
+  assert.match(board, /addEdge\(span, thickness, 0, edge\)/, "the frame needs a bottom edge");
+  assert.match(board, /addEdge\(thickness, span, -edge, 0\)/, "the frame needs a left edge");
+  assert.match(board, /addEdge\(thickness, span, edge, 0\)/, "the frame needs a right edge");
+  assert.doesNotMatch(
+    board,
+    /new THREE\.PlaneGeometry\(CELL \* 0\.7, 0\.13\)/,
+    "the old underline disappears behind large hulls",
   );
 });
 

@@ -45,3 +45,15 @@ test("the match shell cannot grow a dead page-scroll under the dock", () => {
   );
   assert.match(css, /\.match-bottom \{[^}]*margin-top:\s*auto/, "the dock stays at the bottom of the HUD");
 });
+
+test("the straight payout is a compact, explicit one-of-two choice", () => {
+  const screen = readFileSync(new URL("../components/MatchScreen.tsx", import.meta.url), "utf8");
+  const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
+  assert.match(screen, /role=\{choosable \? "radiogroup"/);
+  assert.match(screen, /role=\{choosable \? "radio"/);
+  assert.match(screen, /aria-checked=\{choosable \? selected/);
+  assert.match(screen, /straight-prize-or/);
+  assert.doesNotMatch(screen, /Quick cash|Full run/);
+  assert.match(css, /\.match-hud-solo \.roll-dock:has\(\.straight-prizes\)[\s\S]{0,120}314px/);
+  assert.match(css, /\.match-hud-solo \.straight-prize \{[\s\S]{0,100}min-height:\s*48px/);
+});

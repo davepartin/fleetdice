@@ -830,10 +830,19 @@ action reachable on a phone.
   **DONE when:** the deck owns the orange straight marks rather than hull-sized
   dice, and the dock says which run happened, which hull sets its size, and
   what each of the at-most-two choices means.
-  **Proved:** the die-level orange bar is disabled, leaving the board-space
-  bars aligned to grid cells. The new straight card header names the range,
-  number count and best hull; two-card choices are labelled Quick cash and Full
-  run with their Energy or Attack result.
+  **Proved:** revised after a phone playtest showed the original orange
+  underlines disappearing behind large hulls and the two-card choice shrinking
+  the board. Each scoring cell now gets a steady four-sided orange frame, so
+  at least its top and side edges remain visible around every hull. The dock
+  names the range, number count and best hull, then presents one 48px segmented
+  Energy-or-Attack control with an OR divider, selected check, and radio
+  semantics. At 375×812 the complete dock measured 314px instead of the old
+  380px allowance, the choice measured 89px, all content fit without scrolling,
+  and the horizontal overflow check returned an empty list. The lab and real
+  match screenshots showed the cell frames and the 9 Energy / 12 Attack choice;
+  TypeScript, lint, all 152 tests, and the production build passed. A four-round
+  402×874 phone playthrough then completed with no console errors or stuck
+  screens; its stale flagship-button label was corrected before the clean run.
 
 - [x] **6.3 — A selected reroll and a damaged ship are unmistakable.**
   **DONE when:** the cyan reroll outline clears every hull, including the cube,
