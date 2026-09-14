@@ -19,11 +19,13 @@ test("the match shell cannot grow a dead page-scroll under the dock", () => {
   const hudBlock = css.match(/^\.hud \{[^}]*\}/m);
   const canvasBlock = css.match(/^\.stage-canvas \{[^}]*\}/m);
   const shellBlock = css.match(/^\.tutorial-shell \{[^}]*\}/m);
+  const frameBlock = css.match(/^\.app-frame \{[^}]*\}/m);
   assert.ok(htmlBlock, "html, body need a sizing block");
   assert.ok(bodyBlock, "body needs its own lock-down block");
   assert.ok(hudBlock, "the HUD needs a sizing block");
   assert.ok(canvasBlock, "the canvas needs a sizing block");
   assert.ok(shellBlock, "the tutorial shell needs a sizing block");
+  assert.ok(frameBlock, "the playable column needs a sizing block");
 
   // --vv-height is the real visible screen. 100dvh alone is what let Safari
   // paint a taller page than the player can see, then scroll into black.
@@ -33,6 +35,7 @@ test("the match shell cannot grow a dead page-scroll under the dock", () => {
     ["hud", hudBlock[0]],
     ["canvas", canvasBlock[0]],
     ["tutorial-shell", shellBlock[0]],
+    ["app-frame", frameBlock[0]],
   ]) {
     assert.match(block, /--vv-height/, `${name} must size to the visible viewport`);
     assert.match(block, /overflow:\s*hidden/, `${name} must not page-scroll`);
@@ -67,4 +70,48 @@ test("the straight payout is a compact, explicit one-of-two choice", () => {
 test("the d8 keeps more light on its lower facets than the other hulls", () => {
   const die = readFileSync(new URL("../lib/three/die.ts", import.meta.url), "utf8");
   assert.match(die, /const inactiveFacetStrength = kind === 8 \? "0\.48" : "0\.3"/);
+});
+
+test("a wide window letterboxes to the same phone column, and a phone stays full-bleed", () => {
+  const layout = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8");
+  const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
+  const viewport = readFileSync(new URL("../lib/viewport.ts", import.meta.url), "utf8");
+
+  assert.match(layout, /className="app-frame"/);
+  assert.match(viewport, /export const PHONE_FRAME_WIDTH = 390/);
+  assert.match(css, /--phone-frame-width:\s*390px/);
+
+  const desktop = css.match(
+    /@media \(min-width: 641px\) and \(min-height: 641px\) \{[\s\S]*?^\}/m,
+  );
+  assert.ok(desktop, "desktop letterbox media query is missing");
+  assert.match(desktop[0], /\.app-frame \{[\s\S]*?width:\s*var\(--phone-frame-width\)/);
+  assert.match(desktop[0], /justify-content:\s*center/);
+  assert.match(desktop[0], /\.stage-canvas,[\s\S]*?position:\s*absolute/);
+  // Transforming html/body/canvas is the Safari bug that puts dice over menus.
+  assert.doesNotMatch(desktop[0], /html[\s\S]{0,80}transform:/);
+  assert.doesNotMatch(desktop[0], /\n\s*body \{[\s\S]{0,200}transform:/);
+  assert.doesNotMatch(desktop[0], /\.stage-canvas[\s\S]{0,80}transform:/);
+
+  // Compact phone chrome still applies on a real phone, and also inside the
+  // letterboxed column so a laptop does not stretch a second layout.
+  assert.match(
+    css,
+    /@media \(max-width: 640px\), \(max-height: 640px\), \(min-width: 641px\) and \(min-height: 641px\)/,
+  );
+
+  // The old two-column shipyard/recap was the desktop UI Dave does not want.
+  assert.doesNotMatch(css, /@media \(min-width: 46rem\) and \(min-height: 34rem\)/);
+  assert.doesNotMatch(
+    css,
+    /\.yard \{[\s\S]{0,280}grid-template-columns:\s*minmax\(0,\s*1fr\) minmax\(0,\s*1\.05fr\)/,
+  );
+
+  // A modal dialog lives in the top layer, so it must size to the column,
+  // not the monitor — 100vw on a laptop is 1280px and overflows the frame.
+  assert.match(css, /\.weapon-window \{[^}]*width:\s*min\(440px, calc\(var\(--vv-width\) - 24px\)\)/);
+  assert.doesNotMatch(css, /\.weapon-window \{[^}]*100vw/);
+
+  assert.match(viewport, /if \(isWideWindow\(view\)\) return true/);
+  assert.match(viewport, /root\.style\.setProperty\("--vv-width", `\$\{layoutWidth\(view\)\}px`\)/);
 });

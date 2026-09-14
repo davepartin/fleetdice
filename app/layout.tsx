@@ -84,7 +84,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${display.variable} ${body.variable} ${numeral.variable}`}>
       <body>
         <ViewportSync />
-        {children}
+        {/* On a phone this is the whole screen. On a laptop CSS centres it
+            as a phone-width column — one layout, not a second desktop UI. */}
+        <div className="app-frame">{children}</div>
       </body>
     </html>
   );

@@ -23,7 +23,7 @@
 }
 .weapon-launcher-wait { color: var(--color-energy); }
 .weapon-launcher-using { border-color: color-mix(in srgb, currentColor 50%, transparent); background: color-mix(in srgb, currentColor 12%, rgb(7 11 22)); box-shadow: inset 0 1px 0 color-mix(in srgb, currentColor 22%, transparent), 0 0 16px -8px color-mix(in srgb, currentColor 55%, transparent); }
-.weapon-window { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); margin: 0; padding: 0; width: min(440px, calc(100vw - 24px)); max-width: none; height: max-content; max-height: calc(100dvh - 32px); color: var(--color-hull-100, #e3e8f2); border: 1px solid rgb(255 255 255 / 0.16); border-radius: 22px; overflow: hidden;
+.weapon-window { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); margin: 0; padding: 0; width: min(440px, calc(var(--vv-width) - 24px)); max-width: none; height: max-content; max-height: calc(100dvh - 32px); color: var(--color-hull-100, #e3e8f2); border: 1px solid rgb(255 255 255 / 0.16); border-radius: 22px; overflow: hidden;
   background:
     radial-gradient(120% 70% at 50% 0%, rgb(22 34 64 / 0.45) 0%, transparent 58%),
     linear-gradient(180deg, rgb(255 255 255 / 0.055) 0%, rgb(255 255 255 / 0) 28%),
@@ -304,6 +304,9 @@
      phone's address bar and toolbar cannot leave a taller page to scroll. */
   --vv-width: 100%;
   --vv-height: 100dvh;
+  /* Playable column on a laptop/desktop. Real phones ignore this and use
+     their own width. Keep in step with PHONE_FRAME_WIDTH in lib/viewport.ts. */
+  --phone-frame-width: 390px;
   --ease-snap: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-slam: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -336,6 +339,17 @@ body {
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+/* The playable column. On a phone this is the whole screen. On a laptop it
+   is the 390px frame the desktop media query centres in the void. */
+.app-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  height: var(--vv-height);
+  max-height: var(--vv-height);
+  overflow: hidden;
 }
 
 button {
@@ -1059,7 +1073,11 @@ button {
   text-align: center;
 }
 
-@media (max-width: 640px), (max-height: 640px) {
+/* Phone chrome is the only layout. The third clause is a letterboxed
+   laptop/desktop: the window is wide, but .app-frame is phone-width, so
+   these compact rules must still apply. A real phone matches the first
+   two clauses and is unchanged. */
+@media (max-width: 640px), (max-height: 640px), (min-width: 641px) and (min-height: 641px) {
   /* One bar, at the very top. The menu lives inside the rail's middle slot,
      so the numbers no longer have to share a line with two buttons — which is
      what forced this header onto two rows before. */
@@ -1791,30 +1809,6 @@ button {
   padding-top: 0.15rem;
 }
 
-/* Wider screens: board and drawer side by side rather than a tall column. */
-@media (min-width: 46rem) and (min-height: 34rem) {
-  .yard {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
-    grid-template-rows: auto auto 1fr auto;
-    column-gap: 1.6rem;
-    align-content: start;
-    padding-inline: 2rem;
-  }
-  .yard-head { grid-column: 1 / -1; }
-  .yard-stats { grid-column: 1 / -1; }
-  .yard-main { grid-column: 1; grid-row: 3 / span 2; justify-content: flex-start; }
-  .yard-drawer-wrap {
-    position: static;
-    grid-column: 2;
-    grid-row: 3 / span 2;
-    justify-content: flex-start;
-    max-height: none;
-  }
-  .yard-foot { grid-column: 1 / -1; max-width: 26rem; margin: 0 auto; width: 100%; }
-  .yard-hulls { grid-template-columns: repeat(2, 1fr); }
-}
-
 /* ==================================================================
    Battle recap
    The screen a match ends on. Both fleets, board and board, and the
@@ -2125,22 +2119,6 @@ button {
   display: flex;
   gap: 0.5rem;
   padding-top: 0.15rem;
-}
-
-/* Wider screens: fleets and totals side by side rather than stacked. */
-@media (min-width: 46rem) and (min-height: 34rem) {
-  .recap-scroll {
-    display: grid;
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-    align-content: start;
-    column-gap: 1.4rem;
-    max-width: 62rem;
-    margin: 0 auto;
-    width: 100%;
-  }
-  .recap-head { grid-column: 1 / -1; }
-  .recap-fleets { grid-column: 1; flex-direction: column; }
-  .recap-stats { grid-column: 2; }
 }
 
 /* ==================================================================
@@ -3530,10 +3508,40 @@ button {
   background: var(--color-hull-700);
 }
 
+/* Laptop/desktop: one phone-width column, centred in the void. Do not
+   transform html, body, or the WebGL canvas — Safari then paints the dice
+   over every menu. Fixed overlays are rebound to .app-frame instead. */
 @media (min-width: 641px) and (min-height: 641px) {
-  .match-menu-btn {
-    padding-inline: 0.55rem;
-    font-size: 0.64rem;
+  :root {
+    --vv-width: var(--phone-frame-width);
+  }
+
+  html,
+  body {
+    background: var(--color-void);
+  }
+
+  body {
+    display: flex;
+    justify-content: center;
+  }
+
+  .app-frame {
+    width: var(--phone-frame-width);
+    max-width: var(--phone-frame-width);
+    flex: none;
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 0.06),
+      0 0 64px rgb(0 0 0 / 0.55);
+  }
+
+  .stage-canvas,
+  .yard,
+  .recap,
+  .tutorial-theme,
+  .tutorial-coach,
+  .sheet-overlay {
+    position: absolute;
   }
 }
 
