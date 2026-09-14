@@ -106,10 +106,12 @@ try {
       const direction = page.getByRole("button", { name: "Turn the flagship +1", exact: true });
       const rect = await direction.boundingBox();
       assert.ok(rect && rect.y >= 0 && rect.y + rect.height <= 812, "rotation directions must appear without scrolling");
+      await page.screenshot({ path: "shots/weapons-rotate-375.png" });
       await direction.click();
     }
     assert.equal((await saved(page)).weapons[id].usedRound, 6);
     assert.match(await page.locator(".weapon-using-cue").innerText(), new RegExp(`Using ${name}`));
+    if (id === "attack") await page.screenshot({ path: "shots/weapons-using-375.png" });
     await page.reload({ waitUntil: "networkidle" });
     await page.getByRole("button", { name: /Carry on/ }).click();
     await page.getByRole("button", { name: "Use flagship weapon", exact: true }).click();

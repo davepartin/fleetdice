@@ -38,4 +38,5 @@ test("the roll dock shows Using plus the weapon name after it fires", () => {
   assert.match(weapons, /Using \{WEAPON_NAMES\[used\.id\]\}/);
   assert.match(match, /WeaponUsingCue/);
   assert.match(css, /\.weapon-using-cue/);
+  assert.match(weapons, /weapon-launcher-using/);
 });

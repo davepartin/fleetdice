@@ -63,10 +63,15 @@ export function FlagshipWeapons({ player, enemy, shop = false, busy, onAction }:
   onAction(action: MatchAction): void;
 }) {
   const [open, setOpen] = useState(false);
+  const used = roundWeapon(player);
   return <>
-    <button type="button" className="weapon-launcher" aria-label={shop ? "Charge flagship weapons" : "Use flagship weapon"}
+    <button type="button"
+      className={`weapon-launcher${used && !shop ? ` weapon-launcher-using c-${TONE[used.id]}` : ""}`}
+      aria-label={shop ? "Charge flagship weapons" : "Use flagship weapon"}
       onClick={() => setOpen(true)}>
-      {shop ? `Flagship Weapons · ${TUNING.weaponChargeCost} Energy` : "Flagship Weapon"}
+      {shop ? `Flagship Weapons · ${TUNING.weaponChargeCost} Energy`
+        : used ? `Using ${WEAPON_NAMES[used.id]}`
+        : "Flagship Weapon"}
     </button>
     {open && <WeaponWindow player={player} enemy={enemy} shop={shop} busy={busy}
       onAction={onAction} onClose={() => setOpen(false)} />}
