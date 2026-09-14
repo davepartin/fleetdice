@@ -127,7 +127,7 @@ try {
     assert.doesNotMatch(await page.locator(".weapon-window").innerText(), /FLAGSHIP WEAPONS/);
     assert.match(row.attack, new RegExp(String.raw`round\s*\(\s*1\s*\)\s*×\s*${TUNING.weaponAttackPerRound}\s*=\s*${TUNING.weaponAttackPerRound} Attack`));
     assert.equal(await page.locator(".weapon-enemy-locked").count(), 4);
-    await saveShot(page, "weapons_panel_static_locked_390x844");
+    await saveShot(page, "weapons_panel_compact_locked_390x844");
     console.log("round1", row);
     await ctx.close();
   }
@@ -140,7 +140,7 @@ try {
     assert.equal(await page.locator(".weapon-enemy-box.weapon-attack.weapon-enemy-used").count(), 1);
     assert.equal(await page.locator(".weapon-enemy-box.weapon-repair.weapon-enemy-locked").count(), 1);
     assert.match(row.attack, new RegExp(String.raw`round\s*\(\s*6\s*\)\s*×\s*${TUNING.weaponAttackPerRound}\s*=\s*${12} Attack`));
-    await saveShot(page, `weapons_panel_static_mixed_${vp.width}x${vp.height}`);
+    await saveShot(page, `weapons_panel_compact_mixed_${vp.width}x${vp.height}`);
     console.log(`mixed ${vp.width}x${vp.height}`, row);
     await ctx.close();
   }
