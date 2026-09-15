@@ -37,6 +37,7 @@ import { commanderName } from "./firebase";
 import { reconnectDelay } from "./backoff";
 import { newTapLock, pickLiveRoom } from "./versusSync";
 import { saveSoloBattle, type SoloSave } from "./soloSave";
+import { recordSoloFinish } from "./gameTally";
 import { clearPendingMove, loadPendingMove, storePendingMove, type MoveEnvelope } from "./moveReceipt";
 
 export type MatchStatus = "loading" | "ready" | "error";
@@ -105,6 +106,9 @@ export function useSoloMatch(settings: SoloSettings): MatchController {
   const persist = useCallback((match: MatchState) => {
     if (brainRef.current && !saveSoloBattle(match, brainRef.current)) {
       setSaveWarning("This browser cannot save your solo battle. Keep this tab open until you finish.");
+    }
+    if (match.status === "finished" && (match.winner === "host" || match.winner === "guest")) {
+      recordSoloFinish(match.id);
     }
   }, []);
   const start = useCallback(() => {

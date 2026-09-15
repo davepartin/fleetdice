@@ -22,6 +22,7 @@ import {
   type LiveBattleRow,
   type RememberedRoomCard,
 } from "@/lib/rooms";
+import { watchGameTally, type GameTally } from "@/lib/gameTally";
 import { basePath, href } from "@/lib/paths";
 import { NOUN } from "@/lib/reference";
 
@@ -34,6 +35,7 @@ export function HomeScreen() {
   const [cards, setCards] = useState<RememberedRoomCard[]>([]);
   const [battles, setBattles] = useState<LiveBattleRow[]>([]);
   const [results, setResults] = useState<BattleResultRow[]>([]);
+  const [tally, setTally] = useState<GameTally | null>(null);
   const [showBoard, setShowBoard] = useState(false);
   const [pendingCancel, setPendingCancel] = useState<RememberedRoomCard | null>(null);
   const [closing, setClosing] = useState(false);
@@ -57,10 +59,15 @@ export function HomeScreen() {
       (rows) => alive && setResults(rows.slice(0, 8)),
       () => undefined,
     );
+    const stopTally = watchGameTally(
+      (row) => alive && setTally(row),
+      () => undefined,
+    );
     return () => {
       alive = false;
       stopBattles();
       stopResults();
+      stopTally();
     };
   }, []);
 
@@ -330,6 +337,14 @@ export function HomeScreen() {
               </Notice>
             )}
 
+            {tally && (
+              <p className="home-tally t-eyebrow text-center" aria-live="polite">
+                {tally.solo + tally.versus} {NOUN.games} played
+                <span className="home-tally-break">
+                  {tally.solo} solo · {tally.versus} vs
+                </span>
+              </p>
+            )}
             <p className="pt-2 text-center text-xs c-dim">
               Fleet Dice · every number in this game was measured, not guessed
             </p>

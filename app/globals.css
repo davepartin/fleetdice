@@ -4228,6 +4228,16 @@ button {
    Its lower edge is faded to nothing so the painted starfield hands over to
    the real dice turning behind the page — the point of the front page is that
    the first thing you see is the actual renderer, not a picture of it. */
+.home-tally {
+  margin: 0.35rem 0 0;
+  letter-spacing: 0.08em;
+  color: var(--color-hull-400);
+}
+.home-tally-break {
+  display: block;
+  margin-top: 0.2rem;
+  font-weight: 600;
+}
 .home-key-art {
   /* Cancels the scroll region's top padding as well as its side padding, so
      the art meets the top edge of the screen instead of floating in a band of

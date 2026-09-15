@@ -14,6 +14,7 @@ test("firestore.rules is Fleet Dice only — fd3 collections and reclaim, no FD1
   assert.match(rules, /match \/fd3Matches\/\{matchId\}/);
   assert.match(rules, /match \/fd3Live\/\{matchId\}/);
   assert.match(rules, /match \/fd3Results\/\{matchId\}/);
+  assert.match(rules, /match \/fd3Stats\/\{docId\}/);
   assert.match(rules, /function approvingReturn\(side, other\)/);
   assert.match(rules, /match \/rejoin\/\{uid\}/);
 

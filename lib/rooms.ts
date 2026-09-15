@@ -16,6 +16,7 @@
  *   fd3Codes/{0000}       four-digit room code -> matchId, plus seating
  *   fd3Live/{matchId}     public "now on the field" board: names and round only
  *   fd3Results/{matchId}  public finished-match list: two names and a time
+ *   fd3Stats/tally        public finished-game counts: solo and versus
  *
  * THE RULE THAT KEEPS EVERYONE SANE: host stays, guest joins. Creating a room
  * seats you. Opening your own invite link in a second tab makes you a THIRD
@@ -60,6 +61,7 @@ import {
 } from "./engine";
 import { checkMove, type MoveEnvelope, type MoveReceipts } from "./moveReceipt";
 import { isOnTheField } from "./liveboard";
+import { bumpTallyInTransaction, countingWritesEnabled } from "./gameTally";
 import { NOUN } from "./reference";
 
 /* ------------------------------------------------------------------ */
@@ -671,6 +673,7 @@ function finishRoomWrites(
       loserName: state.players[loserSide]!.name,
       finishedAt: serverTimestamp(),
     });
+    if (countingWritesEnabled()) bumpTallyInTransaction(transaction, "versus");
   }
 
   // Free the four digits for reuse if we can (only the host may delete), else

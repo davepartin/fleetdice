@@ -16,7 +16,7 @@ rules_version = '2';
 //    npx -y firebase-tools@latest deploy --only firestore:rules --project space-tribes
 //
 //  Collections (the fd3* prefix stays — renaming would break live rooms):
-//    fd3Codes, fd3Matches, fd3Live, fd3Results
+//    fd3Codes, fd3Matches, fd3Live, fd3Results, fd3Stats
 // =====================================================================
 
 service cloud.firestore {
@@ -302,6 +302,34 @@ service cloud.firestore {
             .hasOnly(["guestName", "status", "round", "updatedAt"]));
 
       allow delete: if boardParticipant();
+    }
+
+    // Home-page game counter. Anyone may read it. A signed-in player may
+    // add exactly one to solo or versus per write — never subtract, never
+    // touch other fields. The live site is what increments; localhost does
+    // not, so a playtest cannot inflate the number.
+    match /fd3Stats/{docId} {
+      allow read: if true;
+      allow create: if signedIn()
+        && docId == "tally"
+        && request.resource.data.keys().hasOnly(["solo", "versus"])
+        && request.resource.data.solo is int
+        && request.resource.data.versus is int
+        && request.resource.data.solo in [0, 1]
+        && request.resource.data.versus in [0, 1]
+        && request.resource.data.solo + request.resource.data.versus == 1;
+      allow update: if signedIn()
+        && docId == "tally"
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["solo", "versus"])
+        && request.resource.data.solo is int
+        && request.resource.data.versus is int
+        && request.resource.data.solo >= resource.data.solo
+        && request.resource.data.versus >= resource.data.versus
+        && request.resource.data.solo - resource.data.solo <= 1
+        && request.resource.data.versus - resource.data.versus <= 1
+        && (request.resource.data.solo - resource.data.solo)
+          + (request.resource.data.versus - resource.data.versus) == 1;
+      allow delete: if false;
     }
 
     // Public, name-only history for the home page results list.
