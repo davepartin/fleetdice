@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
-  TUNING, WEAPON_IDS, WEAPON_NAMES, weaponEffect, weaponStatus, weaponsOf, roundWeapon,
+  TUNING, WEAPON_IDS, WEAPON_NAMES, weaponAttack, weaponEffect, weaponStatus, weaponsOf, roundWeapon,
   type MatchAction, type PlayerState, type WeaponId, type WeaponInventory, type WeaponUse,
 } from "@/lib/engine";
 import { EnergyBank, EnergyPrice } from "./ui";
@@ -118,6 +118,20 @@ export function WeaponReport({ yours, theirs, yourStock, enemyStock, enemyName }
   </div>;
 }
 
+function WeaponEffectLine({ id, round }: { id: WeaponId; round: number }) {
+  if (id === "attack") {
+    return (
+      <p className="weapon-effect">
+        <span className="weapon-effect-eq">
+          Round ({round}) × {TUNING.weaponAttackPerRound} =
+        </span>
+        <span className="weapon-effect-hit t-num">{weaponAttack(round)} Attack</span>
+      </p>
+    );
+  }
+  return <p className="weapon-effect">{weaponEffect(id, round)}</p>;
+}
+
 function lockedWeapons(player: PlayerState) {
   return WEAPON_IDS.filter((id) => weaponStatus(weaponsOf(player), id) === "locked");
 }
@@ -208,19 +222,21 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
           <p>Opening this window or pressing Back spends nothing. Pressing Use, or a rotation direction, spends that charge immediately.</p>
         </div>}
         <div className="weapon-stage">
-        {turning && <div className="weapon-rotate-controls">
-          <p>Turn the flagship from {player.flag.face}:</p>
-          <button type="button" className="btn btn-primary weapon-rotate-btn" autoFocus
-            aria-label="Turn the flagship −1"
-            onClick={() => fire({ type: "flag-token", direction: -1 })}>
-            <span className="weapon-rotate-dir">−1</span>
-          </button>
-          <button type="button" className="btn btn-primary weapon-rotate-btn"
-            aria-label="Turn the flagship +1"
-            onClick={() => fire({ type: "flag-token", direction: 1 })}>
-            <span className="weapon-rotate-dir">+1</span>
-          </button>
-        </div>}
+        {turning ? (
+          <div className="weapon-rotate-controls">
+            <p>Turn the flagship from {player.flag.face}:</p>
+            <button type="button" className="btn btn-primary weapon-rotate-btn"
+              aria-label="Turn the flagship −1"
+              onClick={() => fire({ type: "flag-token", direction: -1 })}>
+              <span className="weapon-rotate-dir">−1</span>
+            </button>
+            <button type="button" className="btn btn-primary weapon-rotate-btn"
+              aria-label="Turn the flagship +1"
+              onClick={() => fire({ type: "flag-token", direction: 1 })}>
+              <span className="weapon-rotate-dir">+1</span>
+            </button>
+          </div>
+        ) : (
         <div className="weapon-card-grid">
           {WEAPON_IDS.map(id => {
             const status = weaponStatus(stock, id);
@@ -230,7 +246,7 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
             return <section className={`weapon-card weapon-${id} weapon-card-${status}`} key={id}>
               <div className="weapon-card-top"><WeaponIcon id={id} /><span className="weapon-state">{STATE[status]}</span></div>
               <h3>{WEAPON_NAMES[id]}</h3>
-              <p className="weapon-effect">{weaponEffect(id, player.round)}</p>
+              <WeaponEffectLine id={id} round={player.round} />
               <button type="button" disabled={!enabled}
                 className={shop && status === "available" ? "weapon-btn-charged" : undefined}
                 onClick={() => {
@@ -245,6 +261,7 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
             </section>;
           })}
         </div>
+        )}
         </div>
       </div>
       {enemy && <EnemyWeaponRow stock={weaponsOf(enemy)} name={enemy.name} />}

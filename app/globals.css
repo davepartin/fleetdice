@@ -189,7 +189,20 @@
 }
 .weapon-state { font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-hull-300, #8593b8); }
 .weapon-card h3 { font-size: 14px; font-weight: 800; line-height: 1.15; }
-.weapon-effect { color: var(--weapon-color); font-size: 12px; font-weight: 700; line-height: 1.2; text-wrap: pretty; }
+.weapon-effect { color: var(--weapon-color); font-size: 12px; font-weight: 700; line-height: 1.2; }
+.weapon-attack .weapon-effect { display: flex; flex-direction: column; align-items: flex-start; gap: 0.2rem; }
+.weapon-effect-eq { display: block; white-space: nowrap; }
+.weapon-effect-hit {
+  display: block;
+  width: fit-content;
+  border: 1px solid color-mix(in srgb, var(--weapon-color) 55%, transparent);
+  border-radius: 6px;
+  padding: 0.12rem 0.38rem;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.1;
+  background: color-mix(in srgb, var(--weapon-color) 14%, transparent);
+}
 .weapon-card > button { margin-top: auto; border: 1px solid color-mix(in srgb, var(--weapon-color) 45%, transparent); border-radius: 8px; padding: 6px 4px; min-height: 40px; font-size: 11px; font-weight: 800; color: var(--weapon-color); cursor: pointer; background: rgb(0 0 0 / 0.18); }
 .weapon-card-available { border-color: color-mix(in srgb, var(--weapon-color) 55%, transparent); background: radial-gradient(circle at 50% 18%, color-mix(in srgb, var(--weapon-color) 22%, transparent), transparent 52%), linear-gradient(180deg, color-mix(in srgb, var(--weapon-color) 14%, #0b1020), rgb(7 11 22 / 0.96)); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--weapon-color) 28%, white 12%), 0 0 0 1px color-mix(in srgb, var(--weapon-color) 18%, transparent), 0 0 22px -6px color-mix(in srgb, var(--weapon-color) 48%, transparent); }
 .weapon-card-available .weapon-state { color: var(--weapon-color); }
@@ -227,21 +240,21 @@
 }
 .weapon-tips b { color: var(--color-primary, #f4f1e8); }
 .weapon-rotate-controls {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
   margin: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  align-content: center;
-  padding: 8px;
-  border-radius: 12px;
-  background: rgb(7 11 22 / 0.94);
+  gap: 10px;
+  align-content: stretch;
+  min-height: 11rem;
+  padding: 4px 0 8px;
 }
-.weapon-rotate-controls p { grid-column: 1 / -1; font-size: 13px; }
-.weapon-window .btn.weapon-rotate-btn { min-height: 44px; padding: 0.7rem 0.9rem; }
-.weapon-rotate-dir { font-family: var(--font-numeric, inherit); font-size: 18px; font-weight: 800; letter-spacing: -0.02em; line-height: 1; }
+.weapon-rotate-controls p { grid-column: 1 / -1; font-size: 15px; font-weight: 700; }
+.weapon-window .btn.weapon-rotate-btn {
+  min-height: 72px;
+  padding: 0.9rem 0.9rem;
+  touch-action: manipulation;
+}
+.weapon-rotate-dir { font-family: var(--font-numeric, inherit); font-size: 28px; font-weight: 800; letter-spacing: -0.02em; line-height: 1; position: relative; z-index: 1; }
 .weapon-enemy-row {
   flex-shrink: 0;
   margin: 0;

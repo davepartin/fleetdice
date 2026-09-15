@@ -13,7 +13,10 @@ const help = readFileSync(new URL("../lib/reference.ts", import.meta.url), "utf8
 
 test("Attack copy is the round times two as an equation from TUNING", () => {
   assert.match(engine, /Round \(\$\{round\}\) × \$\{TUNING\.weaponAttackPerRound\} = \$\{weaponAttack\(round\)\} Attack/);
-  assert.match(weapons, /weaponEffect\(id, player\.round\)/);
+  assert.match(weapons, /function WeaponEffectLine/);
+  assert.match(weapons, /weapon-effect-hit/);
+  assert.match(weapons, /Round \(\{round\}\) × \{TUNING\.weaponAttackPerRound\} =/);
+  assert.match(weapons, /weaponAttack\(round\)\} Attack/);
   assert.doesNotMatch(weapons, /weapon-effect-now/);
   assert.doesNotMatch(weapons, /This round/);
 });
@@ -67,8 +70,11 @@ test("rotate directions are filled primary buttons with −1 and +1 inside", () 
   assert.match(weapons, /btn btn-primary weapon-rotate-btn/);
   assert.match(weapons, /<span className="weapon-rotate-dir">−1<\/span>/);
   assert.match(weapons, /<span className="weapon-rotate-dir">\+1<\/span>/);
-  assert.match(css, /\.weapon-window \.btn\.weapon-rotate-btn \{ min-height: 44px/);
-  assert.doesNotMatch(css, /weapon-rotate-dir \{[^}]*font-size: 32px/);
+  assert.match(css, /\.weapon-window \.btn\.weapon-rotate-btn \{/);
+  assert.match(css, /min-height: 72px/);
+  assert.match(css, /\.weapon-rotate-controls \{/);
+  assert.doesNotMatch(css, /\.weapon-rotate-controls \{[^}]*position:\s*absolute/);
+  assert.doesNotMatch(weapons, /autoFocus/);
   assert.doesNotMatch(weapons, /−1 face/);
 });
 
