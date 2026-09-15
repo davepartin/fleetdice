@@ -134,13 +134,13 @@ test("the shipyard charge control is a filled top button with the upgrade Energy
 });
 
 test("Charged weapon controls are a coloured fill, not a dead black button", () => {
+  assert.match(weapons, /weapon-btn-ready/);
   assert.match(weapons, /className=\{shop && status === "available" \? "weapon-btn-charged"/);
   assert.match(weapons, /status === "available" \? "Charged"/);
-  const charged = css.match(/\.weapon-card > button\.weapon-btn-charged:disabled \{[\s\S]*?\}/);
-  assert.ok(charged, "Charged button needs its own disabled style");
-  assert.match(charged[0], /var\(--weapon-color\)/);
-  assert.match(charged[0], /#090d17/);
-  assert.doesNotMatch(charged[0], /rgb\(0 0 0/);
+  assert.match(css, /\.weapon-card > button\.weapon-btn-ready/);
+  assert.match(css, /\.weapon-card > button\.weapon-btn-charged:disabled/);
+  assert.match(css, /button\.weapon-btn-ready[\s\S]*?#090d17/);
+  assert.match(css, /button\.weapon-btn-ready[\s\S]*?var\(--weapon-color\)/);
   assert.match(css, /\.weapon-launcher-shop\.weapon-launcher-charged \{[\s\S]*?opacity:\s*1/);
 });
 

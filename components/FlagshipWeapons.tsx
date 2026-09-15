@@ -251,7 +251,7 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
               <h3>{WEAPON_NAMES[id]}</h3>
               <WeaponEffectLine id={id} round={player.round} />
               <button type="button" disabled={!enabled}
-                className={shop && status === "available" ? "weapon-btn-charged" : undefined}
+                className={shop && status === "available" ? "weapon-btn-charged" : !shop && status === "available" && enabled ? "weapon-btn-ready" : undefined}
                 onClick={() => {
                   if (shop) onAction({ type: "shop", operation: "weapon", weapon: id });
                   else if (id === "rotate") setRotate(true);
