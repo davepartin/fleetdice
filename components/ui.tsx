@@ -21,8 +21,7 @@ type ButtonProps = {
   children: ReactNode;
   onClick?: () => void;
   disabled?: boolean;
-  /** Exactly one filled style exists: "primary", bone white, one per screen.
-   *  Everything else is "ghost" — outline-only. */
+  /** The one filled action: dark space HUD bar. Everything else is "ghost". */
   tone?: "primary" | "buy" | "ghost";
   size?: "sm" | "md" | "lg";
   full?: boolean;

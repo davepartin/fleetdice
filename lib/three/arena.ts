@@ -131,6 +131,13 @@ export type Arena = {
    * settles into once next round's sync marks it disabled.
    */
   nudgeShip(side: "you" | "enemy", shipId: string, strength?: number): void;
+  /**
+   * Drain a hull to the sat-out plate the moment it takes the hit, so the
+   * volley animation is the thing that blacks it — not the next round's sync.
+   */
+  spendShip(side: "you" | "enemy", shipId: string): void;
+  /** World position of a live hull, for aiming the hit at the die itself. */
+  shipWorld(side: "you" | "enemy", shipId: string): THREE.Vector3 | null;
   /** Blast every die on that deck outward from the flagship and off the
    *  board — the losing fleet at the moment the match ends. */
   scatterDice(side: "you" | "enemy"): void;
@@ -157,6 +164,8 @@ export function createArena(canvas: HTMLCanvasElement, options: ArenaOptions = {
   };
   const isPhone = () => isPhoneLayout();
   let settledAlive = true;
+  const spentIds: Record<"you" | "enemy", Set<string>> = { you: new Set(), enemy: new Set() };
+  const spentRound: Record<"you" | "enemy", number> = { you: -1, enemy: -1 };
 
   /* Tapping ---------------------------------------------------------- */
 
@@ -235,6 +244,10 @@ export function createArena(canvas: HTMLCanvasElement, options: ArenaOptions = {
     show: boolean,
     opts: SyncOptions,
   ) {
+    if (spentRound[deckKey] !== player.round) {
+      spentIds[deckKey].clear();
+      spentRound[deckKey] = player.round;
+    }
     const deck = decks[deckKey];
     const wanted = new Map<string, { kind: DieKind; cell: number; value: number; disabled: boolean }>();
 
@@ -244,7 +257,7 @@ export function createArena(canvas: HTMLCanvasElement, options: ArenaOptions = {
         kind: ship.sides as DieKind,
         cell: cellForSlot(ship.slot),
         value: die?.value ?? 0,
-        disabled: ship.disabledRound === player.round,
+        disabled: ship.disabledRound === player.round || spentIds[deckKey].has(ship.id),
       });
     }
     const flagDie = player.dice.find((entry) => entry.flag);
@@ -487,6 +500,15 @@ export function createArena(canvas: HTMLCanvasElement, options: ArenaOptions = {
     },
     nudgeShip(side, shipId, strength = 1) {
       decks[side].dice.get(shipId)?.nudge(strength);
+    },
+    spendShip(side, shipId) {
+      spentIds[side].add(shipId);
+      decks[side].dice.get(shipId)?.setState({ disabled: true });
+    },
+    shipWorld(side, shipId) {
+      const die = decks[side].dice.get(shipId);
+      if (!die) return null;
+      return die.object.getWorldPosition(new THREE.Vector3());
     },
     scatterDice(side) {
       for (const die of decks[side].dice.values()) {

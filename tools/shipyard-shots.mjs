@@ -96,7 +96,7 @@ try {
         chargeText: (charge?.textContent || "").replace(/\s+/g, " ").trim(),
         chipText: (chip?.textContent || "").replace(/\s+/g, " ").trim(),
         chipOk: chip?.classList.contains("yard-price-ok") ?? false,
-        aboveBoard: !!(cr && br && cr.bottom <= br.top + 1),
+        belowBoard: !!(cr && br && cr.top >= br.bottom - 1),
         footLauncher: !!document.querySelector(".yard-foot .weapon-launcher"),
         name: (name?.textContent || "").replace(/\s+/g, " ").trim(),
         sub: (sub?.textContent || "").replace(/\s+/g, " ").trim(),
@@ -117,10 +117,11 @@ try {
       };
     });
 
-    assert.match(layout.chargeText, /Charge flagship weapons/i);
+    assert.match(layout.chargeText, /Charge/);
+    assert.match(layout.chargeText, /Flagship Weapons/i);
     assert.equal(layout.chipText, String(TUNING.weaponChargeCost));
     assert.equal(layout.chipOk, true);
-    assert.equal(layout.aboveBoard, true, "charge button must sit above the fleet map");
+    assert.equal(layout.belowBoard, true, "charge button must sit below the fleet map");
     assert.equal(layout.footLauncher, false);
     assert.match(layout.name, /Flagship Level One/i);
     assert.match(layout.sub, /→ Level Two/i);
@@ -139,10 +140,15 @@ try {
       Math.abs(layout.boardLeft - layout.chargeLeft) <= 2,
       `fleet map left ${layout.boardLeft} must match charge left ${layout.chargeLeft}`,
     );
+    const chargeBg = await page.evaluate(() => {
+      const el = document.querySelector(".yard-charge .weapon-launcher-shop");
+      const cs = el ? getComputedStyle(el) : null;
+      return cs?.backgroundImage || cs?.backgroundColor || "";
+    });
     assert.match(
-      layout.chargeBg,
-      /rgb\(255,\s*210,\s*61\)/,
-      `charge control must keep the filled Energy colour, not the ghost hover (${layout.chargeBg})`,
+      chargeBg,
+      /rgb\(12,\s*18,\s*32\)/,
+      `charge control must use the hangar HUD plate (${chargeBg})`,
     );
 
     await save(page, `shipyard_charge_${vp.width}x${vp.height}`);

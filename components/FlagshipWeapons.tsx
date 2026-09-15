@@ -145,13 +145,16 @@ export function FlagshipWeapons({ player, enemy, shop = false, busy, onAction }:
       onClick={() => setOpen(true)}>
       {shop ? (
         <>
-          <span className="weapon-launcher-shop-label">Charge flagship weapons</span>
-          {canCharge && (
-            <EnergyPrice
-              cost={TUNING.weaponChargeCost}
-              affordable={player.energy >= TUNING.weaponChargeCost}
-            />
-          )}
+          <span className="weapon-launcher-pad">Charge</span>
+          <span className="weapon-launcher-meta">
+            <span className="weapon-launcher-shop-label">Flagship Weapons</span>
+            {canCharge && (
+              <EnergyPrice
+                cost={TUNING.weaponChargeCost}
+                affordable={player.energy >= TUNING.weaponChargeCost}
+              />
+            )}
+          </span>
         </>
       ) : (
         launcherLabel(player)

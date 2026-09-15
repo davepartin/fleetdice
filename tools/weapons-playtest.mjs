@@ -180,15 +180,16 @@ try {
     const { ctx, page } = await pageWith(broke, { width: 375, height: 812 });
     await launcherOnScreen(page);
     const charge = page.getByRole("button", { name: "Charge flagship weapons" });
-    assert.match(await charge.innerText(), /Charge flagship weapons/i);
+    assert.match(await charge.innerText(), /Charge/);
+    assert.match(await charge.innerText(), /Flagship Weapons/);
     assert.equal(await page.locator(".yard-charge .yard-price-no").count(), 1);
     assert.equal(await page.locator(".yard-foot .weapon-launcher").count(), 0);
-    const aboveBoard = await page.evaluate(() => {
+    const belowBoard = await page.evaluate(() => {
       const bar = document.querySelector(".yard-charge .weapon-launcher")?.getBoundingClientRect();
       const board = document.querySelector(".yard-board")?.getBoundingClientRect();
-      return !!(bar && board && bar.bottom <= board.top + 1);
+      return !!(bar && board && bar.top >= board.bottom - 1);
     });
-    assert.equal(aboveBoard, true, "Charge flagship weapons must sit above the fleet map");
+    assert.equal(belowBoard, true, "Charge must sit below the fleet map");
     await charge.click();
     assert.match(await page.locator("#weapon-title").innerText(), /FLAGSHIP WEAPONS/i);
     assert.match(await page.locator(".weapon-lede").innerText(), /One-time use per game and only 1 per round/);

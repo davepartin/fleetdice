@@ -587,7 +587,7 @@ export const HOW_TO_PLAY: readonly HelpSection[] = [
       },
       {
         kind: "text",
-        text: `Charge each flagship weapon once per game in the shipyard for ${TUNING.weaponChargeCost} Energy — the Charge flagship weapons button sits at the top of the yard, above the fleet map. Each charge can be used once, after rolling, with at most one weapon per round. You can keep several weapons charged. Opponents see which are available, locked or used; activation stays hidden until both lock in. Back closes the weapon window without spending a charge.`,
+        text: `Charge each flagship weapon once per game in the shipyard for ${TUNING.weaponChargeCost} Energy — the Charge flagship weapons button sits below the fleet map. Each charge can be used once, after rolling, with at most one weapon per round. You can keep several weapons charged. Opponents see which are available, locked or used; activation stays hidden until both lock in. Back closes the weapon window without spending a charge.`,
       },
       {
         kind: "text",
@@ -609,7 +609,7 @@ export const HOW_TO_PLAY: readonly HelpSection[] = [
         steps: [
           {
             name: "1. The shipyard",
-            text: `You decide what to spend. Hulls, upgrades, bays and flagship levels all come out of the same Energy. Charge flagship weapons is the button above the fleet map, ${TUNING.weaponChargeCost} Energy each. Round one skips this, because you start with ${TUNING.startEnergy} Energy and ${TUNING.startSlots} ${die(START_HULL)}s already in place.`,
+            text: `You decide what to spend. Hulls, upgrades, bays and flagship levels all come out of the same Energy. Charge flagship weapons is the red button below the fleet map, ${TUNING.weaponChargeCost} Energy each. Round one skips this, because you start with ${TUNING.startEnergy} Energy and ${TUNING.startSlots} ${die(START_HULL)}s already in place.`,
           },
           {
             name: "2. Roll",

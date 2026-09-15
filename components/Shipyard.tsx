@@ -219,12 +219,6 @@ export function Shipyard({ player, enemy, enemyName, enemyHp, onAction, onDone, 
         <Chip tone="energy">{NOUN.flagship} L{player.flag.level}</Chip>
       </div>
 
-      {/* Charge sits above the fleet map so it reads as a thing to tap,
-          not a status line under the grid. Same engine action as before. */}
-      <div className="yard-charge">
-        <FlagshipWeapons player={player} enemy={enemy} shop busy={busy} onAction={onAction} />
-      </div>
-
       {/* ---------------- the board ---------------- */}
       <div className="yard-main">
       <div className="yard-board" role="group" aria-label="Your fleet">
@@ -239,6 +233,9 @@ export function Shipyard({ player, enemy, enemyName, enemyHp, onAction, onDone, 
         ))}
       </div>
 
+      <div className="yard-charge">
+        <FlagshipWeapons player={player} enemy={enemy} shop busy={busy} onAction={onAction} />
+      </div>
       </div>
 
       {/* ---------------- the drawer ---------------- */}

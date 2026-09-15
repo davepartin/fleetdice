@@ -385,11 +385,15 @@ export function MatchScreen({ controller, onExit, title, subtitle }: Props) {
       braced.forEach((entry, index) => {
         const ship = player.ships.find((candidate) => candidate.id === entry.id);
         if (!ship) return;
-        const point = arena.cellWorld(side, cellForSlot(ship.slot));
+        const point =
+          arena.shipWorld(side, entry.id) ?? arena.cellWorld(side, cellForSlot(ship.slot));
         window.setTimeout(() => {
           arena.vfx.shipSacrifice(point);
-          arena.nudgeShip(side, entry.id, 1.1);
+          arena.nudgeShip(side, entry.id, 1.25);
           audio.play("impact-light", { pitch: 1.05 + index * 0.05 });
+          // After the spark, the hull itself goes out — same length as the
+          // existing volley hold, no extra wait.
+          window.setTimeout(() => arena.spendShip(side, entry.id), 220);
         }, index * 90);
       });
     };
