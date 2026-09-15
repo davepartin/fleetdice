@@ -249,6 +249,7 @@
   padding: 4px 0 8px;
 }
 .weapon-rotate-controls p { grid-column: 1 / -1; font-size: 15px; font-weight: 700; }
+.weapon-rotate-wrap { font-size: 13px; font-weight: 600; color: var(--color-hull-200, #c0c8db); }
 .weapon-window .btn.weapon-rotate-btn {
   min-height: 72px;
   padding: 0.9rem 0.9rem;

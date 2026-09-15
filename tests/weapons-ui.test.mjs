@@ -76,6 +76,8 @@ test("rotate directions are filled primary buttons with −1 and +1 inside", () 
   assert.doesNotMatch(css, /\.weapon-rotate-controls \{[^}]*position:\s*absolute/);
   assert.doesNotMatch(weapons, /autoFocus/);
   assert.doesNotMatch(weapons, /−1 face/);
+  assert.match(weapons, /FLAG_FACES\.length\} up becomes 1/);
+  assert.match(weapons, /1 down becomes \{FLAG_FACES\.length\}/);
 });
 
 test("weapon status lives only on the launcher, not a second Using line", () => {

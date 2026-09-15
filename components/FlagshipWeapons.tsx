@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
-  TUNING, WEAPON_IDS, WEAPON_NAMES, weaponAttack, weaponEffect, weaponStatus, weaponsOf, roundWeapon,
+  TUNING, FLAG_FACES, WEAPON_IDS, WEAPON_NAMES, weaponAttack, weaponEffect, weaponStatus, weaponsOf, roundWeapon,
   type MatchAction, type PlayerState, type WeaponId, type WeaponInventory, type WeaponUse,
 } from "@/lib/engine";
 import { EnergyBank, EnergyPrice } from "./ui";
@@ -224,7 +224,10 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
         <div className="weapon-stage">
         {turning ? (
           <div className="weapon-rotate-controls">
-            <p>Turn the flagship from {player.flag.face}:</p>
+            <p>Turn the flagship from {player.flag.face}.</p>
+            <p className="weapon-rotate-wrap">
+              {FLAG_FACES.length} up becomes 1. 1 down becomes {FLAG_FACES.length}.
+            </p>
             <button type="button" className="btn btn-primary weapon-rotate-btn"
               aria-label="Turn the flagship −1"
               onClick={() => fire({ type: "flag-token", direction: -1 })}>
