@@ -185,4 +185,6 @@ test("the centre flagship tile spells the level and uses the d6 square, not a st
   assert.doesNotMatch(yard, /L\$\{offer\.level\} → L/);
   assert.doesNotMatch(yard, /yard-cell-art yard-cell-flag/);
   assert.match(css, /\.yard-cell-flag \.yard-cell-art svg path/);
+  assert.match(css, /\.yard-cell \{[^}]*min-height: 0/);
+  assert.match(css, /\.yard-cell-sub \{[^}]*white-space: nowrap/);
 });
