@@ -94,6 +94,7 @@ export function MatchScreen({ controller, onExit, title, subtitle }: Props) {
    * behind a wall of text.
    */
   const [cinematic, setCinematic] = useState<null | "reveal" | "volley" | "finish">(null);
+  const [reportDetails, setReportDetails] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
   /**
    * The straight's board lights stay off until the dice land, so the run
@@ -357,6 +358,7 @@ export function MatchScreen({ controller, onExit, title, subtitle }: Props) {
       return () => window.clearTimeout(timer);
     }
     if (phase !== "brace" && phase !== "report" && phase !== "over") setCinematic(null);
+    if (phase !== "report") setReportDetails(false);
   }, [phase]);
 
   /* The volley — play it once per round, when the report appears ------ */
@@ -656,13 +658,37 @@ export function MatchScreen({ controller, onExit, title, subtitle }: Props) {
           )}
         </div>
 
-        {/* ---------------- middle: the board shows through ---------------- */}
-        <div
-          className={`hud-pass-through min-h-0 flex-1 ${phase === "brace" ? "hud-pass-through-danger" : ""}`}
-        />
+        {/* ---------------- middle: the board shows through. Round details
+            cover it only if someone asks. */}
+        {phase === "report" && you.report && reportDetails ? (
+          <div className="volley-report">
+            <RoundReportCard
+              report={you.report}
+              them={them}
+              enemyName={enemyName}
+              waitingForOpponent={them?.phase === "brace"}
+              details
+              busy={busy}
+              onHideDetails={() => setReportDetails(false)}
+              onContinue={() => {
+                audio.play("button-major");
+                send({ type: "continue" });
+              }}
+            />
+          </div>
+        ) : (
+          <div
+            className={`hud-pass-through min-h-0 flex-1 ${phase === "brace" ? "hud-pass-through-danger" : ""}`}
+          />
+        )}
 
         {/* ---------------- bottom ---------------- */}
-        <div ref={bottomRef} className="match-bottom mx-auto w-full max-w-[44rem] px-2 pb-2">
+        <div
+          ref={bottomRef}
+          className={`match-bottom mx-auto w-full max-w-[44rem] px-2 pb-2 ${
+            phase === "report" && reportDetails ? "hidden" : ""
+          }`}
+        >
           {controller.recoveryNotice && (
             <Notice tone="warn" className="mb-2">{controller.recoveryNotice}</Notice>
           )}
@@ -675,7 +701,7 @@ export function MatchScreen({ controller, onExit, title, subtitle }: Props) {
             </Notice>
           )}
 
-          {cinematic ? (
+          {cinematic && cinematic !== "volley" ? (
             <RevealBanner
               kind={cinematic}
               you={you}
@@ -704,12 +730,14 @@ export function MatchScreen({ controller, onExit, title, subtitle }: Props) {
               />
             </div>
           ) : phase === "report" && you.report ? (
-            <div className="round-report-panel panel panel-you flex max-h-[74dvh] min-h-0 flex-col overflow-hidden p-4">
+            <div className="round-report-panel panel panel-you">
               <RoundReportCard
                 report={you.report}
+                them={them}
                 enemyName={enemyName}
                 waitingForOpponent={them?.phase === "brace"}
                 busy={busy}
+                onShowDetails={() => setReportDetails(true)}
                 onContinue={() => {
                   audio.play("button-major");
                   send({ type: "continue" });

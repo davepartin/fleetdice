@@ -4,11 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   TUNING, WEAPON_IDS, WEAPON_NAMES, weaponEffect, weaponStatus, weaponsOf, roundWeapon,
-  type MatchAction, type PlayerState, type WeaponInventory, type WeaponUse,
+  type MatchAction, type PlayerState, type WeaponId, type WeaponInventory, type WeaponUse,
 } from "@/lib/engine";
-import { EnergyPrice } from "./ui";
+import { EnergyBank, EnergyPrice } from "./ui";
+import { StatIcon } from "./StatIcon";
 
-const ICON = { rotate: "↻", shield: "◈", attack: "✦", repair: "+" };
 const TONE = { rotate: "energy", shield: "shield", attack: "attack", repair: "repair" };
 const STATE = { locked: "Locked", available: "Available", used: "Used" };
 /** Short names for the compact dock tap. Full names stay in the window. */
@@ -20,10 +20,48 @@ export function weaponUseText(use: WeaponUse): string {
   return `${WEAPON_NAMES[use.id]} · +${use.amount}`;
 }
 
+/** Same four marks at the same size — unicode ↻ filled the box; ✦ did not. */
+function WeaponIcon({ id, size = 22 }: { id: WeaponId; size?: number }) {
+  if (id === "rotate") {
+    return (
+      <svg
+        className="weapon-symbol"
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          fill="currentColor"
+          d="M17.65 6.35C16.2 4.9 14.21 4 12 4 7.58 4 4.01 7.58 4.01 12S7.58 20 12 20c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4z"
+        />
+      </svg>
+    );
+  }
+  const kind = id === "shield" ? "shield" : id === "attack" ? "attack" : "repair";
+  return <StatIcon kind={kind} size={size} className="weapon-symbol" />;
+}
+
 function LockMark() {
-  return <svg className="weapon-enemy-lock" viewBox="0 0 16 16" aria-hidden="true">
-    <path fill="currentColor" d="M8 1.75A2.75 2.75 0 0 0 5.25 4.5V6h-.75A1.5 1.5 0 0 0 3 7.5v5A1.5 1.5 0 0 0 4.5 14h7a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 11.5 6h-.75V4.5A2.75 2.75 0 0 0 8 1.75Zm1.25 4.25h-2.5V4.5a1.25 1.25 0 1 1 2.5 0Z" />
-  </svg>;
+  return (
+    <svg className="weapon-enemy-lock" viewBox="0 0 24 28" aria-hidden="true">
+      <path
+        d="M7 12.2V8.4C7 4.8 9.4 2.6 12 2.6s5 2.2 5 5.8v3.8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.8"
+        strokeLinecap="round"
+      />
+      <rect x="3.6" y="11.4" width="16.8" height="14.4" rx="3.4" fill="currentColor" />
+      <circle cx="12" cy="17.8" r="1.7" fill="var(--color-lock-hole)" />
+      <path
+        d="M12 18.8v2.8"
+        stroke="var(--color-lock-hole)"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
 }
 
 /** Glanceable four-box strip: locked, charged, or spent. Same symbols as the cards. */
@@ -40,7 +78,7 @@ export function EnemyWeaponRow({ stock, name }: { stock: WeaponInventory; name: 
           aria-label={`${WEAPON_NAMES[id]} · ${caption}`}
           title={`${WEAPON_NAMES[id]} · ${caption}`}>
           <span className="weapon-enemy-mark">
-            <span className="weapon-symbol" aria-hidden="true">{ICON[id]}</span>
+            <WeaponIcon id={id} size={22} />
             {status === "locked" && <LockMark />}
           </span>
           {status === "used" && <span className="weapon-enemy-slash" aria-hidden="true" />}
@@ -57,7 +95,7 @@ export function WeaponStatusList({ stock, name }: { stock: WeaponInventory; name
       const status = weaponStatus(stock, id);
       const use = stock[id].use;
       return <div key={id} className={`weapon-status-row weapon-status-${status}`}>
-        <span className={`c-${TONE[id]}`}><span aria-hidden="true">{ICON[id]} </span>{WEAPON_NAMES[id]}</span>
+        <span className={`c-${TONE[id]} weapon-status-name`}><WeaponIcon id={id} size={16} />{WEAPON_NAMES[id]}</span>
         <span>{status === "used" && stock[id].usedRound ? `Used R${stock[id].usedRound}` : STATE[status]}</span>
         {use && <small>{weaponUseText(use)}</small>}
       </div>;
@@ -141,21 +179,20 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
   const canFire = player.phase === "rolling" && !used && !busy;
   const fire = (action: MatchAction) => { onAction(action); onClose(); };
   const turning = rotate && canFire && weaponStatus(stock, "rotate") === "available";
-  const shopLede = shop
-    ? player.energy < TUNING.weaponChargeCost && lockedWeapons(player).length
-      ? `Need ${TUNING.weaponChargeCost} Energy to charge · ${player.energy} in the bank`
-      : `${player.energy} Energy in the bank · ${TUNING.weaponChargeCost} per charge`
-    : null;
+  const shopLede = shop ? "One-time use per game and only 1 per round" : null;
   return createPortal(<dialog ref={dialog} className="weapon-window" aria-labelledby="weapon-title"
     onCancel={onClose} onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
     <div className="weapon-window-inner">
       <header className="weapon-window-head">
         <div>
-          <p className="t-eyebrow">{shop ? "Shipyard" : `Round ${player.round}`}</p>
+          <p className="t-eyebrow weapon-window-kicker">
+            {shop ? "Shipyard" : `Round ${player.round}`}
+            <button type="button" className="weapon-tips-link" aria-expanded={tips} onClick={() => setTips(!tips)}>Tips</button>
+          </p>
           <h2 id="weapon-title" className="t-display">Flagship weapons</h2>
-          <p className="weapon-lede">{shopLede ?? <>Each may be used <b>once</b> per game<br />and only <b>one</b> per round.</>}</p>
         </div>
-        <button type="button" className="weapon-small-button" aria-expanded={tips} onClick={() => setTips(!tips)}>Tips</button>
+        {shop && <EnergyBank energy={player.energy} />}
+        <p className="weapon-lede">{shopLede ?? <>Each may be used <b>once</b> per game<br />and only <b>one</b> per round.</>}</p>
       </header>
       <div className="weapon-window-body">
         {tips && <div className="weapon-tips">
@@ -163,7 +200,7 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
           <p>Both players can see charged and used weapons. Your activation stays hidden until both lock in.</p>
           <p><b>Rotate:</b> turn your flagship −1 or +1 after rolling. It can complete a straight or change your bonus.</p>
           <p><b>Super Shield:</b> halve enemy Attack before your Shields and blocking ships. An odd total rounds up after halving. Direct and War still follow their usual rules.</p>
-          <p><b>Attack:</b> add round (the current round) × {TUNING.weaponAttackPerRound} Attack. Waiting makes it stronger; enemy defenses still apply.</p>
+          <p><b>Attack:</b> add Round (the current round) × {TUNING.weaponAttackPerRound} Attack. Waiting makes it stronger; enemy defenses still apply.</p>
           <p><b>Repair:</b> add {TUNING.weaponRepair} health alongside this volley’s damage. It can save your flagship and raise your health above its previous high.</p>
           <p>Opening this window or pressing Back spends nothing. Pressing Use, or a rotation direction, spends that charge immediately.</p>
         </div>}
@@ -188,7 +225,7 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
               ? player.phase === "shop" && status === "locked" && player.energy >= TUNING.weaponChargeCost
               : status === "available" && canFire);
             return <section className={`weapon-card weapon-${id} weapon-card-${status}`} key={id}>
-              <div className="weapon-card-top"><span className="weapon-symbol" aria-hidden="true">{ICON[id]}</span><span className="weapon-state">{STATE[status]}</span></div>
+              <div className="weapon-card-top"><WeaponIcon id={id} /><span className="weapon-state">{STATE[status]}</span></div>
               <h3>{WEAPON_NAMES[id]}</h3>
               <p className="weapon-effect">{weaponEffect(id, player.round)}</p>
               <button type="button" disabled={!enabled}

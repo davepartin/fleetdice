@@ -8,7 +8,7 @@
  * they played — this is the screen worth a screenshot when they do.
  */
 
-import type { PlayerState } from "@/lib/engine";
+import type { DieValue, PlayerState } from "@/lib/engine";
 import { shipInSlot, slotForCell, weaponsOf } from "@/lib/engine";
 import { WeaponStatusList } from "./FlagshipWeapons";
 import { NOUN } from "@/lib/reference";
@@ -34,9 +34,19 @@ const CELLS = Array.from({ length: 9 }, (_, cell) => cell);
 /** Face art is a canvas, so it needs a pixel size rather than a percentage. */
 const RECAP_FACE_PX = 40;
 
-function FleetBoard({ player }: { player: PlayerState }) {
-  const faces = new Map(player.dice.filter((die) => !die.flag).map((die) => [die.id, die.value]));
-  const flagDie = player.dice.find((die) => die.flag);
+export function FleetBoard({
+  player,
+  dice,
+  facePx = RECAP_FACE_PX,
+}: {
+  player: PlayerState;
+  /** The roll to paint. Defaults to the player's live dice. */
+  dice?: DieValue[];
+  facePx?: number;
+}) {
+  const roll = dice ?? player.dice;
+  const faces = new Map(roll.filter((die) => !die.flag).map((die) => [die.id, die.value]));
+  const flagDie = roll.find((die) => die.flag);
   return (
     <div className="recap-board" role="group" aria-label="Final fleet">
       {CELLS.map((cell) => {
@@ -45,7 +55,7 @@ function FleetBoard({ player }: { player: PlayerState }) {
             <div key={cell} className="recap-cell recap-cell-flag">
               {flagDie ? (
                 <span className="recap-cell-face">
-                  <HelpFlagFace face={flagDie.value} size={RECAP_FACE_PX} />
+                  <HelpFlagFace face={flagDie.value} size={facePx} />
                 </span>
               ) : (
                 <span className="recap-cell-flag-star" aria-hidden="true">★</span>
@@ -66,13 +76,13 @@ function FleetBoard({ player }: { player: PlayerState }) {
                   // round out, so it gets the out-plate rather than a bare
                   // silhouette that leaves you wondering where its number went.
                   <span className="recap-cell-face">
-                    <HelpHullPlate sides={ship.sides} size={RECAP_FACE_PX} />
+                    <HelpHullPlate sides={ship.sides} size={facePx} />
                   </span>
                 ) : (
                   <span className="recap-cell-face">
                     {/* The ship's own hull, not the smallest one showing this
                       * number: a 4 on a d10 is still a pentagon. */}
-                    <HelpShipFace value={face} hull={ship.sides} size={RECAP_FACE_PX} />
+                    <HelpShipFace value={face} hull={ship.sides} size={facePx} />
                   </span>
                 )}
                 <span className="recap-cell-hull-label t-num">d{ship.sides}</span>
@@ -116,7 +126,7 @@ function FleetPanel({
  *  Each line ends in a bright dot at its growing tip, so a bar too thin to
  *  see still shows up as a dot — the only way "1" reads differently from
  *  "0" when the other side ran up a much bigger number. */
-function StatRow({
+export function StatRow({
   label,
   you,
   them,

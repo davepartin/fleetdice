@@ -12,7 +12,7 @@ const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8")
 const help = readFileSync(new URL("../lib/reference.ts", import.meta.url), "utf8");
 
 test("Attack copy is the round times two as an equation from TUNING", () => {
-  assert.match(engine, /round \(\$\{round\}\) × \$\{TUNING\.weaponAttackPerRound\} = \$\{weaponAttack\(round\)\} Attack/);
+  assert.match(engine, /Round \(\$\{round\}\) × \$\{TUNING\.weaponAttackPerRound\} = \$\{weaponAttack\(round\)\} Attack/);
   assert.match(weapons, /weaponEffect\(id, player\.round\)/);
   assert.doesNotMatch(weapons, /weapon-effect-now/);
   assert.doesNotMatch(weapons, /This round/);
@@ -51,7 +51,7 @@ test("enemy weapon status is a four-box row, not a disclosure", () => {
   assert.doesNotMatch(css, /\.weapon-enemy-lock \{[^}]*position: absolute/);
   assert.match(weapons, /EnemyWeaponRow[\s\S]{0,120}<footer>/);
   assert.match(help, /Each may be used once per game and only one per round/);
-  assert.match(help, /round \(the current round\) × \$\{TUNING\.weaponAttackPerRound\}/);
+  assert.match(help, /Round \(the current round\) × \$\{TUNING\.weaponAttackPerRound\}/);
 });
 
 test("the weapons panel does not put the four cards in a scrolling pane", () => {
@@ -109,14 +109,16 @@ test("the shipyard charge control is a filled top button with the upgrade Energy
   assert.match(weapons, /cost=\{TUNING\.weaponChargeCost\}/);
   assert.match(ui, /export function EnergyPrice/);
   assert.match(css, /\.weapon-launcher\.weapon-launcher-shop \{/);
-  assert.match(css, /\.weapon-launcher\.weapon-launcher-shop \{[\s\S]*?background:[\s\S]*?var\(--color-buy\)/);
-  assert.match(css, /\.weapon-launcher\.weapon-launcher-shop \{[\s\S]*?color:\s*var\(--color-buy-ink\)/);
-  assert.match(css, /\.weapon-launcher\.weapon-launcher-shop:hover \{[\s\S]*?var\(--color-buy\)/);
+  assert.match(css, /\.weapon-launcher\.weapon-launcher-shop \{[\s\S]*?background:[\s\S]*?var\(--color-energy\)/);
+  assert.match(css, /\.weapon-launcher\.weapon-launcher-shop \{[\s\S]*?color:\s*var\(--color-reroll-cost-ink\)/);
+  assert.match(css, /\.weapon-launcher\.weapon-launcher-shop:hover \{[\s\S]*?var\(--color-energy\)/);
+  assert.match(css, /\.weapon-launcher\.weapon-launcher-shop \{[\s\S]*?justify-content:\s*center/);
   assert.match(css, /\.yard-charge \{/);
   assert.doesNotMatch(css, /\.yard-done\s*>\s*\.weapon-launcher/);
   assert.doesNotMatch(css, /\.yard-board \{ width: min\(86%/);
   assert.match(css, /\.weapon-launcher-wait/);
-  assert.match(weapons, /Need \$\{TUNING\.weaponChargeCost\} Energy to charge/);
+  assert.match(weapons, /One-time use per game and only 1 per round/);
+  assert.doesNotMatch(weapons, /Need \$\{TUNING\.weaponChargeCost\} Energy to charge/);
   assert.match(weapons, /Use flagship weapon/);
   assert.match(help, /Charge flagship weapons button sits at the top of the yard/);
   const how = readFileSync(new URL("../components/HowToPlay.tsx", import.meta.url), "utf8");
@@ -132,6 +134,37 @@ test("Charged weapon controls are a coloured fill, not a dead black button", () 
   assert.match(charged[0], /#090d17/);
   assert.doesNotMatch(charged[0], /rgb\(0 0 0/);
   assert.match(css, /\.weapon-launcher-shop\.weapon-launcher-charged \{[\s\S]*?opacity:\s*1/);
+});
+
+test("shipyard and the charge window share one Energy bank that counts down on spend", () => {
+  const yard = readFileSync(new URL("../components/Shipyard.tsx", import.meta.url), "utf8");
+  const ui = readFileSync(new URL("../components/ui.tsx", import.meta.url), "utf8");
+  assert.match(ui, /export function EnergyBank/);
+  assert.match(ui, /Ticker value=\{shown\} duration=\{260\}/);
+  assert.match(ui, /energy-bank-bolt/);
+  assert.doesNotMatch(ui, />Energy</);
+  assert.doesNotMatch(ui, /in the bank/);
+  assert.match(yard, /<EnergyBank energy=\{energy\} spend=\{pendingSpend\}/);
+  assert.match(yard, /function spendFor/);
+  assert.match(weapons, /<EnergyBank energy=\{player\.energy\}/);
+  assert.match(weapons, /weapon-window-head[\s\S]+EnergyBank/);
+  assert.match(css, /\.energy-bank-spend/);
+  assert.match(css, /\.yard-bank-value,\s*\n\s*\.energy-bank-value/);
+});
+
+test("weapon marks are equal-size SVGs and the enemy lock is a real padlock", () => {
+  assert.match(weapons, /function WeaponIcon/);
+  assert.match(weapons, /<StatIcon kind=\{kind\} size=\{size\} className="weapon-symbol"/);
+  assert.doesNotMatch(weapons, /rotate: "↻"/);
+  assert.doesNotMatch(weapons, /attack: "✦"/);
+  assert.match(css, /\.weapon-symbol \{[^}]*width: 22px/);
+  assert.match(css, /\.weapon-enemy-box \.weapon-symbol \{ width: 22px; height: 22px/);
+  const lock = css.match(/\.weapon-enemy-lock \{[\s\S]*?\}/);
+  assert.ok(lock, "enemy lock needs a size");
+  assert.match(lock[0], /width: 16px/);
+  assert.match(lock[0], /height: 19px/);
+  assert.doesNotMatch(lock[0], /width: 11px/);
+  assert.match(weapons, /viewBox="0 0 24 28"/);
 });
 
 test("the centre flagship tile spells the level and uses the d6 square, not a star", () => {

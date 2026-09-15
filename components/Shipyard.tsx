@@ -36,7 +36,7 @@ import {
 import { NOUN } from "@/lib/reference";
 import { HullShape } from "./HullShape";
 import { HelpHullPlate } from "./HelpArt";
-import { Button, Chip, EnergyPrice, HpRail, Notice } from "./ui";
+import { Button, Chip, EnergyBank, EnergyPrice, HpRail, Notice } from "./ui";
 import { FlagshipWeapons } from "./FlagshipWeapons";
 
 const HULLS: DieSize[] = [4, 6, 8, 10];
@@ -124,6 +124,16 @@ function linesOpenedBy(player: PlayerState, cell: number): string[] {
   return out;
 }
 
+/** What the bank would lose if this cell's confirm fired now. Empty bays
+ *  offer four hull prices, so they do not preview — the spend lands when
+ *  a hull is tapped. */
+function spendFor(offer: CellOffer | null, energy: number): number {
+  if (!offer || offer.kind === "empty") return 0;
+  const cost = offer.cost;
+  if (cost === null || cost > energy) return 0;
+  return cost;
+}
+
 function offerFor(player: PlayerState, cell: number): CellOffer {
   if (cell === 4) {
     return { kind: "flagship", cell: 4, level: player.flag.level, cost: flagshipUpgradeCost(player.flag.level) };
@@ -179,6 +189,9 @@ export function Shipyard({ player, enemy, enemyName, enemyHp, onAction, onDone, 
     onAction(action);
   };
 
+  const selectedOffer = selected === null ? null : offers[selected]!;
+  const pendingSpend = spendFor(selectedOffer, energy);
+
   return (
     <div className="yard">
       {/* The shipyard is a full-screen overlay above the match header (see
@@ -197,10 +210,7 @@ export function Shipyard({ player, enemy, enemyName, enemyHp, onAction, onDone, 
           <p className="t-eyebrow">Round {player.round}</p>
           <h2 className="t-display text-3xl leading-none">Shipyard</h2>
         </div>
-        <div className="yard-bank">
-          <span className="yard-bank-value t-num c-energy">{energy}</span>
-          <span className="t-eyebrow text-xs">in the bank</span>
-        </div>
+        <EnergyBank energy={energy} spend={pendingSpend} />
       </header>
 
       <div className="yard-stats">

@@ -141,8 +141,8 @@ try {
     );
     assert.match(
       layout.chargeBg,
-      /rgb\(205,\s*189,\s*245\)/,
-      `charge control must keep the filled buy colour, not the ghost hover (${layout.chargeBg})`,
+      /rgb\(255,\s*210,\s*61\)/,
+      `charge control must keep the filled Energy colour, not the ghost hover (${layout.chargeBg})`,
     );
 
     await save(page, `shipyard_charge_${vp.width}x${vp.height}`);

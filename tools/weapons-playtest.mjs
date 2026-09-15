@@ -7,7 +7,9 @@ import { serve } from "./shoot.mjs";
 import { bundlePath } from "../sim/bundle.mjs";
 const G = await import(bundlePath);
 const { newMatch, newPlayer, newBrain, applyAction, makeRng, setRng, WEAPON_IDS, TUNING } = G;
-const server = await serve(resolve("out"), 4321);
+const LIVE = process.env.LIVE;
+const BASE = LIVE || "http://localhost:4321";
+const server = LIVE ? { close() {} } : await serve(resolve("out"), 4321);
 const browser = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
 const errors = [];
 await mkdir("shots", { recursive: true });
@@ -38,7 +40,7 @@ async function pageWith(state, viewport) {
   await page.addInitScript(save => {
     if (!localStorage.getItem("fd3.solo.battle.v1")) localStorage.setItem("fd3.solo.battle.v1", JSON.stringify(save));
   }, { schema: 1, savedAt: Date.now(), state, brain: newBrain("balanced", "low") });
-  await page.goto("http://localhost:4321/solo/?q=low", { waitUntil: "networkidle" });
+  await page.goto(`${BASE}/solo/?q=low`, { waitUntil: "networkidle" });
   await page.getByRole("button", { name: /Carry on/ }).click();
   return { ctx, page };
 }
@@ -158,7 +160,7 @@ try {
     assert.equal((await saved(page)).energy, 0);
     assert.equal(await page.locator(".weapon-card-available").count(), 4);
     assert.match(await page.locator(".weapon-attack .weapon-effect").innerText(),
-      new RegExp(String.raw`round\s*\(\s*${6}\s*\)\s*×\s*${TUNING.weaponAttackPerRound}\s*=\s*${6 * TUNING.weaponAttackPerRound} Attack`));
+      new RegExp(String.raw`Round\s*\(\s*${6}\s*\)\s*×\s*${TUNING.weaponAttackPerRound}\s*=\s*${6 * TUNING.weaponAttackPerRound} Attack`));
     await page.getByRole("button", { name: "Tips", exact: true }).click();
     await frame(page);
     await page.getByRole("button", { name: "Tips", exact: true }).click();
@@ -189,7 +191,7 @@ try {
     assert.equal(aboveBoard, true, "Charge flagship weapons must sit above the fleet map");
     await charge.click();
     assert.match(await page.locator("#weapon-title").innerText(), /FLAGSHIP WEAPONS/i);
-    assert.match(await page.locator(".weapon-lede").innerText(), new RegExp(`Need ${TUNING.weaponChargeCost} Energy to charge`));
+    assert.match(await page.locator(".weapon-lede").innerText(), /One-time use per game and only 1 per round/);
     assert.equal(await page.getByRole("button", { name: `Charge Attack for ${TUNING.weaponChargeCost} Energy`, exact: true }).isDisabled(), true);
     await ctx.close();
     console.log("PASS shipyard empty-state when the bank is short of a charge");
@@ -201,7 +203,7 @@ try {
     const { ctx, page } = await pageWith(shop, { width: 375, height: 812 });
     await page.getByRole("button", { name: "Charge flagship weapons" }).click();
     assert.match(await page.locator(".weapon-attack .weapon-effect").innerText(),
-      new RegExp(String.raw`round\s*\(\s*3\s*\)\s*×\s*${TUNING.weaponAttackPerRound}\s*=\s*${3 * TUNING.weaponAttackPerRound} Attack`));
+      new RegExp(String.raw`Round\s*\(\s*3\s*\)\s*×\s*${TUNING.weaponAttackPerRound}\s*=\s*${3 * TUNING.weaponAttackPerRound} Attack`));
     await page.screenshot({ path: "shots/weapons-attack-equation-375.png" });
     await ctx.close();
     console.log("PASS Attack card shows round × 2 = N Attack");
@@ -219,7 +221,7 @@ try {
     assert.doesNotMatch(await page.locator(".weapon-lede").innerText(), /wisely|—/);
     assert.doesNotMatch(await page.locator(".weapon-window").innerText(), /Roll your fleet before using a weapon/);
     assert.match(await page.locator(".weapon-attack .weapon-effect").innerText(),
-      new RegExp(String.raw`round\s*\(\s*1\s*\)\s*×\s*${TUNING.weaponAttackPerRound}\s*=\s*${TUNING.weaponAttackPerRound} Attack`));
+      new RegExp(String.raw`Round\s*\(\s*1\s*\)\s*×\s*${TUNING.weaponAttackPerRound}\s*=\s*${TUNING.weaponAttackPerRound} Attack`));
     assert.equal(await page.locator(".weapon-enemy-boxes .weapon-enemy-box").count(), 4);
     assert.equal(await page.locator(".weapon-enemy-locked").count(), 4);
     const row = await page.evaluate(() => {

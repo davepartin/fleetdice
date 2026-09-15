@@ -591,7 +591,7 @@ export const HOW_TO_PLAY: readonly HelpSection[] = [
       },
       {
         kind: "text",
-        text: `Rotate Flagship turns the centre die one number up or down. It wraps around, so ${FLAG_SIDES} can turn into 1 and 1 into ${FLAG_SIDES}. Attack adds round (the current round) × ${TUNING.weaponAttackPerRound} ordinary Attack — on round 1 that is round (1) × ${TUNING.weaponAttackPerRound} = ${weaponAttack(1)} Attack. Repair always adds ${TUNING.weaponRepair} health alongside damage, even above your previous high. Super Shield halves enemy Attack before ordinary Shields and ship blocking; odd totals round up after halving. It does not reduce Direct or War Escalation.`,
+        text: `Rotate Flagship turns the centre die one number up or down. It wraps around, so ${FLAG_SIDES} can turn into 1 and 1 into ${FLAG_SIDES}. Attack adds Round (the current round) × ${TUNING.weaponAttackPerRound} ordinary Attack — on Round 1 that is Round (1) × ${TUNING.weaponAttackPerRound} = ${weaponAttack(1)} Attack. Repair always adds ${TUNING.weaponRepair} health alongside damage, even above your previous high. Super Shield halves enemy Attack before ordinary Shields and ship blocking; odd totals round up after halving. It does not reduce Direct or War Escalation.`,
       },
       {
         kind: "text",

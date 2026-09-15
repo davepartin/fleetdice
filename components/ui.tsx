@@ -424,6 +424,51 @@ export function EnergyPrice({ cost, affordable }: { cost: number; affordable: bo
   );
 }
 
+/**
+ * The one Energy purse. Shipyard and the charge window both show this, top
+ * right, so spending a hull or charging a weapon is the same number going
+ * down. `spend` is the cost under the thumb — the bank counts down to what
+ * would be left, and springs back if you close without buying.
+ */
+export function EnergyBank({
+  energy,
+  spend = 0,
+  className = "",
+}: {
+  energy: number;
+  spend?: number;
+  className?: string;
+}) {
+  const take = spend > 0 && spend <= energy ? spend : 0;
+  const shown = energy - take;
+  const label = take
+    ? `${shown} Energy, ${take} pending`
+    : `${shown} Energy`;
+  return (
+    <div
+      className={`energy-bank yard-bank ${className}`.trim()}
+      data-energy-bank=""
+      data-preview={take ? "" : undefined}
+      aria-label={label}
+      aria-live="polite"
+    >
+      <span className="energy-bank-row">
+        <svg className="energy-bank-bolt" viewBox="0 0 16 20" aria-hidden="true">
+          <path d="M9.1 0 1.8 11.1h4.7L5.6 20l8.6-12.3H9.4L9.1 0Z" fill="currentColor" />
+        </svg>
+        <span className="energy-bank-value yard-bank-value t-num c-energy">
+          <Ticker value={shown} duration={260} />
+        </span>
+        {take > 0 && (
+          <span className="energy-bank-spend t-num" aria-hidden="true">
+            −{take}
+          </span>
+        )}
+      </span>
+    </div>
+  );
+}
+
 /** The four-digit room code, big enough to read across a room. */
 export function RoomCode({ code }: { code: string }) {
   return (

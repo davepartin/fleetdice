@@ -138,7 +138,7 @@ a previous machine and does not exist on the owner's Mac, where Playwright's own
 bundled Chromium works. `cap-playtest.mjs` is a short worked example: it drives
 solo from the tier picker, follows whatever "next" button each screen offers
 rather than hardcoding the sequence, and reads button state from the DOM.
-Energy is the `N IN THE BANK` readout on the shipyard screen — the `+16` beside
+Energy is the gold number with the lightning bolt on the shipyard screen (`[data-energy-bank]`) — the `+16` beside
 each flagship is **not** Energy, both sides show it, and misreading it cost this
 session two runs.
 Check 390×844, 390×620 and 360×780 — the dock clips horizontal overflow, so a

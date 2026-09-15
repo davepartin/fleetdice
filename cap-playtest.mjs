@@ -40,11 +40,12 @@ try {
                    /^Ready|^Done|^Set sail|^Launch/i, /^Roll Fleet/];
   let bank = 0, lastBank = 0;
   for (let step = 0; step < 24; step += 1) {
-    // "3 IN THE BANK" on the shipyard screen is the Energy readout. The
+    // The gold number over ENERGY on the shipyard is the Energy readout. The
     // "+16" beside each flagship is not Energy — both sides show it.
     bank = await page.evaluate(() => {
-      const m = document.body.innerText.match(/(\d+)\s+IN THE BANK/i);
-      return m ? Number(m[1]) : window.__fd3Bank ?? 0;
+      const el = document.querySelector("[data-energy-bank] .energy-bank-value");
+      const n = el ? Number((el.textContent || "").replace(/\D/g, "")) : NaN;
+      return Number.isFinite(n) ? n : window.__fd3Bank ?? 0;
     });
     if (bank) lastBank = bank;
     const inRoll = await page.evaluate(() =>

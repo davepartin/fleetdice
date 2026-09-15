@@ -1,23 +1,18 @@
 "use client";
 
 /**
- * What just happened, in the order it happened.
- *
- * Two lines, one per commander. Yours is exact and ends where you actually
- * are: HP before, every real term the engine applied, HP after — the same
- * order the engine itself applies them in, so this is never just a summary
- * that happens to agree with the game, it's the game's own arithmetic.
+ * After the volley: the same five total boxes from the roll screen, yours
+ * then theirs. The comparison bars and flagship arithmetic live behind
+ * More details — the board stays visible until someone asks.
  */
 
-import type { RoundReport as Report } from "@/lib/engine";
+import { newWeapons, type PlayerState, type RoundReport as Report, type Tally } from "@/lib/engine";
 import { Button, Notice, TallyStrip } from "./ui";
-import { WeaponReport } from "./FlagshipWeapons";
+import { StatRow } from "./BattleRecap";
+import { EnemyWeaponRow, weaponUseText } from "./FlagshipWeapons";
 
 export type BoxKind = "attack" | "shield" | "direct" | "repair";
 
-// Written literally (not built from a template string) so Tailwind's static
-// scan can actually find these classes — a `${kind}`-interpolated class name
-// would never make it into the compiled stylesheet.
 const BOX_TONE: Record<BoxKind, string> = {
   attack: "border-[--color-attack]/40 bg-[--color-attack]/[0.16] c-attack",
   shield: "border-[--color-shield]/40 bg-[--color-shield]/[0.16] c-shield",
@@ -25,9 +20,6 @@ const BOX_TONE: Record<BoxKind, string> = {
   repair: "border-[--color-repair]/40 bg-[--color-repair]/[0.16] c-repair",
 };
 
-/** One boxed number in a battle line — colour carries the meaning (red
- *  attack, blue shield, purple direct, green repair), no glyph needed once
- *  every screen in the game already uses that same colour language. */
 export function Box({ kind, value, big }: { kind: BoxKind; value: number; big?: boolean }) {
   return (
     <span
@@ -40,9 +32,6 @@ export function Box({ kind, value, big }: { kind: BoxKind; value: number; big?: 
   );
 }
 
-/** Hit points, and only hit points, are ever this colour — hpBefore and
- *  hpAfter aren't damage terms, they're the anchors the line starts and
- *  ends on, so they get the one hue nothing else on screen uses. */
 export function HpBox({ value, big }: { value: number; big?: boolean }) {
   return (
     <span
@@ -55,20 +44,10 @@ export function HpBox({ value, big }: { value: number; big?: boolean }) {
   );
 }
 
-/**
- * A ship blocking part of the hit, drawn as the same triangle hull every
- * d4 ship shows on the board — see HullShape's own note on why each hull
- * has its own silhouette. A white number on it, the same as a real die
- * face: the shape says "this is a ship," not a colour that would
- * otherwise collide with shields' blue.
- */
 function ShipBlockBox({ value, big }: { value: number; big?: boolean }) {
   const size = big ? "1.9em" : "1.6em";
   return (
-    <span
-      className="relative inline-flex items-center justify-center"
-      style={{ width: size, height: size }}
-    >
+    <span className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
       <svg viewBox="0 0 64 64" className="absolute inset-0 h-full w-full" aria-hidden="true">
         <path
           d="M32 8 L57 52 L7 52 Z"
@@ -78,135 +57,232 @@ function ShipBlockBox({ value, big }: { value: number; big?: boolean }) {
           strokeLinejoin="round"
         />
       </svg>
-      <span
-        className={`t-num relative translate-y-[0.12em] font-bold leading-none text-white ${big ? "text-sm" : "text-xs"}`}
-      >
+      <span className={`t-num relative translate-y-[0.12em] font-bold leading-none text-white ${big ? "text-sm" : "text-xs"}`}>
         {value}
       </span>
     </span>
   );
 }
 
+function HpChange({ before, after }: { before: number; after: number }) {
+  return (
+    <span className="volley-hp">
+      <span className="volley-hp-before t-num">{Math.max(0, before)}</span>
+      <span className="volley-hp-arrow" aria-hidden="true">
+        →
+      </span>
+      <span className="volley-hp-after t-num c-hp-glow">{Math.max(0, after)}</span>
+    </span>
+  );
+}
+
+function TallyLane({
+  label,
+  tally,
+  hpBefore,
+  hpAfter,
+}: {
+  label: string;
+  tally: Tally | null;
+  hpBefore: number;
+  hpAfter: number;
+}) {
+  return (
+    <div className="round-report-lane">
+      <div className="round-report-lane-head">
+        <p className="t-eyebrow">{label}</p>
+        <HpChange before={hpBefore} after={hpAfter} />
+      </div>
+      <TallyStrip tally={tally} />
+    </div>
+  );
+}
+
 export function RoundReportCard({
   report,
+  them,
   enemyName,
   waitingForOpponent = false,
+  details = false,
+  onShowDetails,
+  onHideDetails,
   onContinue,
   busy,
 }: {
   report: Report;
+  them?: PlayerState | null;
   enemyName: string;
-  /** The other commander is still choosing which ships block their volley. */
   waitingForOpponent?: boolean;
+  details?: boolean;
+  onShowDetails?(): void;
+  onHideDetails?(): void;
   onContinue(): void;
   busy?: boolean;
 }) {
-  const enemy = report.enemyTally;
+  const yours = report.tally;
+  const theirs: Tally | null = report.enemyTally;
   const survived = report.hpAfter > 0;
-
-  // Shields stopped this much of the raw attack, before ships or the war
-  // even entered into it — see lib/engine.ts's settlePlayer for the real
-  // sequence: attack minus shields, plus the war (shields can't touch that),
-  // then ships subtract from *that* combined total, then direct is added on
-  // completely separately — nothing, not shields or ships, blocks Direct.
-  // Repair is the very last step, after all of that damage is applied.
   const superShieldStopped = report.superShieldStopped ?? 0;
-  const shieldsStopped = Math.max(0, (enemy?.attack ?? 0) - superShieldStopped + report.escalation - report.incoming);
+  const shieldsStopped = Math.max(
+    0,
+    (theirs?.attack ?? 0) - superShieldStopped + report.escalation - report.incoming,
+  );
+  const nothingToBlock = report.incoming === 0 && (theirs?.attack ?? 0) > 0;
+  const theirAfter = Math.max(0, them?.report?.hpAfter ?? them?.hp ?? 0);
+  const theirBefore = them?.report?.hpBefore ?? theirAfter;
 
-  // Nothing was blockable this round, so the block screen never appeared. That
-  // is correct — ships can only step in front of attack, and there was none
-  // left — but silently skipping a turn reads as a bug unless it says why.
-  const nothingToBlock = report.incoming === 0 && (enemy?.attack ?? 0) > 0;
+  const continueLabel = !survived ? "See the result" : "To the shipyard";
+
+  if (!details) {
+    return (
+      <div className="round-report round-report-summary">
+        <div className="round-report-top">
+          <header className="round-report-summary-head">
+            <p className="t-eyebrow">Round {report.round}</p>
+            <button type="button" className="round-report-more" onClick={onShowDetails}>
+              More details
+            </button>
+          </header>
+          <TallyLane label="You" tally={yours} hpBefore={report.hpBefore} hpAfter={report.hpAfter} />
+          <TallyLane label={enemyName} tally={theirs} hpBefore={theirBefore} hpAfter={theirAfter} />
+          {report.weapon && <p className="round-report-used">{`You used ${weaponUseText(report.weapon)}`}</p>}
+          {report.enemyWeapon && (
+            <p className="round-report-used">{`${enemyName} used ${weaponUseText(report.enemyWeapon)}`}</p>
+          )}
+          {!survived && <Notice tone="warn">Your flagship is gone.</Notice>}
+          {waitingForOpponent && survived && (
+            <p className="round-report-wait" role="status">
+              {enemyName} is still choosing which ships block. Carry on — the next volley waits for
+              you both.
+            </p>
+          )}
+        </div>
+        <div className="round-report-actions">
+          <Button tone="primary" size="lg" full onClick={onContinue} disabled={busy}>
+            {continueLabel}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="round-report flex min-h-0 flex-1 flex-col gap-3">
-      {/* Short now that Battle details is gone, but still its own scroll
-       * region rather than trusting that — the confirm button below has
-       * been clipped off screen by this exact class of bug twice already. */}
-      <div className="round-report-top min-h-0 flex flex-col gap-3">
-      <div className="flex items-baseline justify-between">
-        <p className="t-eyebrow">Round {report.round}</p>
-        <span className="t-num c-energy text-sm">+{report.energyEarned} energy</span>
-      </div>
+    <div className="round-report volley-report-card">
+      <div className="round-report-top">
+        <header className="volley-head">
+          <div>
+            <p className="t-eyebrow">Round {report.round}</p>
+            <h2 className="t-display volley-title">Volley</h2>
+          </div>
+          <div className="volley-earned" aria-label={`+${report.energyEarned} Energy`}>
+            <svg className="volley-earned-bolt" viewBox="0 0 16 20" aria-hidden="true">
+              <path d="M9.1 0 1.8 11.1h4.7L5.6 20l8.6-12.3H9.4L9.1 0Z" fill="currentColor" />
+            </svg>
+            <span className="t-num c-energy volley-banked">+{report.energyEarned}</span>
+          </div>
+        </header>
 
-      {/* Yours is exact — hpBefore, every real term, hpAfter, in the order
-       * the engine itself applies them. Theirs is just what they rolled,
-       * the same strip the roll screen shows for your own fleet: what they
-       * did with it (who blocked, what got through) isn't visible from this
-       * side of the match, so this never pretends to total that up. */}
-      <div className="round-report-mobile-summary">
-        <p className="t-eyebrow mb-1">Your fleet damage report</p>
-        <p className="battle-line flex flex-wrap items-center gap-1">
-          <HpBox value={report.hpBefore} />
-          <span className="c-dim">−</span>
-          <Box kind="attack" value={enemy?.attack ?? 0} />
-          {superShieldStopped > 0 && <>
-            <span className="c-dim">+</span>
-            <span title="Super Shield"><Box kind="shield" value={superShieldStopped} /> <small className="c-shield">Super</small></span>
-          </>}
-          {shieldsStopped > 0 && (
-            <>
-              <span className="c-dim">+</span>
-              <Box kind="shield" value={shieldsStopped} />
-            </>
-          )}
-          {report.blocked > 0 && (
-            <>
-              <span className="c-dim">+</span>
-              <ShipBlockBox value={report.blocked} />
-            </>
-          )}
-          {report.escalation > 0 && (
-            <>
-              <span className="c-dim">−</span>
-              <Box kind="attack" value={report.escalation} />
-            </>
-          )}
-          {report.direct > 0 && (
-            <>
-              <span className="c-dim">−</span>
-              <Box kind="direct" value={report.direct} />
-            </>
-          )}
-          {report.repair > 0 && (
-            <>
-              <span className="c-dim">+</span>
-              <Box kind="repair" value={report.repair} />
-            </>
-          )}
-          <span className="c-dim">=</span>
-          <HpBox value={report.hpAfter} big />
-        </p>
+        <div className="volley-stats">
+          <div className="recap-stats-head">
+            <div className="round-report-who volley-who">
+              <span className="t-eyebrow">You</span>
+              <HpChange before={report.hpBefore} after={report.hpAfter} />
+            </div>
+            <div className="round-report-who volley-who">
+              <span className="t-eyebrow">{enemyName}</span>
+              <HpChange before={theirBefore} after={theirAfter} />
+            </div>
+          </div>
+          <StatRow label="Attack" you={yours.attack} them={theirs?.attack ?? 0} color="attack" />
+          <StatRow label="Shields" you={yours.defense} them={theirs?.defense ?? 0} color="shield" />
+          <StatRow label="Direct" you={yours.direct} them={theirs?.direct ?? 0} color="direct" />
+          <StatRow label="Repair" you={yours.heal} them={theirs?.heal ?? 0} color="repair" />
+          <StatRow label="Energy" you={yours.energy} them={theirs?.energy ?? 0} color="energy" />
+        </div>
 
-        {nothingToBlock && (
-          <p className="report-noblock">
-            No blocking — your <b className="c-shield">{superShieldStopped > 0 ? "Super Shield and Shields" : `Shields ${report.tally.defense}`}</b> stopped
-            their <b className="c-attack">Attack {enemy?.attack ?? 0}</b>.
+        <div className="volley-landed">
+          <p className="t-eyebrow">On your flagship</p>
+          <p className="battle-line flex flex-wrap items-center gap-1">
+            <HpBox value={report.hpBefore} />
+            <span className="c-dim">−</span>
+            <Box kind="attack" value={theirs?.attack ?? 0} />
+            {superShieldStopped > 0 && (
+              <>
+                <span className="c-dim">+</span>
+                <span title="Super Shield">
+                  <Box kind="shield" value={superShieldStopped} /> <small className="c-shield">Super</small>
+                </span>
+              </>
+            )}
+            {shieldsStopped > 0 && (
+              <>
+                <span className="c-dim">+</span>
+                <Box kind="shield" value={shieldsStopped} />
+              </>
+            )}
+            {report.blocked > 0 && (
+              <>
+                <span className="c-dim">+</span>
+                <ShipBlockBox value={report.blocked} />
+              </>
+            )}
+            {report.escalation > 0 && (
+              <>
+                <span className="c-dim">−</span>
+                <Box kind="attack" value={report.escalation} />
+              </>
+            )}
+            {report.direct > 0 && (
+              <>
+                <span className="c-dim">−</span>
+                <Box kind="direct" value={report.direct} />
+              </>
+            )}
+            {report.repair > 0 && (
+              <>
+                <span className="c-dim">+</span>
+                <Box kind="repair" value={report.repair} />
+              </>
+            )}
+            <span className="c-dim">=</span>
+            <HpBox value={Math.max(0, report.hpAfter)} big />
+          </p>
+          {nothingToBlock && (
+            <p className="report-noblock">
+              No blocking — your{" "}
+              <b className="c-shield">{superShieldStopped > 0 ? "Super Shield and Shields" : `Shields ${report.tally.defense}`}</b>{" "}
+              stopped their <b className="c-attack">Attack {theirs?.attack ?? 0}</b>.
+            </p>
+          )}
+          {report.weapon && <p className="round-report-used">{`You used ${weaponUseText(report.weapon)}`}</p>}
+          {report.enemyWeapon && (
+            <p className="round-report-used">{`${enemyName} used ${weaponUseText(report.enemyWeapon)}`}</p>
+          )}
+        </div>
+
+        <div className="volley-weapons">
+          <EnemyWeaponRow stock={report.weapons ?? newWeapons()} name="You" />
+          <EnemyWeaponRow stock={report.enemyWeapons ?? newWeapons()} name={enemyName} />
+        </div>
+
+        {!survived && <Notice tone="warn">Your flagship is gone.</Notice>}
+
+        {waitingForOpponent && survived && (
+          <p className="round-report-wait" role="status">
+            {enemyName} is still choosing which ships block. Carry on — the next volley waits for
+            you both.
           </p>
         )}
-
-        <p className="t-eyebrow mb-1 mt-2.5">{enemyName} volley</p>
-        <TallyStrip tally={enemy} />
-        <WeaponReport yours={report.weapon} theirs={report.enemyWeapon}
-          yourStock={report.weapons} enemyStock={report.enemyWeapons} enemyName={enemyName} />
       </div>
 
-      {!survived && (
-        <Notice tone="warn">Your flagship is gone.</Notice>
-      )}
-
-      {waitingForOpponent && survived && (
-        // Information, not a barrier: their choice does not hold up yours.
-        <p className="round-report-wait" role="status">
-          {enemyName} is still choosing which ships block. Carry on — the next volley waits for
-          you both.
-        </p>
-      )}
+      <div className="round-report-actions">
+        <Button tone="ghost" size="md" full onClick={onHideDetails}>
+          Back
+        </Button>
+        <Button tone="primary" size="lg" full onClick={onContinue} disabled={busy}>
+          {continueLabel}
+        </Button>
       </div>
-
-      <Button tone="primary" size="lg" full onClick={onContinue} disabled={busy}>
-        {!survived ? "See the result" : "To the shipyard"}
-      </Button>
     </div>
   );
 }

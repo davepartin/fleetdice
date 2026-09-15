@@ -648,7 +648,7 @@ export function weaponEffect(id: WeaponId, round: number): string {
   return {
     rotate: "−1 or +1 face",
     shield: "½ enemy Attack",
-    attack: `round (${round}) × ${TUNING.weaponAttackPerRound} = ${weaponAttack(round)} Attack`,
+    attack: `Round (${round}) × ${TUNING.weaponAttackPerRound} = ${weaponAttack(round)} Attack`,
     repair: `+${TUNING.weaponRepair} Repair`,
   }[id];
 }

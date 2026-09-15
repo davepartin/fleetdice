@@ -17,6 +17,28 @@ import { readFileSync } from "node:fs";
 
 const read = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
 
+test("the round report paints both fleets and both volleys, like the recap", () => {
+  const src = read("../components/RoundReport.tsx");
+  const match = read("../components/MatchScreen.tsx");
+  assert.match(src, /TallyStrip/);
+  assert.match(src, /More details/);
+  assert.doesNotMatch(src, /Show round details/);
+  assert.doesNotMatch(src, /FleetBoard/);
+  assert.match(src, /StatRow/);
+  assert.match(src, /On your flagship/);
+  assert.match(src, /HpChange/);
+  assert.match(src, /round-report-more/);
+  assert.match(src, /EnemyWeaponRow/);
+  assert.doesNotMatch(src, /<details/);
+  assert.doesNotMatch(src, /WeaponReport/);
+  assert.match(src, /report\.tally/);
+  assert.match(src, /report\.enemyTally/);
+  assert.match(match, /reportDetails/);
+  assert.match(match, /<RoundReportCard/);
+  assert.match(match, /them=\{them\}/);
+  assert.match(match, /cinematic !== "volley"/);
+});
+
 test("the report's Continue button is never disabled by the other commander", () => {
   const src = read("../components/RoundReport.tsx");
   // The button exists and is gated on `busy` alone.
