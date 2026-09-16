@@ -345,9 +345,6 @@ export function HomeScreen() {
                 </span>
               </p>
             )}
-            <p className="pt-2 text-center text-xs c-dim">
-              Fleet Dice · every number in this game was measured, not guessed
-            </p>
           </div>
         </div>
       </div>
