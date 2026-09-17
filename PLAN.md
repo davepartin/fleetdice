@@ -1079,10 +1079,6 @@ screenshot.
 - **The straight tier chooser only appears when the run is longer than five.**
   That is correct, but it means most players will never see it, and may not know
   it exists.
-- **`tools/dbg.mjs`** is a scratch probe. Delete it whenever.
-- **`_to_delete/`** in your fleetdice3 folder holds the zips used to move the
-  code onto your Mac. Safe to throw away — the sandbox is not allowed to delete
-  files on your machine, so it left them there instead.
 
 ---
 

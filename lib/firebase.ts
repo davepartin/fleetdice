@@ -227,7 +227,7 @@ export function friendlyAuthError(error: unknown): Error {
 /*
  * Commander name. Fleet Dice uses its own storage key because GitHub Pages
  * used to serve all of this owner's projects from one origin —
- * davepartin.github.io — so fleetdice3 and the older games shared one
+ * davepartin.github.io — so this game and the older ones shared one
  * localStorage. Anything not prefixed `fd3-` risked stepping on those games.
  * Leave the key as it is: renaming it would forget names already saved.
  */

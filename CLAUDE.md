@@ -26,11 +26,11 @@ the game**, in this repo, and nothing is copied anywhere else.
 | `www.fleetdice.com` | GitHub's own redirect to the apex (a `www` CNAME at GoDaddy) |
 | `fleetdice.ministrybag.com` | a redirect; the game's address until 17 September 2026 |
 | `ministrybag.com/fleetdice` | a redirect, four small files in `davepartin/ministrybag1` |
-| `davepartin.github.io/fleetdice3/` | GitHub's own redirect to the custom domain |
+| `davepartin.github.io/fleetdice/` | GitHub's own redirect to the custom domain |
 
 **`public/CNAME` is load-bearing.** It carries the domain into the build
 artifact; without it in the build, Pages drops the custom domain on the next
-deploy, the site moves back to `davepartin.github.io/fleetdice3/`, and every
+deploy, the site moves back to `davepartin.github.io/fleetdice/`, and every
 asset path breaks because `basePath` is empty.
 
 It briefly worked another way — the whole built site committed into a

@@ -17,9 +17,9 @@ The owner will delete their leftover Firestore collections (`codes`,
 `matches`, `liveBattles`, `battleResults`). The rules in this repo are
 Fleet Dice only.
 
-The repository is still called `fleetdice3` and the collections are still
-`fd3*`. The 3 was the development name; it now survives only where renaming
-would break a live URL or live data.
+The repository is `fleetdice` and the Firestore collections are still `fd3*`.
+The 3 was the development name; it now survives only where renaming would
+break live data already on players' phones.
 
 ---
 
@@ -47,7 +47,7 @@ Every older address redirects here, so nothing shared before the move is lost:
 | `www.fleetdice.com` | redirects here |
 | `fleetdice.ministrybag.com` | redirects here — the game's address until 17 September 2026, served by the tiny `davepartin/fleetdice-redirect` repo |
 | `ministrybag.com/fleetdice` | redirects here — one page in `davepartin/ministrybag1` |
-| `davepartin.github.io/fleetdice3/` | redirects here |
+| `davepartin.github.io/fleetdice/` | redirects here |
 
 **The Firebase rules are deployed** and were confirmed live on 1 September 2026.
 You only need this again if `firestore.rules` changes:
@@ -92,7 +92,7 @@ pnpm dev
 ```
 
 Then open `http://localhost:3000/`. The game serves from the root now that it
-has its own domain — it used to be under `/fleetdice3/`, and that path 404s.
+has its own domain — it used to be under a `/fleetdice3/` path, which 404s now.
 
 Other useful commands:
 

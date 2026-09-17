@@ -5,7 +5,7 @@ import type { NextConfig } from "next";
  * https://fleetdice.com, so there is no path prefix. `public/CNAME`
  * carries that domain into every build — without it in the artifact, Pages
  * drops the custom domain on the next deploy and the site moves back to
- * davepartin.github.io/fleetdice3/ with every asset pointing at the wrong place.
+ * davepartin.github.io/fleetdice/ with every asset pointing at the wrong place.
  *
  * `BASE_PATH` still exists for a build served under a path.
  */

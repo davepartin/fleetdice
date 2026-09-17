@@ -148,7 +148,7 @@ export type LiveRoom = {
 export type CreatedRoom = {
   match: LiveRoom;
   side: SideId;
-  /** App-relative, e.g. `/fleetdice3/join/?id=…&code=0525`. */
+  /** App-relative, e.g. `/join/?id=…&code=0525`, or `/fleetdice/join/…` under a path. */
   invitePath: string;
   /** Full URL to text to a friend. Same thing with the origin on the front. */
   inviteUrl: string;

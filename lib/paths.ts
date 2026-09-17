@@ -1,7 +1,7 @@
 /**
  * Where the app is mounted.
  *
- * GitHub Pages serves a project site under `/fleetdice3/`. Next's Link and
+ * GitHub Pages serves a project site under a path, e.g. `/fleetdice/`. Next's Link and
  * router APIs add that prefix themselves; direct browser redirects and invite
  * URLs still need it. `next.config.ts` puts the value here at build time.
  */
