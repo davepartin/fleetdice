@@ -119,3 +119,63 @@ has the measurements. Kept here because the reasoning is still worth reading.*
    experienced, and it is entirely guesses.
 3. **`lib/ai.ts` if you want more difficulty.** `sim/ladder.mjs` measures every
    rung in one command, and `sim/weights.mjs` sweeps the knob that moved them.
+
+## Future ideas — not started, owner decides when
+
+Ideas the owner wants kept, not work to pick up unprompted. Nothing here is on
+`AAA-PLAN.md`'s list; when one is chosen, it goes there as a numbered item with
+a DONE test first.
+
+### Dice skins, then maybe whole themes (16 September 2026)
+
+A friend who played it said he is having as much fun with Fleet Dice as with any
+other game. The owner thinks a choice of dice skin would be fun for players, and
+possibly something to sell for about a dollar each.
+
+**Why it is cheap to run.** Faces are painted once, at load, into a texture per
+hull (`lib/three/faceArt.ts`, from the `HIT`, `BLOCK` and flagship palettes),
+and the finish is a handful of material settings in `lib/three/die.ts`. A skin
+is another set of those choices. Switching repaints once; a match runs at the
+same speed on any skin. Engraved lines can catch light through one extra normal
+map per hull — a small cost, but measure frame rate before and after.
+
+Five candidates, with the current dice kept as the default (**Classic**):
+
+1. **Gunmetal** — dark brushed steel, bevelled rims that catch light, colour set
+   into an inset panel on each face (the way the flagship already is).
+2. **Neon** — near-black glassy dice, glowing edge lines and symbols.
+3. **Carbon Fiber** — matte woven black with glossy colour faces.
+4. **Nebula** — deep translucent resin with purple and teal swirls and faint stars.
+5. **Salvage** — scratched hull plating and worn hazard stripes, matching the
+   locked bays.
+
+Gunmetal, Carbon Fiber and Salvage are almost entirely painted texture — the
+easiest. Neon and Nebula lean on bloom and translucency; check them on an older
+phone, where the low quality tier already turns bloom off.
+
+**Rules every skin keeps** (see `CLAUDE.md` and `AAA-PLAN.md`):
+
+- Colour keeps its meaning. Red is Attack and blue is Shields in every skin; a
+  skin changes shade and material, never what a colour says.
+- Hull shapes stay fixed — d4 triangle, d6 square, d8 diamond, d10 pentagon.
+- The number reads at a glance first. Surface detail stays faint on the face and
+  heavier on the rim.
+- Cosmetic only. In versus each player sees their own skin, so it cannot touch
+  fairness, and it must never reach `lib/engine.ts`.
+
+**A theme** goes a step further: the lighting and space background
+(`lib/three/stage.ts`) and the panel and button colours (the tokens in
+`app/globals.css`). Worth doing only after one skin shows people use the choice.
+
+**A sensible first version:** one extra skin (Gunmetal) and a toggle in
+Settings, saved on the device. Selling skins is a separate, later decision — it
+needs a payment provider, a way to restore a purchase on a new phone (which
+means an account, likely the Firebase Auth versus already uses), and the app
+store or web payment rules for wherever the game is sold.
+
+**Grok's mock-up** (a tilted camera, dice stacked in towers, a glossy reflecting
+table, a large ship behind the board) was reviewed the same day. Keep the
+bevelled metal edges, inset colour panels, faint panel lines and glowing
+symbols. Leave out the tilted camera and stacking (numbers get harder to read),
+real reflections (every die drawn twice) and the ship (it pulls the eye off the
+numbers).
