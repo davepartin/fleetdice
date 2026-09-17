@@ -396,19 +396,23 @@ function ModeIcon({ kind }: { kind: "solo" | "versus" | "tutorial" }) {
     <span className="home-mode-icon grid h-11 w-11 shrink-0 place-items-center rounded-xl border" aria-hidden>
       <svg viewBox="0 0 64 64" className="h-8 w-8" fill="none" stroke="currentColor">
         {kind === "tutorial" ? (
+          /* The d10, labelled with its own size — the same thing the board
+             writes on a hull that has not rolled yet. No question mark, and
+             none of the face marks: a bolt here would give the Energy mark a
+             second meaning. */
           <>
-            <path d={HULL_PATHS[6]} strokeWidth="3" strokeLinejoin="round" fill="currentColor" fillOpacity="0.1" />
+            <path d={HULL_PATHS[10]} strokeWidth="3.5" strokeLinejoin="round" fill="currentColor" fillOpacity="0.12" />
             <text
               x="32"
-              y="33.5"
+              y="34"
               textAnchor="middle"
               dominantBaseline="central"
-              fontSize="25"
+              fontSize="20"
               fontWeight="700"
               fill="currentColor"
               stroke="none"
             >
-              ?
+              10
             </text>
           </>
         ) : kind === "solo" ? (
