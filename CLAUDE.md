@@ -10,13 +10,16 @@ an approach.
 
 ## Where it lives
 
-<https://fleetdice.ministrybag.com> — its own subdomain on the owner's domain,
-published by `.github/workflows/deploy.yml` on every push to `main`. There is
-**one copy of the game**, in this repo, and nothing is copied anywhere else.
+<https://fleetdice.com> — the owner's own domain, registered at GoDaddy, where
+four A and four AAAA records point at GitHub Pages. Published by
+`.github/workflows/deploy.yml` on every push to `main`. There is **one copy of
+the game**, in this repo, and nothing is copied anywhere else.
 
 | address | what it is |
 | --- | --- |
-| `fleetdice.ministrybag.com` | the game |
+| `fleetdice.com` | the game |
+| `www.fleetdice.com` | GitHub's own redirect to the apex (a `www` CNAME at GoDaddy) |
+| `fleetdice.ministrybag.com` | a redirect; the game's address until 17 September 2026 |
 | `ministrybag.com/fleetdice` | a redirect, four small files in `davepartin/ministrybag1` |
 | `davepartin.github.io/fleetdice3/` | GitHub's own redirect to the custom domain |
 
@@ -29,10 +32,10 @@ It briefly worked another way — the whole built site committed into a
 `fleetdice/` folder in the ministry repo, kept in step by a `publish:ministrybag`
 script. That meant two copies of one website to keep in step and about 5MB added
 to that repo's history on every deploy. **Do not put a copy back there**; the
-subdomain exists so there does not have to be one.
+game has its own address so there does not have to be one.
 
 `SITE_URL` is a build-time variable because Open Graph has to name an absolute
-image URL. The workflow sets `https://fleetdice.ministrybag.com`.
+image URL. The workflow sets `https://fleetdice.com`.
 
 ## Running it
 

@@ -76,12 +76,13 @@ node sim/ladder.mjs 500  # does each difficulty beat the one below it?
 node tools/playtest.mjs 6 phone   # plays the real game in a real browser
 ```
 
-**Where it lives.** <https://fleetdice.ministrybag.com> — its own subdomain on
-the owner's domain, published by `.github/workflows/deploy.yml` on every push to
+**Where it lives.** <https://fleetdice.com> — the owner's own domain, bought
+17 September 2026 at GoDaddy, published by `.github/workflows/deploy.yml` on every push to
 `main`. `public/CNAME` carries the domain into the build; without that file in
 the artifact, Pages drops the custom domain on the next deploy and every asset
-path breaks. `davepartin.github.io/fleetdice3/` and `ministrybag.com/fleetdice`
-both redirect to it, so older links still land.
+path breaks. `www.fleetdice.com`, `fleetdice.ministrybag.com` (its address
+before), `ministrybag.com/fleetdice` and `davepartin.github.io/fleetdice3/` all
+redirect to it, so older links still land.
 
 `tools/playtest.mjs` is the most useful thing in the repo for you. It drives the
 built site with Playwright through a whole solo match at 402×874 and 390×844,

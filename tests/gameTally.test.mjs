@@ -9,7 +9,8 @@ const home = readFileSync(new URL("../components/HomeScreen.tsx", import.meta.ur
 const rules = readFileSync(new URL("../firestore.rules", import.meta.url), "utf8");
 
 test("finished games bump a public solo/versus tally, never from localhost", () => {
-  assert.match(tally, /fleetdice\.ministrybag\.com/);
+  assert.match(tally, /"fleetdice\.com"/);
+  assert.doesNotMatch(tally, /ministrybag/);
   assert.match(tally, /NEXT_PUBLIC_FIREBASE_EMULATOR/);
   assert.match(tally, /recordSoloFinish/);
   assert.match(tally, /bumpTallyInTransaction/);

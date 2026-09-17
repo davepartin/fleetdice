@@ -31,7 +31,7 @@ export function countingWritesEnabled(): boolean {
   if (typeof window === "undefined") return false;
   if (process.env.NEXT_PUBLIC_FIREBASE_EMULATOR) return false;
   const host = window.location.hostname;
-  return host === "fleetdice.ministrybag.com" || host.endsWith(".ministrybag.com");
+  return host === "fleetdice.com" || host === "www.fleetdice.com";
 }
 
 function tallyDoc() {

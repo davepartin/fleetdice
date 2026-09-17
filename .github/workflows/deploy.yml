@@ -47,7 +47,7 @@ jobs:
           # needs no path prefix. `public/CNAME` keeps the domain attached.
           BASE_PATH: ""
           # Open Graph has to name an absolute image URL.
-          SITE_URL: https://fleetdice.ministrybag.com
+          SITE_URL: https://fleetdice.com
 
       - uses: actions/upload-pages-artifact@v3
         with:

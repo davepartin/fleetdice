@@ -2,7 +2,7 @@
 
 **Build the fleet. Break the flagship.**
 
-**Play it: <https://fleetdice.ministrybag.com>**
+**Play it: <https://fleetdice.com>**
 
 A two-player dice battle you play in a browser. Every ship is a die — a d4, d6,
 d8 or d10 — sitting in a three-by-three grid. In the middle is your flagship: a
@@ -32,15 +32,17 @@ it together.
 the tests, and only builds and publishes if they pass — so a broken push fails
 loudly instead of quietly replacing a working game.
 
-**It lives at its own address**, <https://fleetdice.ministrybag.com>, a subdomain
-of the owner's domain pointed at GitHub Pages by a CNAME record. `public/CNAME`
+**It lives at its own address**, <https://fleetdice.com>, registered at GoDaddy
+and pointed at GitHub Pages by DNS records set there. `public/CNAME`
 carries that domain into every build; **if that file ever leaves the build, Pages
 drops the custom domain** and every asset path breaks. Two older addresses
 redirect to it, so nothing shared before the move is lost:
 
 | address | what it does |
 | --- | --- |
-| `fleetdice.ministrybag.com` | the game |
+| `fleetdice.com` | the game |
+| `www.fleetdice.com` | redirects here |
+| `fleetdice.ministrybag.com` | redirects here (the game's address until 17 September 2026) |
 | `ministrybag.com/fleetdice` | redirects here |
 | `davepartin.github.io/fleetdice3/` | redirects here |
 
