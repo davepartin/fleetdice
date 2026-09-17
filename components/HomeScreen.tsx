@@ -147,7 +147,7 @@ export function HomeScreen() {
             {/* The two ways to play */}
             <div className="flex flex-col gap-2.5">
               <Link href="/tutorial/" className="block">
-                <Panel className="anim-rise flex items-center gap-4 border-[--color-energy]/30 bg-[--color-energy]/[0.06] p-4 transition hover:border-[--color-energy]/50">
+                <Panel className="home-mode home-mode--tutorial anim-rise flex items-center gap-4 p-4">
                   <ModeIcon kind="tutorial" />
                   <span className="min-w-0 flex-1">
                     <span className="t-display block text-xl text-white">Tutorial</span>
@@ -155,14 +155,14 @@ export function HomeScreen() {
                       New here? Start with this.
                     </span>
                   </span>
-                  <span className="c-energy" aria-hidden>
+                  <span className="home-mode-go" aria-hidden>
                     ›
                   </span>
                 </Panel>
               </Link>
 
               <Link href="/solo/" className="block">
-                <Panel className="anim-rise flex items-center gap-4 p-4 transition hover:border-white/25">
+                <Panel className="home-mode home-mode--solo anim-rise flex items-center gap-4 p-4">
                   <ModeIcon kind="solo" />
                   <span className="min-w-0 flex-1">
                     <span className="t-display block text-xl text-white">Play solo</span>
@@ -170,14 +170,14 @@ export function HomeScreen() {
                       Against the ship&apos;s computer.
                     </span>
                   </span>
-                  <span className="c-dim" aria-hidden>
+                  <span className="home-mode-go" aria-hidden>
                     ›
                   </span>
                 </Panel>
               </Link>
 
               <Link href="/versus/" className="block">
-                <Panel className="anim-rise flex items-center gap-4 p-4 transition hover:border-white/25">
+                <Panel className="home-mode home-mode--versus anim-rise flex items-center gap-4 p-4">
                   <ModeIcon kind="versus" />
                   <span className="min-w-0 flex-1">
                     <span className="t-display block text-xl text-white">Play a friend</span>
@@ -185,7 +185,7 @@ export function HomeScreen() {
                       Four digits and a link.
                     </span>
                   </span>
-                  <span className="c-dim" aria-hidden>
+                  <span className="home-mode-go" aria-hidden>
                     ›
                   </span>
                 </Panel>
@@ -384,86 +384,68 @@ export function HomeScreen() {
 /**
  * The three ways in, drawn with the same hull silhouettes the dice have on the
  * board (`HULL_PATHS`) rather than icons from some other game. Solo is one die;
- * Play a friend is two, in the two commanders' colours — the shape and the
- * count say which mode it is before the words do.
+ * Play a friend is two. Each one glows in its row's colour — gold to learn,
+ * shield blue against the computer, attack red against a person — which is the
+ * same colour the row's border and arrow carry, so a row reads as one thing.
+ *
+ * Outlines, not solid shapes: a filled square at 32px reads as a box, and the
+ * dice on the board are lit edges over a dark hull.
  */
 function ModeIcon({ kind }: { kind: "solo" | "versus" | "tutorial" }) {
-  const tone =
-    kind === "tutorial"
-      ? "border-[--color-energy]/40 bg-[--color-energy]/15 c-energy"
-      : kind === "solo"
-        ? "border-[--color-energy]/30 bg-[--color-energy]/10 c-energy"
-        : "border-[--color-attack]/30 bg-[--color-attack]/10 c-attack";
   return (
-    <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl border ${tone}`} aria-hidden>
-      <svg viewBox="0 0 64 64" className="h-8 w-8">
+    <span className="home-mode-icon grid h-11 w-11 shrink-0 place-items-center rounded-xl border" aria-hidden>
+      <svg viewBox="0 0 64 64" className="h-8 w-8" fill="none" stroke="currentColor">
         {kind === "tutorial" ? (
-          /* One die with a question on its face: the shape says dice, the mark
-             says you are here to learn rather than to start a match. */
           <>
-            <path
-              d={HULL_PATHS[6]}
-              fill="var(--color-energy)"
-              fillOpacity="0.16"
-              stroke="var(--color-energy)"
-              strokeWidth="3"
-              strokeLinejoin="round"
-            />
+            <path d={HULL_PATHS[6]} strokeWidth="3" strokeLinejoin="round" fill="currentColor" fillOpacity="0.1" />
             <text
               x="32"
-              y="33"
+              y="33.5"
               textAnchor="middle"
               dominantBaseline="central"
-              fontSize="26"
+              fontSize="25"
               fontWeight="700"
-              fill="var(--color-energy)"
+              fill="currentColor"
+              stroke="none"
             >
               ?
             </text>
           </>
         ) : kind === "solo" ? (
-          /* One die: you against the ship's computer. The inner line is the
-             face inset the d6 carries on the board, which is what stops a
-             square at this size reading as a plain box. */
           <>
-            <path
-              d={HULL_PATHS[6]}
-              fill="var(--color-hull-icon-d6)"
-              stroke="rgba(255,255,255,0.9)"
-              strokeWidth="3"
-              strokeLinejoin="round"
-            />
-            <rect
-              x="19"
-              y="19"
-              width="26"
-              height="26"
-              rx="3"
-              fill="none"
-              stroke="rgba(255,255,255,0.45)"
-              strokeWidth="2"
-            />
+            <path d={HULL_PATHS[6]} strokeWidth="3" strokeLinejoin="round" fill="currentColor" fillOpacity="0.1" />
+            {/* A numeral, because that is what this game's faces show — and an
+                odd one, because blue faces are the odd ones that make Shields. */}
+            <text
+              x="32"
+              y="33.5"
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize="24"
+              fontWeight="700"
+              fill="currentColor"
+              stroke="none"
+            >
+              5
+            </text>
           </>
         ) : (
-          /* Two dice, two commanders — the blue hull in front, an attack-red d4
-             behind it, so the pair reads as a match rather than a stack. */
           <>
             <path
               d={HULL_PATHS[4]}
-              fill="var(--color-attack)"
-              fillOpacity="0.9"
-              stroke="rgba(255,255,255,0.8)"
-              strokeWidth="3"
+              strokeWidth="4.5"
               strokeLinejoin="round"
-              transform="translate(27 3) scale(0.6)"
+              fill="currentColor"
+              fillOpacity="0.12"
+              transform="translate(26 5) scale(0.64)"
             />
             <path
               d={HULL_PATHS[6]}
-              fill="var(--color-hull-icon-d6)"
-              stroke="rgba(255,255,255,0.85)"
-              strokeWidth="3"
+              strokeWidth="4"
               strokeLinejoin="round"
-              transform="translate(-5 11) scale(0.68)"
+              fill="currentColor"
+              fillOpacity="0.12"
+              transform="translate(-5 13) scale(0.66)"
             />
           </>
         )}

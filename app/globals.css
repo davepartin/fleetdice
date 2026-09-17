@@ -4253,6 +4253,55 @@ button {
   height: auto;
 }
 
+/* The three ways in. Each row carries one colour — border, icon and arrow —
+   so it reads as a single object rather than a panel with a badge stuck on it.
+   The hues are the game's own and keep their meaning: gold is Energy (learn
+   first), shield blue is your own fleet against the computer, attack red is
+   another commander. The glow is a highlight, not a light source; it stays
+   under the key art above it. */
+.home-mode {
+  border-color: color-mix(in srgb, var(--mode) 32%, transparent);
+  box-shadow:
+    inset 0 1px 0 0 rgb(255 255 255 / 0.11),
+    inset 0 -1px 0 0 rgb(0 0 0 / 0.5),
+    0 0 20px -12px var(--mode),
+    0 18px 44px -20px rgb(0 0 0 / 0.9);
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+@media (hover: hover) {
+  .home-mode:hover {
+    border-color: color-mix(in srgb, var(--mode) 58%, transparent);
+    box-shadow:
+      inset 0 1px 0 0 rgb(255 255 255 / 0.11),
+      inset 0 -1px 0 0 rgb(0 0 0 / 0.5),
+      0 0 26px -10px var(--mode),
+      0 18px 44px -20px rgb(0 0 0 / 0.9);
+  }
+}
+.home-mode--tutorial {
+  --mode: var(--color-energy);
+}
+.home-mode--solo {
+  --mode: var(--color-shield);
+}
+.home-mode--versus {
+  --mode: var(--color-attack);
+}
+
+.home-mode-icon {
+  color: var(--mode);
+  border-color: color-mix(in srgb, var(--mode) 38%, transparent);
+  background: color-mix(in srgb, var(--mode) 9%, transparent);
+  /* One soft pass, so the outline reads as lit rather than blurred. A second
+     shadow costs more than it shows at 44px. */
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--mode) 45%, transparent));
+}
+
+.home-mode-go {
+  color: var(--mode);
+  opacity: 0.85;
+}
+
 /* Quiet enough not to compete with the two ways to play, present enough that
    a first-timer finds the rules without scrolling. */
 .home-help-link {
