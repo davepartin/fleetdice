@@ -444,7 +444,7 @@
 
   --font-display: var(--font-display), "Arial Black", system-ui, sans-serif;
   --font-body: var(--font-body), ui-sans-serif, system-ui, sans-serif;
-  /* Numbers are Inter's job (see the type table in AAA-PLAN.md), not
+  /* Numbers are Inter's job (see the type table in PLAN.md), not
      Oxanium's — most of .t-num's uses are well under Oxanium's 20px floor. */
   --font-numeric: var(--font-body), ui-monospace, monospace;
 

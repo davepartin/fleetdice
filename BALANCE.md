@@ -1084,7 +1084,7 @@ the cap. Match length, lines, and fleet mix are unchanged. The hand-written
 The Reroll button was gated on affordability only, so under the cap it would
 have offered a move the engine refuses and thrown an error at the player.
 `MatchScreen` now reads `rollsLeft()` from the engine and shows **"No rerolls
-left"**. Verified in a real browser at 390×844 by `cap-playtest.mjs`, with 4⚡
+left"**. Verified in a real browser at 390×844 by `tools/cap-playtest.mjs`, with 4⚡
 still in the bank so the cap was doing the stopping:
 
 | tap | button |

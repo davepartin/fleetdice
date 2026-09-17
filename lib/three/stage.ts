@@ -425,7 +425,7 @@ export function createStage(canvas: HTMLCanvasElement, initial?: Quality): Stage
 
   /* Lights ------------------------------------------------------------
      The rig itself, not a UI colour: a cool key, a warm rim, a dim cool
-     fill (see "The 3D" in AAA-PLAN.md). None of these are design tokens. */
+     fill (see "The 3D" in PLAN.md). None of these are design tokens. */
 
   const ambient = new THREE.AmbientLight(0x6d83c1, 0.5);
   scene.add(ambient);

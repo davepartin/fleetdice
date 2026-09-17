@@ -32,18 +32,21 @@ it together.
 the tests, and only builds and publishes if they pass — so a broken push fails
 loudly instead of quietly replacing a working game.
 
-**It lives at its own address**, <https://fleetdice.com>, registered at GoDaddy
-and pointed at GitHub Pages by DNS records set there. `public/CNAME`
-carries that domain into every build; **if that file ever leaves the build, Pages
-drops the custom domain** and every asset path breaks. Two older addresses
-redirect to it, so nothing shared before the move is lost:
+**It lives at its own address**, <https://fleetdice.com>, registered at GoDaddy,
+where four A and four AAAA records point at GitHub Pages and a `www` CNAME
+points at `davepartin.github.io`. The domain itself is set in the repo's Pages
+settings on GitHub — **that setting, not `public/CNAME`, is what holds it**,
+because this site deploys from a workflow rather than a branch. Keep
+`public/CNAME` in step anyway; a branch-built copy would need it.
+
+Every older address redirects here, so nothing shared before the move is lost:
 
 | address | what it does |
 | --- | --- |
 | `fleetdice.com` | the game |
 | `www.fleetdice.com` | redirects here |
-| `fleetdice.ministrybag.com` | redirects here (the game's address until 17 September 2026) |
-| `ministrybag.com/fleetdice` | redirects here |
+| `fleetdice.ministrybag.com` | redirects here — the game's address until 17 September 2026, served by the tiny `davepartin/fleetdice-redirect` repo |
+| `ministrybag.com/fleetdice` | redirects here — one page in `davepartin/ministrybag1` |
 | `davepartin.github.io/fleetdice3/` | redirects here |
 
 **The Firebase rules are deployed** and were confirmed live on 1 September 2026.
@@ -192,3 +195,15 @@ away — is in [`BALANCE.md`](BALANCE.md).
    to Play screen changes with it. It cannot go stale.
 4. **A face does one thing, automatically.** No menus on a die. The choosing in
    this game lives in which dice you send back.
+
+---
+
+## The written record
+
+| file | what it holds |
+| --- | --- |
+| `README.md` | this: what the game is, how to run it, how it gets online |
+| `CLAUDE.md` | how to work in this repo — read first if you are an AI |
+| `PLAN.md` | the visual direction, what is done, what is still open, future ideas |
+| `BALANCE.md` | every number, and the measurement behind it |
+| `FIREBASE.md` | the one Firebase project, and how not to break it |
