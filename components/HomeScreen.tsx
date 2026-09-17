@@ -417,7 +417,7 @@ function ModeIcon({ kind }: { kind: "solo" | "versus" | "tutorial" }) {
             <path d={HULL_PATHS[4]} strokeWidth="3.5" strokeLinejoin="round" fill="currentColor" fillOpacity="0.12" />
             <text
               x="32"
-              y="41"
+              y="36"
               textAnchor="middle"
               dominantBaseline="central"
               fontSize="22"
@@ -434,14 +434,14 @@ function ModeIcon({ kind }: { kind: "solo" | "versus" | "tutorial" }) {
              point of the mark is that there are two sides. */
           <>
             <g
-              transform="translate(-5 12) scale(0.7)"
+              transform="translate(-8 12) scale(0.7)"
               stroke="var(--color-shield)"
               fill="var(--color-shield)"
             >
               <path d={HULL_PATHS[4]} strokeWidth="5" strokeLinejoin="round" fillOpacity="0.14" />
               <text
                 x="32"
-                y="41"
+                y="36"
                 textAnchor="middle"
                 dominantBaseline="central"
                 fontSize="24"
@@ -452,7 +452,7 @@ function ModeIcon({ kind }: { kind: "solo" | "versus" | "tutorial" }) {
               </text>
             </g>
             <g
-              transform="translate(25 8) scale(0.7)"
+              transform="translate(27 8) scale(0.7)"
               stroke="var(--color-attack)"
               fill="var(--color-attack)"
             >
