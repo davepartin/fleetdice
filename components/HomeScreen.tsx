@@ -412,41 +412,63 @@ function ModeIcon({ kind }: { kind: "solo" | "versus" | "tutorial" }) {
             </text>
           </>
         ) : kind === "solo" ? (
+          /* One die, the d4 triangle, showing a 1: one commander. */
           <>
-            <path d={HULL_PATHS[6]} strokeWidth="3" strokeLinejoin="round" fill="currentColor" fillOpacity="0.1" />
-            {/* A numeral, because that is what this game's faces show — and an
-                odd one, because blue faces are the odd ones that make Shields. */}
+            <path d={HULL_PATHS[4]} strokeWidth="3.5" strokeLinejoin="round" fill="currentColor" fillOpacity="0.12" />
             <text
               x="32"
-              y="33.5"
+              y="41"
               textAnchor="middle"
               dominantBaseline="central"
-              fontSize="24"
+              fontSize="22"
               fontWeight="700"
               fill="currentColor"
               stroke="none"
             >
-              5
+              1
             </text>
           </>
         ) : (
+          /* Two dice, two commanders: your blue d4 as 1, theirs a red d6 as 2.
+             These two keep their own colours rather than the row's, because the
+             point of the mark is that there are two sides. */
           <>
-            <path
-              d={HULL_PATHS[4]}
-              strokeWidth="4.5"
-              strokeLinejoin="round"
-              fill="currentColor"
-              fillOpacity="0.12"
-              transform="translate(26 5) scale(0.64)"
-            />
-            <path
-              d={HULL_PATHS[6]}
-              strokeWidth="4"
-              strokeLinejoin="round"
-              fill="currentColor"
-              fillOpacity="0.12"
-              transform="translate(-5 13) scale(0.66)"
-            />
+            <g
+              transform="translate(-5 12) scale(0.7)"
+              stroke="var(--color-shield)"
+              fill="var(--color-shield)"
+            >
+              <path d={HULL_PATHS[4]} strokeWidth="5" strokeLinejoin="round" fillOpacity="0.14" />
+              <text
+                x="32"
+                y="41"
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize="24"
+                fontWeight="700"
+                stroke="none"
+              >
+                1
+              </text>
+            </g>
+            <g
+              transform="translate(25 8) scale(0.7)"
+              stroke="var(--color-attack)"
+              fill="var(--color-attack)"
+            >
+              <path d={HULL_PATHS[6]} strokeWidth="5" strokeLinejoin="round" fillOpacity="0.14" />
+              <text
+                x="32"
+                y="33"
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize="24"
+                fontWeight="700"
+                stroke="none"
+              >
+                2
+              </text>
+            </g>
           </>
         )}
       </svg>
