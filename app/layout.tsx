@@ -62,9 +62,9 @@ export const metadata: Metadata = {
     url: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/`,
     images: [
       {
-        url: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/art/fleet-dice-key-art.png`,
-        width: 1024,
-        height: 640,
+        url: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/art/fleet-dice-key-art.jpg`,
+        width: 1440,
+        height: 810,
         alt: "Fleet Dice — build the fleet, break the flagship",
       },
     ],
@@ -73,7 +73,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Fleet Dice",
     description: "Build the fleet. Break the flagship.",
-    images: [`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/art/fleet-dice-key-art.png`],
+    images: [`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/art/fleet-dice-key-art.jpg`],
   },
 };
 

@@ -12,6 +12,7 @@ import Link from "next/link";
 import { HeroStage } from "./HeroStage";
 import { Button, Chip, Notice, Panel, Rule, Sheet, Spinner } from "./ui";
 import { HowToPlaySheet } from "./HowToPlay";
+import { HULL_PATHS } from "./HullShape";
 import { commanderName, ensurePlayerIdentity, firebaseConfigured, rememberCommanderName } from "@/lib/firebase";
 import {
   cancelRoom,
@@ -122,10 +123,10 @@ export function HomeScreen() {
                   the helper that knows where this app is mounted. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={href("/art/fleet-dice-key-art.png")}
+                src={href("/art/fleet-dice-key-art.jpg")}
                 alt="Fleet Dice — build the fleet, break the flagship"
-                width={1024}
-                height={640}
+                width={1440}
+                height={810}
                 decoding="async"
                 fetchPriority="high"
               />
@@ -380,6 +381,12 @@ export function HomeScreen() {
   );
 }
 
+/**
+ * The three ways in, drawn with the same hull silhouettes the dice have on the
+ * board (`HULL_PATHS`) rather than icons from some other game. Solo is one die;
+ * Play a friend is two, in the two commanders' colours — the shape and the
+ * count say which mode it is before the words do.
+ */
 function ModeIcon({ kind }: { kind: "solo" | "versus" | "tutorial" }) {
   const tone =
     kind === "tutorial"
@@ -389,27 +396,78 @@ function ModeIcon({ kind }: { kind: "solo" | "versus" | "tutorial" }) {
         : "border-[--color-attack]/30 bg-[--color-attack]/10 c-attack";
   return (
     <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl border ${tone}`} aria-hidden>
-      {kind === "tutorial" ? (
-        <svg viewBox="0 0 32 32" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M6 7h14a4 4 0 0 1 4 4v14H10a4 4 0 0 0-4 4V7Z" />
-          <path d="M6 7a4 4 0 0 1 4-4h14" />
-          <path d="M12 12h8M12 17h8M12 22h5" />
-        </svg>
-      ) : kind === "solo" ? (
-        <svg viewBox="0 0 32 32" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M8 5h16l4 7-4 15H8L4 12 8 5Z" />
-          <circle cx="11" cy="11" r="1.3" fill="currentColor" stroke="none" />
-          <circle cx="21" cy="11" r="1.3" fill="currentColor" stroke="none" />
-          <circle cx="16" cy="16" r="1.3" fill="currentColor" stroke="none" />
-          <circle cx="11" cy="21" r="1.3" fill="currentColor" stroke="none" />
-          <circle cx="21" cy="21" r="1.3" fill="currentColor" stroke="none" />
-        </svg>
-      ) : (
-        <svg viewBox="0 0 32 32" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="m7 5 6 6-2.5 2.5L4.5 7.5 7 5Zm4 8 14 14m0-22-6 6 2.5 2.5 6-6L25 5Zm-4 8L7 27" />
-          <path d="m5 23 4 4m14-4 4 4" />
-        </svg>
-      )}
+      <svg viewBox="0 0 64 64" className="h-8 w-8">
+        {kind === "tutorial" ? (
+          /* One die with a question on its face: the shape says dice, the mark
+             says you are here to learn rather than to start a match. */
+          <>
+            <path
+              d={HULL_PATHS[6]}
+              fill="var(--color-energy)"
+              fillOpacity="0.16"
+              stroke="var(--color-energy)"
+              strokeWidth="3"
+              strokeLinejoin="round"
+            />
+            <text
+              x="32"
+              y="33"
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize="26"
+              fontWeight="700"
+              fill="var(--color-energy)"
+            >
+              ?
+            </text>
+          </>
+        ) : kind === "solo" ? (
+          /* One die: you against the ship's computer. The inner line is the
+             face inset the d6 carries on the board, which is what stops a
+             square at this size reading as a plain box. */
+          <>
+            <path
+              d={HULL_PATHS[6]}
+              fill="var(--color-hull-icon-d6)"
+              stroke="rgba(255,255,255,0.9)"
+              strokeWidth="3"
+              strokeLinejoin="round"
+            />
+            <rect
+              x="19"
+              y="19"
+              width="26"
+              height="26"
+              rx="3"
+              fill="none"
+              stroke="rgba(255,255,255,0.45)"
+              strokeWidth="2"
+            />
+          </>
+        ) : (
+          /* Two dice, two commanders — the blue hull in front, an attack-red d4
+             behind it, so the pair reads as a match rather than a stack. */
+          <>
+            <path
+              d={HULL_PATHS[4]}
+              fill="var(--color-attack)"
+              fillOpacity="0.9"
+              stroke="rgba(255,255,255,0.8)"
+              strokeWidth="3"
+              strokeLinejoin="round"
+              transform="translate(27 3) scale(0.6)"
+            />
+            <path
+              d={HULL_PATHS[6]}
+              fill="var(--color-hull-icon-d6)"
+              stroke="rgba(255,255,255,0.85)"
+              strokeWidth="3"
+              strokeLinejoin="round"
+              transform="translate(-5 11) scale(0.68)"
+            />
+          </>
+        )}
+      </svg>
     </span>
   );
 }
