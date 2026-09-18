@@ -206,9 +206,9 @@ export function Stat({
  * rolled reads exactly the way yours does — no separate "what got through"
  * math standing in for numbers this side of the match never truly knows.
  */
-export function TallyStrip({ tally }: { tally: Tally | null }) {
+export function TallyStrip({ tally, showEnergy = true }: { tally: Tally | null; showEnergy?: boolean }) {
   return (
-    <div className="tally-strip grid gap-1">
+    <div className={`tally-strip ${showEnergy ? "" : "tally-strip-4"} grid gap-1`}>
       <div className="tally-cell tally-cell-attack">
         <Stat
           kind="attack"
@@ -247,15 +247,19 @@ export function TallyStrip({ tally }: { tally: Tally | null }) {
           colorLabel
         />
       </div>
-      <div className="tally-cell tally-cell-energy">
-        <Stat
-          kind="energy"
-          value={tally?.energy ?? 0}
-          label="Energy"
-          showGlyph={false}
-          colorLabel
-        />
-      </div>
+      {/* The other commander's Energy is hidden in a report: it is exactly what
+          they can spend in the shipyard next round. */}
+      {showEnergy && (
+        <div className="tally-cell tally-cell-energy">
+          <Stat
+            kind="energy"
+            value={tally?.energy ?? 0}
+            label="Energy"
+            showGlyph={false}
+            colorLabel
+          />
+        </div>
+      )}
     </div>
   );
 }

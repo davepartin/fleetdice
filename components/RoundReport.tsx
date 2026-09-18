@@ -86,11 +86,13 @@ function TallyLane({
   tally,
   hpBefore,
   hpAfter,
+  showEnergy = true,
 }: {
   label: string;
   tally: Tally | null;
   hpBefore: number;
   hpAfter: number;
+  showEnergy?: boolean;
 }) {
   return (
     <div className="round-report-lane">
@@ -98,7 +100,7 @@ function TallyLane({
         <p className="t-eyebrow">{label}</p>
         <HpChange before={hpBefore} after={hpAfter} />
       </div>
-      <TallyStrip tally={tally} />
+      <TallyStrip tally={tally} showEnergy={showEnergy} />
     </div>
   );
 }
@@ -421,7 +423,13 @@ export function RoundReportCard({
             </button>
           </header>
           <TallyLane label="You" tally={yours} hpBefore={report.hpBefore} hpAfter={report.hpAfter} />
-          <TallyLane label={enemyName} tally={theirs} hpBefore={theirBefore} hpAfter={theirAfter} />
+          <TallyLane
+            label={enemyName}
+            tally={theirs}
+            hpBefore={theirBefore}
+            hpAfter={theirAfter}
+            showEnergy={false}
+          />
           {report.weapon && <p className="round-report-used">{`You used ${weaponUseText(report.weapon)}`}</p>}
           {report.enemyWeapon && (
             <p className="round-report-used">{`${enemyName} used ${weaponUseText(report.enemyWeapon)}`}</p>
@@ -449,7 +457,7 @@ export function RoundReportCard({
         <header className="volley-head">
           <div>
             <p className="t-eyebrow">Round {report.round}</p>
-            <h2 className="t-display volley-title">Volley</h2>
+            <h2 className="t-display volley-title">Round Review</h2>
           </div>
           <div className="volley-earned" aria-label={`+${report.energyEarned} Energy`}>
             <svg className="volley-earned-bolt" viewBox="0 0 16 20" aria-hidden="true">
@@ -471,12 +479,12 @@ export function RoundReportCard({
           enemyWeapon={report.enemyWeapon}
         />
 
+        {/* Yours only. What the other commander banked is what they can spend
+            in the shipyard next round, and telling you theirs — or them yours —
+            gives away the next buy. */}
         <p className="volley-ledger-energy">
-          <span className="t-eyebrow">Energy this round</span>
-          <span className="t-num c-energy">You +{yours.energy}</span>
-          <span className="t-num c-energy">
-            {enemyName} +{theirs?.energy ?? 0}
-          </span>
+          <span className="t-eyebrow">Energy you earned</span>
+          <span className="t-num c-energy">+{report.energyEarned}</span>
         </p>
 
         {nothingToBlock && (
@@ -494,8 +502,8 @@ export function RoundReportCard({
         )}
 
         <div className="volley-weapons">
-          <EnemyWeaponRow stock={report.weapons ?? newWeapons()} name="You" />
-          <EnemyWeaponRow stock={report.enemyWeapons ?? newWeapons()} name={enemyName} />
+          <EnemyWeaponRow stock={report.weapons ?? newWeapons()} name="Your flagship weapons" />
+          <EnemyWeaponRow stock={report.enemyWeapons ?? newWeapons()} name={`${enemyName}'s flagship weapons`} />
         </div>
 
         {!survived && <Notice tone="warn">Your flagship is gone.</Notice>}

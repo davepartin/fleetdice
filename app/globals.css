@@ -1035,6 +1035,11 @@ button {
 .tally-strip {
   grid-template-columns: 1.2fr 1.2fr 1fr 1fr 1fr;
 }
+/* Four cells when the Energy one is hidden, so the row fills its width
+   instead of leaving a gap where the secret used to be. */
+.tally-strip-4 {
+  grid-template-columns: 1.2fr 1.2fr 1fr 1fr;
+}
 
 .tally-cell {
   border: 1px solid rgb(255 255 255 / 0.08);
