@@ -195,12 +195,12 @@ function LedgerCell({
   mine: boolean;
 }) {
   if (value === null) return <span className="volley-ledger-cell volley-ledger-empty">·</span>;
-  // Nothing happened on this side: a plain 0, with no sign and no box. A "−0"
-  // reads as a term that moved health, and a box around it claims dice did
-  // something they did not.
+  // Nothing happened on this side: a plain 0, with no sign, because a "−0"
+  // reads as a term that moved health. It keeps the box when the dice were
+  // yours — you rolled that nothing, and the row still says whose turn it was.
   if (value === 0) {
     return (
-      <span className="volley-ledger-cell volley-ledger-zero">
+      <span className={`volley-ledger-cell volley-ledger-zero ${mine ? "volley-ledger-mine" : ""}`}>
         <span className="t-num">0</span>
       </span>
     );
@@ -305,8 +305,15 @@ function VolleyLedger({
       themIsYours: false,
     },
   ];
-  // A row of two zeroes says nothing; a row where either side moved stays.
-  const shown = rows.filter((row) => (row.you ?? 0) !== 0 || (row.them ?? 0) !== 0);
+  // Every row stays, even at zero: a round always has the same shape, so the
+  // eye learns where Repair lives instead of hunting for it. The exceptions are
+  // Escalation, which is not a rule until late in a match, and Super Shield,
+  // which only exists when that weapon fired.
+  const alwaysHidden = (row: LedgerRow) =>
+    (row.key === "escalation" || row.key === "super") &&
+    (row.you ?? 0) === 0 &&
+    (row.them ?? 0) === 0;
+  const shown = rows.filter((row) => !alwaysHidden(row));
 
   return (
     <div className="volley-ledger">
@@ -317,7 +324,7 @@ function VolleyLedger({
       </div>
 
       <div className="volley-ledger-row volley-ledger-start">
-        <span className="volley-ledger-cell volley-ledger-hp">
+        <span className="volley-ledger-cell volley-ledger-hp volley-ledger-mine">
           <span className="t-num">{Math.max(0, you.hpBefore)}</span>
         </span>
         <span className="volley-ledger-label">Started with</span>
@@ -326,13 +333,15 @@ function VolleyLedger({
         </span>
       </div>
 
-      {(yourNote || enemyNote) && (
-        <div className="volley-ledger-row volley-ledger-weapon">
-          <span className="volley-ledger-note">{yourNote ?? "\u00b7"}</span>
-          <span className="volley-ledger-label">Weapon</span>
-          <span className="volley-ledger-note">{enemyNote ?? "\u00b7"}</span>
-        </div>
-      )}
+      <div className="volley-ledger-row volley-ledger-weapon">
+        <span className={`volley-ledger-note ${yourNote ? "volley-ledger-note-used" : ""}`}>
+          {yourNote ?? "None"}
+        </span>
+        <span className="volley-ledger-label">Weapon</span>
+        <span className={`volley-ledger-note ${enemyNote ? "volley-ledger-note-used" : ""}`}>
+          {enemyNote ?? "None"}
+        </span>
+      </div>
 
       {shown.map((row) => (
         <div key={row.key} className="volley-ledger-row">
@@ -343,7 +352,7 @@ function VolleyLedger({
       ))}
 
       <div className="volley-ledger-row volley-ledger-total">
-        <span className="volley-ledger-cell volley-ledger-hp volley-ledger-hp-final">
+        <span className="volley-ledger-cell volley-ledger-hp volley-ledger-hp-final volley-ledger-mine">
           <span className="t-num">{Math.max(0, you.hpAfter)}</span>
         </span>
         <span className="volley-ledger-label">Left with</span>
@@ -353,8 +362,9 @@ function VolleyLedger({
       </div>
 
       <p className="volley-ledger-key">
-        A box marks what your own dice did.
-        {(yourNote || enemyNote) && " A weapon shows where it changed the sum, and is already counted in that row."}
+        A box marks what is yours: your health, and what your own dice did — wherever
+        they landed. A weapon shows where it changed the sum, and is already counted in
+        that row.
       </p>
     </div>
   );

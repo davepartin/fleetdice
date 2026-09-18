@@ -1470,8 +1470,14 @@ button {
 .volley-ledger-note {
   font-size: var(--text-xs);
   color: var(--color-hull-100);
-  opacity: 0.75;
+  opacity: 0.45;
   text-align: right;
+}
+/* A weapon that actually fired reads brighter than the "None" that is only
+   there to say weapons exist. */
+.volley-ledger-note-used {
+  opacity: 0.85;
+  color: var(--color-energy);
 }
 .volley-ledger-row > .volley-ledger-note:last-child {
   text-align: left;
