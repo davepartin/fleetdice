@@ -168,7 +168,7 @@ test("the free rolls really are free, and the paid ones really are charged", () 
 test("the help screen and the tutorial state the rule the engine enforces", () => {
   // The house rule: a balance change must not be able to leave a sentence on
   // screen lying. Both places must interpolate, not hardcode.
-  for (const file of ["../components/HowToPlay.tsx", "../lib/tutorial.ts"]) {
+  for (const file of ["../components/HowToPlay.tsx", "../lib/tutorialSlides.ts"]) {
     const src = readFileSync(new URL(file, import.meta.url), "utf8");
     assert.match(src, /TUNING\.rollsPerRound/, `${file} must read rollsPerRound from TUNING`);
     assert.match(src, /TUNING\.paidRollsPerRound/, `${file} must read paidRollsPerRound from TUNING`);

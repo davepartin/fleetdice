@@ -35,7 +35,8 @@ test("players are not shown the name Fleet Dice 3", () => {
     "../components/HowToPlay.tsx",
     "../lib/reference.ts",
     "../lib/rooms.ts",
-    "../lib/tutorial.ts",
+    "../lib/tutorialSlides.ts",
+    "../components/TutorialSlides.tsx",
   ];
   const isComment = (line) => /^\s*(\/\/|\/\*|\*)/.test(line);
   for (const file of files) {

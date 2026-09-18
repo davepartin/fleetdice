@@ -18,7 +18,7 @@ test("the match shell cannot grow a dead page-scroll under the dock", () => {
   const bodyBlock = css.match(/\nbody \{[^}]*\}/);
   const hudBlock = css.match(/^\.hud \{[^}]*\}/m);
   const canvasBlock = css.match(/^\.stage-canvas \{[^}]*\}/m);
-  const shellBlock = css.match(/^\.tutorial-shell \{[^}]*\}/m);
+  const shellBlock = css.match(/^\.tut-shell \{[^}]*\}/m);
   const frameBlock = css.match(/^\.app-frame \{[^}]*\}/m);
   assert.ok(htmlBlock, "html, body need a sizing block");
   assert.ok(bodyBlock, "body needs its own lock-down block");
@@ -34,7 +34,7 @@ test("the match shell cannot grow a dead page-scroll under the dock", () => {
     ["body", bodyBlock[0]],
     ["hud", hudBlock[0]],
     ["canvas", canvasBlock[0]],
-    ["tutorial-shell", shellBlock[0]],
+    ["tut-shell", shellBlock[0]],
     ["app-frame", frameBlock[0]],
   ]) {
     assert.match(block, /--vv-height/, `${name} must size to the visible viewport`);

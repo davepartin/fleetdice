@@ -39,8 +39,23 @@ export default function SoloPage() {
   // match meant tapping Solo could not reach the tier list at all — the one
   // screen this page exists for.
   useEffect(() => {
-    setResume(loadSoloSave());
+    const saved = loadSoloSave();
+    setResume(saved);
     setLoaded(true);
+    // The tutorial ends by sending a first-timer here with ?d=low, so the
+    // gentlest tier starts without another screen to read. Read off
+    // location rather than useSearchParams: this is a static export, and
+    // that hook would need a Suspense boundary around the whole page.
+    // A saved battle always wins — never throw away a match in progress.
+    if (saved) return;
+    try {
+      const wanted = new URLSearchParams(window.location.search).get("d");
+      if (wanted && (DIFFICULTIES as readonly string[]).includes(wanted)) {
+        setDifficulty(wanted as Difficulty);
+      }
+    } catch {
+      /* no query string to read */
+    }
   }, []);
   if (!loaded) return <div className="recovery-screen">Checking for your saved battle…</div>;
 

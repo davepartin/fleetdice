@@ -173,6 +173,18 @@ a player reads.)
 
 Faces roll **"Attack N"** or **"Shield N"** — never "hits" or "blocks".
 
+**The tutorial is a slideshow, not a match.** `lib/tutorialSlides.ts` is the
+script — sixteen slides, one button each, the same numbers every time — and
+`components/TutorialSlides.tsx` paints them with the game's own art
+(`HelpShipFace`, `HullShape`, `paintHullPlate`). It used to be a scripted battle
+driven through the real `MatchScreen` with a coach card on top, which taught the
+rules and the interface at the same moment and was the thing a new player
+bounced off. Its numbers interpolate from `TUNING` and the generated tables, and
+it ends by sending the player to `/solo/?d=low` — a real match on the gentlest
+tier. `tests/tutorial.test.mjs` fails if a slide loses its button, if a teaching
+beat disappears, if a number gets typed in by hand, or if it starts driving a
+real match again.
+
 **The round review is arithmetic, and it has to close.** The details view reads
 a round down the column — started with, minus Attack, plus Shields, minus
 Escalation, minus Direct, plus Repair, plus blocking, left with — for both

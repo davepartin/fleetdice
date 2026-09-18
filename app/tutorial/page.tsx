@@ -1,7 +1,7 @@
 "use client";
 
-import { TutorialScreen } from "@/components/TutorialScreen";
+import { TutorialSlides } from "@/components/TutorialSlides";
 
 export default function TutorialPage() {
-  return <TutorialScreen />;
+  return <TutorialSlides />;
 }

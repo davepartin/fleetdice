@@ -3496,473 +3496,79 @@ button {
    Tutorial coach — collapsible tip over a live board
    ================================================================== */
 
-.tutorial-shell {
-  position: relative;
-  height: 100%;
-  height: 100dvh;
-  height: var(--vv-height);
-  max-height: var(--vv-height);
-  overflow: hidden;
-}
 
-.tutorial-theme {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  padding: calc(var(--hud-safe-top) + 0.75rem) 1rem calc(var(--hud-safe-bottom) + 1rem);
-  background:
-    radial-gradient(ellipse at 50% 0%, rgb(255 210 61 / 0.14), transparent 45%),
-    radial-gradient(ellipse at 100% 100%, rgb(176 125 255 / 0.1), transparent 40%),
-    var(--color-void);
-}
 
-.tutorial-theme-art {
-  /* Grows to center the art on a spacious screen, but yields first — before
-     the card ever has to scroll internally — when the viewport is tight. */
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.65rem;
-  width: min(100%, 28rem);
-  overflow: hidden;
-  pointer-events: none;
-}
 
-.tutorial-theme-dice {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 0.65rem;
-}
 
-.tutorial-theme-dice-row2 {
-  opacity: 0.92;
-}
 
-.tutorial-theme-card {
-  width: min(100%, 28rem);
-  max-height: min(56dvh, 26rem);
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  padding: 1.05rem 1.1rem 1rem;
-  flex: 0 1 auto;
-}
 
 /* The eyebrow/title/paragraphs scroll; the actions below are a sibling, not
    nested inside this box, so "Begin the flight" can never hide behind a
    scroll gesture the player doesn't know to make. */
-.tutorial-theme-scroll {
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  flex: 1 1 auto;
-  min-height: 0;
-  mask-image: linear-gradient(to bottom, black calc(100% - 1.1rem), transparent 100%);
-}
 
-.tutorial-theme-actions {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 0.65rem;
-  padding-top: 0.65rem;
-  border-top: 1px solid rgb(255 255 255 / 0.08);
-}
 
 /*
  * One fixed anchor: the bottom of the phone. The board lives above it.
  * A centred or top-anchored card covered the dice the tip was pointing at.
  * The card grows upward; Minimize tucks it to a slim bar for more board.
  */
-.tutorial-coach {
-  position: fixed;
-  left: 0;
-  right: 0;
-  top: auto;
-  bottom: calc(var(--hud-safe-bottom) + 0.45rem);
-  z-index: 70;
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  padding: 0 0.65rem;
-  pointer-events: none;
-}
 /* Sit just above the dock's action row — Roll Fleet / Reroll / Lock in
    stay tappable under the tip, and the fleet stays in the open space
    above it. 8.6rem is that action row plus a little padding. A higher
    shelf (the whole 250px dock) put the card over the dice. */
-.tutorial-shell:not([data-shop]) .tutorial-coach {
-  top: auto;
-  bottom: calc(8.6rem + var(--hud-safe-bottom));
-}
 /* The five-totals lesson has to sit above the whole dock or the yellow
    ring is hidden under the card. */
-.tutorial-shell[data-spotlight="tally"] .tutorial-coach {
-  bottom: calc(16.4rem + var(--hud-safe-bottom));
-}
 
-.tutorial-coach-bar {
-  pointer-events: auto;
-  width: min(100%, 28rem);
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.65rem 0.9rem;
-  border-color: rgb(255 210 61 / 0.3);
-  background: rgb(11 16 32 / 0.97);
-  box-shadow: 0 10px 28px rgb(0 0 0 / 0.5);
-  cursor: pointer;
-  text-align: left;
-}
 
-.tutorial-coach-bar-text {
-  flex: 1 1 auto;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
 
-.tutorial-coach-bar-title {
-  color: white;
-  font-weight: 700;
-  font-size: var(--text-sm);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
-.tutorial-coach-bar-hint {
-  color: var(--color-energy);
-  font-size: var(--text-xs);
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
 /* Board-teach / yard strip: title + two lines + Next. The text column
    shrinks so Next cannot paint over the words. */
-.tutorial-coach-bar-board {
-  align-items: center;
-  padding: 0.5rem 0.75rem;
-}
-.tutorial-coach-bar-board .tutorial-coach-bar-text {
-  flex: 1 1 0;
-  min-width: 0;
-}
-.tutorial-coach-bar-body {
-  color: var(--color-hull-100);
-  font-weight: 600;
-  letter-spacing: 0;
-  white-space: normal;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
 
-.tutorial-coach-bar-error {
-  color: var(--color-attack);
-}
 
-.tutorial-coach-bar-cta {
-  flex: 0 0 auto;
-  border: 1px solid rgb(255 210 61 / 0.4);
-  border-radius: 10px;
-  padding: 0.4rem 0.7rem;
-  color: var(--color-energy);
-  font-size: var(--text-xs);
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
 
-.tutorial-coach-bar-next-wrap {
-  flex: 0 1 auto;
-  min-width: 0;
-}
-.tutorial-coach-bar-next-wrap .btn {
-  max-width: 9.6rem;
-  white-space: normal;
-  text-wrap: balance;
-  letter-spacing: 0.03em;
-}
 
-.tutorial-coach-card {
-  pointer-events: auto;
-  width: min(100%, 28rem);
-  /* Grows up from the bottom. Tall enough for Faces/Marks; not so tall it
-     eats the fleet. Spotlight tips stay shorter so HP / board / totals show. */
-  max-height: min(42dvh, 22rem);
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  padding: 0.7rem 0.85rem 0.65rem;
-  border-color: rgb(255 210 61 / 0.3);
-  /* Translucent on purpose — the board behind it is still part of the
-     lesson, so it should stay visible (softly) even while the tip is open.
-     The blur is what keeps the text readable over busy dice art instead
-     of just going dim. */
-  background:
-    linear-gradient(180deg, rgb(255 210 61 / 0.1), transparent 42%),
-    rgb(11 16 32 / 0.78);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 14px 44px rgb(0 0 0 / 0.55);
-}
 
-.tutorial-shell[data-lesson] .tutorial-coach-card {
-  max-height: min(56dvh, 28rem);
-}
-.tutorial-shell[data-spotlight] .tutorial-coach-card {
-  max-height: min(32dvh, 15.5rem);
-}
 /* Board-teach steps open as the slim strip. If someone taps Show tip, this
    cap keeps the expanded card from growing back over the 3×3. */
-.tutorial-shell[data-spotlight="board"] .tutorial-coach-card {
-  max-height: min(20dvh, 8.5rem);
-  padding: 0.5rem 0.75rem 0.45rem;
-}
-.tutorial-shell[data-spotlight="board"] .tutorial-coach-title {
-  font-size: var(--text-sm);
-}
-.tutorial-shell[data-spotlight="board"] .tutorial-coach-body {
-  margin-top: 0.25rem;
-  font-size: var(--text-xs);
-  line-height: 1.3;
-}
-.tutorial-shell[data-spotlight="board"] .tutorial-coach-foot {
-  margin-top: 0.4rem;
-  padding-top: 0.35rem;
-}
-.tutorial-shell[data-spotlight="board"] .tutorial-face-strip {
-  display: none;
-}
 
 /* Everything that can grow with the step's copy scrolls in here. The foot
    below is a sibling, not a child of this box — it can never be pushed or
    scrolled out of view by a long tip. */
-.tutorial-coach-scroll {
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  flex: 1 1 auto;
-  min-height: 0;
-  /* Keep the fade in empty padding so a tip that fits is not dimmed on the
-     last line. Overflow still fades as "more below" if a future step runs long. */
-  padding-bottom: 1.2rem;
-  mask-image: linear-gradient(to bottom, black calc(100% - 1.1rem), transparent 100%);
-}
-.tutorial-shell[data-spotlight="board"] .tutorial-coach-scroll {
-  padding-bottom: 0.35rem;
-  mask-image: none;
-}
 
-.tutorial-coach-title {
-  margin-top: 0.15rem;
-  color: white;
-  font-size: var(--text-base);
-  line-height: 1.15;
-}
 
-.tutorial-coach-body {
-  margin-top: 0.4rem;
-  color: var(--color-hull-100);
-  font-size: var(--text-sm);
-  line-height: 1.35;
-}
 
-.tutorial-coach-error {
-  margin-top: 0.4rem;
-  color: var(--color-attack);
-  font-size: var(--text-sm);
-}
 
-.tutorial-coach-foot {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  margin-top: 0.6rem;
-  padding-top: 0.55rem;
-  border-top: 1px solid rgb(255 255 255 / 0.08);
-}
 
 /* On an action step there is no coach button — the lit control below IS the
    button. This line just names it and points down at it. */
-.tutorial-coach-await {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  flex: 1 1 auto;
-  margin: 0;
-  color: var(--color-energy);
-  font-size: var(--text-xs);
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
 
-.tutorial-coach-caret {
-  animation: tutorial-caret 1.4s ease-in-out infinite;
-  font-size: 1rem;
-  line-height: 1;
-}
 
-@keyframes tutorial-caret {
-  0%, 100% { transform: translateY(0); opacity: 0.55; }
-  50% { transform: translateY(3px); opacity: 1; }
-}
 
-.tutorial-coach-skip {
-  flex-shrink: 0;
-  border: 1px solid rgb(255 255 255 / 0.14);
-  border-radius: 10px;
-  padding: 0.4rem 0.7rem;
-  background: transparent;
-  color: var(--color-hull-300);
-  font-size: var(--text-xs);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-}
 
-.tutorial-coach-top {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
 
-.tutorial-coach-top-right {
-  display: flex;
-  align-items: baseline;
-  gap: 0.6rem;
-}
 
-.tutorial-coach-progress {
-  color: var(--color-hull-400);
-  font-size: var(--text-xs);
-}
 
-.tutorial-coach-minimize {
-  border: 0;
-  border-radius: 10px;
-  padding: 0.38rem 0.72rem;
-  background: var(--color-energy);
-  color: var(--color-primary-ink);
-  font-size: var(--text-xs);
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  cursor: pointer;
-}
 
-.tutorial-face-strip {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.55rem;
-}
 
-.tutorial-face-card {
-  position: relative;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.3rem;
-}
 
 /* A soft glow behind each face, like it's lit from the board — the flat
    drop-shadow alone read as a sticker; this gives it some depth. */
-.tutorial-face-card::before {
-  content: "";
-  position: absolute;
-  top: -0.5rem;
-  left: 50%;
-  width: 4.5rem;
-  height: 4.5rem;
-  translate: -50% 0;
-  background: radial-gradient(circle, rgb(255 255 255 / 0.14), transparent 68%);
-  z-index: -1;
-}
 
-.tutorial-face-card figcaption {
-  font-size: var(--text-xs);
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--color-hull-300);
-}
 
-.tutorial-face-arrow {
-  font-size: 1.4rem;
-  font-weight: 800;
-  padding-bottom: 1.4rem;
-}
 
-.tutorial-hull-chip {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  color: var(--color-hull-200);
-  font-size: var(--text-xs);
-  font-weight: 700;
-}
 
-.tutorial-hull-chip::before {
-  content: "";
-  position: absolute;
-  top: -0.35rem;
-  left: 50%;
-  width: 3.6rem;
-  height: 3.6rem;
-  translate: -50% 0;
-  background: radial-gradient(circle, rgb(255 255 255 / 0.12), transparent 68%);
-  z-index: -1;
-}
 
-.tutorial-hull-shape {
-  width: 3rem;
-  height: 3rem;
-  filter: drop-shadow(0 6px 10px rgb(0 0 0 / 0.5));
-}
 
 /*
  * The shipyard is a full-screen overlay. The coach sits at the bottom as a
  * slim strip, so the grid only needs room for that strip — 8.5rem was a
  * tall-card reservation and left a black band under Return to battle.
  */
-.tutorial-shell .yard {
-  padding-top: calc(var(--hud-safe-top) + 0.75rem);
-  padding-bottom: calc(var(--hud-safe-bottom) + 6.5rem);
-}
 /* Pushing the yard down costs vertical room, which can put the bottom row of
    bays past the fold. Let the board scroll so every cell stays reachable —
    a bay you cannot tap is a dead end in a tutorial that asks you to tap it. */
-.tutorial-shell .yard-main {
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-}
-.tutorial-shell .yard-portal {
-  z-index: 60;
-}
 
 /* ------------------------------------------------------------------
    Spotlight — the tutorial points at real controls, it does not just
@@ -3970,109 +3576,7 @@ button {
    step needs, and each rule lights that one up in place.
    ------------------------------------------------------------------ */
 
-@keyframes tutorial-spotlight {
-  0%, 100% {
-    box-shadow:
-      0 0 0 3px var(--color-energy),
-      0 0 0 7px rgb(255 210 61 / 0.5),
-      0 0 28px 8px rgb(255 210 61 / 0.85);
-  }
-  50% {
-    box-shadow:
-      0 0 0 4px var(--color-energy-glow),
-      0 0 0 10px rgb(255 210 61 / 0.45),
-      0 0 42px 12px rgb(255 226 120 / 0.95);
-  }
-}
 
-.tutorial-spotlight,
-.tutorial-shell[data-awaiting="roll"] .roll-dock-action .btn-primary,
-.tutorial-shell[data-awaiting="reroll"] .roll-dock-action .btn-primary,
-.tutorial-shell[data-awaiting="submit"] .roll-dock-action .btn-primary,
-.tutorial-shell[data-awaiting="continue"] .round-report .btn-primary,
-.tutorial-shell[data-awaiting="brace"] .brace-dock-action .btn-primary,
-.tutorial-shell[data-awaiting="ready"] .yard-done .btn-primary,
-.tutorial-shell[data-awaiting="ready"] .yard .btn-primary,
-.tutorial-shell[data-awaiting="token"] .flagship-control-row > .btn,
-.tutorial-shell[data-awaiting="token"] .weapon-launcher {
-  position: relative;
-  z-index: 2;
-  animation: tutorial-spotlight 1.6s ease-in-out infinite;
-  border-radius: 16px;
-}
-
-/* Shipyard steps point at cells, not a button — and each step points at one
- *kind* of cell (locked / empty / a ship to upgrade), never all nine. */
-.tutorial-shell[data-awaiting="shopSlot"] .yard-cell-locked[data-affordable],
-.tutorial-shell[data-awaiting="shopBuy"] .yard-cell-empty[data-affordable],
-.tutorial-shell[data-awaiting="shopUpgrade"] .yard-cell-ship[data-affordable] {
-  position: relative;
-  z-index: 3;
-  animation: tutorial-spotlight 1.6s ease-in-out infinite;
-}
-
-/*
- * Return to battle stays off the yard until the tip actually names it.
- * shopSlot / shopBuy / shopUpgrade (and the intro that leads into them)
- * left a full-width primary sitting across the 3×3, so the glowing bay
- * the coach asked for could not be tapped. It comes back on `ready`.
- */
-.tutorial-shell[data-shop]:not([data-awaiting="ready"]) .yard-foot {
-  display: none;
-  pointer-events: none;
-}
-
-/* The 6.5rem yard pad was sized for the leave button plus the dock. With
- * the button gone, that leftover padding is a black band under the grid. */
-.tutorial-shell[data-shop]:not([data-awaiting="ready"]) .yard {
-  padding-bottom: calc(var(--hud-safe-bottom) + 4.8rem);
-}
-
-/* The confirm drawer used to sit above Return to battle. With that button
- * gone, park it above the slim tip instead, or Open this bay / buy a d4
- * land under the dock. */
-.tutorial-shell[data-shop]:not([data-awaiting="ready"]) .yard-drawer-wrap {
-  bottom: calc(var(--hud-safe-bottom) + 5.6rem);
-}
-
-/* The screen tour — a coach-only step naming a HUD region rather than a
-   control to tap gets its own data-spotlight, independent of data-awaiting,
-   so narration can ring real UI without pretending there's a button to
-   press. The board itself is a WebGL canvas with no DOM box to ring, so
-   that one frames the pass-through div sitting exactly over it instead —
-   the same trick the brace phase already uses for its danger frame. */
-.tutorial-shell[data-spotlight="hp"] .match-header .hp-rail {
-  position: relative;
-  z-index: 2;
-  animation: tutorial-spotlight 1.6s ease-in-out infinite;
-  border-radius: 16px;
-  outline: 2px solid var(--color-energy);
-  outline-offset: 3px;
-}
-.tutorial-shell[data-spotlight="tally"] .tally-strip {
-  position: relative;
-  z-index: 2;
-  animation: tutorial-spotlight 1.6s ease-in-out infinite;
-  border-radius: 16px;
-  outline: 2px solid var(--color-energy);
-  outline-offset: 3px;
-}
-@keyframes tutorial-board-spotlight {
-  0%, 100% {
-    box-shadow:
-      inset 0 0 0 4px var(--color-energy),
-      inset 0 0 36px rgb(255 210 61 / 0.45);
-  }
-  50% {
-    box-shadow:
-      inset 0 0 0 6px var(--color-energy-glow),
-      inset 0 0 52px rgb(255 226 120 / 0.7);
-  }
-}
-.tutorial-shell[data-spotlight="board"] .hud-pass-through {
-  animation: tutorial-board-spotlight 1.6s ease-in-out infinite;
-  border-radius: 1rem;
-}
 
 
 /* ---------------------------------------------------------------- */
@@ -4233,8 +3737,7 @@ button {
   .stage-canvas,
   .yard,
   .recap,
-  .tutorial-theme,
-  .tutorial-coach,
+  .tut-frame,
   .sheet-overlay {
     position: absolute;
   }
@@ -4514,4 +4017,319 @@ button {
     0 1px 0 rgb(255 255 255 / 0.4) inset,
     0 -1px 0 var(--color-buy-shadow) inset,
     0 3px 10px rgb(90 70 160 / 0.3);
+}
+
+/* ------------------------------------------------------------------ */
+/* The first-flight tutorial: a slideshow, not a match                 */
+/* ------------------------------------------------------------------ */
+
+/* One picture, a few lines, one button — and the button always sits in the
+   same place, because a first-timer should not have to look for it twice. */
+.tut-frame {
+  display: flex;
+  justify-content: center;
+}
+/* Sized to the visible screen, never to 100dvh: Safari reports a taller page
+   than the player can see, and the difference is a dead scroll into black. */
+.tut-shell {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 30rem;
+  height: 100%;
+  height: var(--vv-height);
+  max-height: var(--vv-height);
+  overflow: hidden;
+  padding: max(0.6rem, var(--hud-safe-top)) 1rem 1rem;
+  gap: 0.7rem;
+}
+.tut-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  flex: 0 0 auto;
+}
+.tut-exit {
+  padding: 0.3rem 0.6rem;
+  border-radius: 10px;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  color: var(--color-hull-300);
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.tut-exit:disabled {
+  opacity: 0.3;
+}
+.tut-dots {
+  display: flex;
+  align-items: center;
+  gap: 0.22rem;
+  flex: 1 1 auto;
+  justify-content: center;
+}
+.tut-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.18);
+}
+.tut-dot-done {
+  background: rgb(255 255 255 / 0.4);
+}
+.tut-dot-on {
+  width: 18px;
+  background: var(--color-energy);
+}
+
+/* The picture takes the room that is left, and never pushes the button off a
+   short screen. It is capped so a small picture does not float in the middle of
+   an empty page with the words stranded at the bottom. */
+.tut-picture {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 52vh;
+  margin: auto 0 0;
+  display: grid;
+  place-items: center;
+  padding: 0.3rem 0;
+  animation: tut-in 220ms ease-out;
+}
+@keyframes tut-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tut-picture { animation: none; }
+}
+
+.tut-copy {
+  flex: 0 0 auto;
+}
+.tut-title {
+  margin: 0.1rem 0 0.3rem;
+  font-size: var(--text-xl);
+  color: #fff;
+}
+.tut-body {
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--color-hull-200);
+}
+.tut-action {
+  flex: 0 0 auto;
+  padding-top: 0.2rem;
+}
+
+/* The board picture: the same three-by-three the game plays on. */
+.tut-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+  width: min(100%, 21rem);
+}
+.tut-cell {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 12px;
+  background: rgb(255 255 255 / 0.03);
+}
+.tut-cell-locked {
+  border-style: dashed;
+  border-color: rgb(255 210 61 / 0.22);
+  background: repeating-linear-gradient(
+    -45deg,
+    rgb(255 210 61 / 0.07) 0 6px,
+    transparent 6px 12px
+  );
+}
+/* A cell this slide is talking about. */
+.tut-cell-lit {
+  border-color: var(--color-energy);
+  box-shadow: 0 0 18px -6px var(--color-energy);
+}
+.tut-cell-marked {
+  border-color: var(--color-shield);
+  box-shadow: 0 0 18px -6px var(--color-shield);
+}
+.tut-idle {
+  width: 54%;
+  opacity: 0.55;
+}
+
+/* Example faces, each with what it rolls written under it. */
+.tut-faces {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem 0.5rem;
+  width: min(100%, 20rem);
+}
+.tut-face {
+  display: grid;
+  justify-items: center;
+  gap: 0.15rem;
+  text-align: center;
+}
+.tut-face-title {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: #fff;
+}
+.tut-face-note {
+  font-size: var(--text-xs);
+  color: var(--color-hull-300);
+}
+
+.tut-straight {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+/* The round review, cut to three lines. */
+.tut-review {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: min(100%, 19rem);
+}
+.tut-review-row {
+  display: grid;
+  grid-template-columns: 3.4rem 1fr;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-size: var(--text-xl);
+  font-weight: 700;
+}
+.tut-review-row .tut-review-label {
+  font-size: var(--text-xs);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-hull-300);
+}
+.tut-review-row span:first-child {
+  text-align: right;
+}
+.tut-review-total {
+  margin-top: 0.15rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid rgb(255 255 255 / 0.16);
+}
+
+/* A shipyard slide shows the board it changes, with the price under it. */
+.tut-shop-stack {
+  display: grid;
+  justify-items: center;
+  gap: 0.55rem;
+  width: 100%;
+}
+.tut-shop-stack .tut-board {
+  width: min(100%, 15rem);
+}
+.tut-shop-stack .tut-shop-label {
+  font-size: var(--text-base);
+}
+
+/* A shipyard row, priced from TUNING. */
+.tut-shop {
+  width: min(100%, 21rem);
+  padding: 1rem 1.1rem;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.04);
+}
+.tut-shop-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+.tut-shop-label {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: #fff;
+}
+.tut-shop-cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--color-energy);
+}
+.tut-bolt {
+  width: 0.7em;
+  height: 0.9em;
+}
+.tut-shop-detail {
+  margin-top: 0.5rem;
+  font-size: var(--text-sm);
+  color: var(--color-hull-300);
+}
+
+/* The four flagship weapons, with the one being charged lit. */
+.tut-weapons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  width: min(100%, 21rem);
+}
+.tut-weapon {
+  display: grid;
+  justify-items: center;
+  gap: 0.15rem;
+  padding: 0.8rem 0.3rem;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 12px;
+  background: rgb(255 255 255 / 0.03);
+  opacity: 0.55;
+}
+.tut-weapon-mark {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+.tut-weapon-label {
+  font-size: var(--text-xs);
+  color: var(--color-hull-200);
+}
+.tut-weapon-state {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--color-repair);
+}
+.tut-weapon-energy .tut-weapon-mark { color: var(--color-energy); }
+.tut-weapon-shield .tut-weapon-mark { color: var(--color-shield); }
+.tut-weapon-attack .tut-weapon-mark { color: var(--color-attack); }
+.tut-weapon-repair .tut-weapon-mark { color: var(--color-repair); }
+.tut-weapon-charged {
+  opacity: 1;
+  border-color: color-mix(in srgb, var(--color-repair) 55%, transparent);
+  box-shadow: 0 0 20px -8px var(--color-repair);
+}
+
+.tut-title-art {
+  display: grid;
+  justify-items: center;
+  gap: 0.7rem;
+}
+.tut-title-fleet {
+  display: flex;
+  gap: 0.35rem;
+}
+
+/* A short phone in landscape, or a small screen: the picture gives way first,
+   the same rule the home page follows. */
+@media (max-height: 620px) {
+  .tut-picture {
+    transform: scale(0.88);
+  }
+  .tut-body {
+    font-size: var(--text-xs);
+  }
 }

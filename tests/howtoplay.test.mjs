@@ -31,8 +31,8 @@ test("the game never says brace, soak or absorb — only shields and blocking", 
     "../components/BattleRecap.tsx",
     "../components/ui.tsx",
     "../lib/reference.ts",
-    "../lib/tutorial.ts",
-    "../components/TutorialCoach.tsx",
+    "../lib/tutorialSlides.ts",
+    "../components/TutorialSlides.tsx",
     "../components/FlagshipWeapons.tsx",
   ];
   // Comment lines are skipped: this is about words a player can read, and
