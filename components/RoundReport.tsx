@@ -6,9 +6,14 @@
  * More details — the board stays visible until someone asks.
  */
 
-import { newWeapons, type PlayerState, type RoundReport as Report, type Tally } from "@/lib/engine";
+import {
+  newWeapons,
+  type PlayerState,
+  type RoundReport as Report,
+  type Tally,
+  type WeaponUse,
+} from "@/lib/engine";
 import { Button, Notice, TallyStrip } from "./ui";
-import { StatRow } from "./BattleRecap";
 import { EnemyWeaponRow, weaponUseText } from "./FlagshipWeapons";
 
 export type BoxKind = "attack" | "shield" | "direct" | "repair";
@@ -98,6 +103,263 @@ function TallyLane({
   );
 }
 
+
+
+/**
+ * What a weapon did, in a few words.
+ *
+ * Deliberately *not* a term in the sum: the Attack weapon is already inside the
+ * Attack row and Repair inside Repair, so adding it again would make the column
+ * lie. It names which row moved, and by how much.
+ */
+function weaponNote(use: WeaponUse | null | undefined): string | null {
+  if (!use) return null;
+  if (use.id === "rotate") return `Rotate ${use.from ?? "?"} \u2192 ${use.to ?? "?"}`;
+  if (use.id === "shield") return `Super Shield \u00d7\u00bd`;
+  if (use.id === "attack") return `Attack +${use.amount}`;
+  return `Repair +${use.amount}`;
+}
+
+/**
+ * One round's arithmetic, read down the column.
+ *
+ * The old details view put two numbers on a slider and left the player to work
+ * out how 47 became 46. This shows the sum itself: what you started with, every
+ * term that moved it, and what you ended with — and it closes exactly, because
+ * every term is what the engine *used*, not what was rolled. Shields that
+ * exceeded the attack stopped only the attack; blocking that exceeded what got
+ * through stopped only that. `settlePlayer` is the authority:
+ *
+ *   incoming = max(0, attack - superShield - shields) + escalation
+ *   damage   = max(0, incoming - blocked) + direct
+ *   after    = before - damage + repair
+ *
+ * Rearranged, that is exactly the column below, which is why it adds up.
+ */
+type LedgerTone = "hp" | "attack" | "shield" | "direct" | "repair" | "block" | "escalation";
+
+type LedgerRow = {
+  key: string;
+  label: string;
+  tone: LedgerTone;
+  /** "-" takes health away, "+" gives it back. */
+  sign: "+" | "-";
+  /** Your value and theirs; null where that side has nothing to show yet. */
+  you: number | null;
+  them: number | null;
+  /** True where the number came off your own dice, in that column. */
+  youIsYours: boolean;
+  themIsYours: boolean;
+};
+
+export type LedgerSide = {
+  hpBefore: number;
+  hpAfter: number;
+  attack: number;
+  superShield: number;
+  shields: number;
+  escalation: number;
+  direct: number;
+  repair: number;
+  blocked: number;
+};
+
+/** What a settle actually used, pulled out of one player's report. */
+export function ledgerSide(report: Report | null | undefined, attackAgainst: number): LedgerSide | null {
+  if (!report) return null;
+  const superShield = report.superShieldStopped ?? 0;
+  // What the shields stopped, never more than the attack that arrived.
+  const shields = Math.max(0, attackAgainst - superShield + report.escalation - report.incoming);
+  return {
+    hpBefore: report.hpBefore,
+    hpAfter: report.hpAfter,
+    attack: attackAgainst,
+    superShield,
+    shields,
+    escalation: report.escalation,
+    direct: report.direct,
+    repair: report.repair,
+    blocked: report.blocked,
+  };
+}
+
+function LedgerCell({
+  value,
+  tone,
+  sign,
+  mine,
+}: {
+  value: number | null;
+  tone: LedgerTone;
+  sign: "+" | "-";
+  mine: boolean;
+}) {
+  if (value === null) return <span className="volley-ledger-cell volley-ledger-empty">·</span>;
+  // Nothing happened on this side: a plain 0, with no sign and no box. A "−0"
+  // reads as a term that moved health, and a box around it claims dice did
+  // something they did not.
+  if (value === 0) {
+    return (
+      <span className="volley-ledger-cell volley-ledger-zero">
+        <span className="t-num">0</span>
+      </span>
+    );
+  }
+  return (
+    <span className={`volley-ledger-cell volley-ledger-${tone} ${mine ? "volley-ledger-mine" : ""}`}>
+      <span className="t-num">
+        {sign === "-" ? "\u2212" : "+"}
+        {value}
+      </span>
+    </span>
+  );
+}
+
+function VolleyLedger({
+  you,
+  them,
+  enemyName,
+  yourWeapon,
+  enemyWeapon,
+}: {
+  you: LedgerSide;
+  them: LedgerSide | null;
+  enemyName: string;
+  yourWeapon?: WeaponUse | null;
+  enemyWeapon?: WeaponUse | null;
+}) {
+  const yourNote = weaponNote(yourWeapon);
+  const enemyNote = weaponNote(enemyWeapon);
+  // Your dice make your Shields, Repair and blocking, and their Attack and
+  // Direct — so the boxed cells sit in both columns. That is the point of the
+  // box: it follows your dice across, whichever side of the sum they land on.
+  const rows: LedgerRow[] = [
+    {
+      key: "attack",
+      label: "Attack",
+      tone: "attack",
+      sign: "-",
+      you: you.attack,
+      them: them?.attack ?? null,
+      youIsYours: false,
+      themIsYours: true,
+    },
+    {
+      key: "super",
+      label: "Super Shield",
+      tone: "shield",
+      sign: "+",
+      you: you.superShield,
+      them: them?.superShield ?? null,
+      youIsYours: true,
+      themIsYours: false,
+    },
+    {
+      key: "shields",
+      label: "Shields",
+      tone: "shield",
+      sign: "+",
+      you: you.shields,
+      them: them?.shields ?? null,
+      youIsYours: true,
+      themIsYours: false,
+    },
+    {
+      key: "escalation",
+      label: "Escalation",
+      tone: "escalation",
+      sign: "-",
+      you: you.escalation,
+      them: them?.escalation ?? null,
+      youIsYours: false,
+      themIsYours: false,
+    },
+    {
+      key: "direct",
+      label: "Direct",
+      tone: "direct",
+      sign: "-",
+      you: you.direct,
+      them: them?.direct ?? null,
+      youIsYours: false,
+      themIsYours: true,
+    },
+    {
+      key: "repair",
+      label: "Repair",
+      tone: "repair",
+      sign: "+",
+      you: you.repair,
+      them: them?.repair ?? null,
+      youIsYours: true,
+      themIsYours: false,
+    },
+    {
+      key: "blocked",
+      label: "Blocking",
+      tone: "block",
+      sign: "+",
+      you: you.blocked,
+      them: them?.blocked ?? null,
+      youIsYours: true,
+      themIsYours: false,
+    },
+  ];
+  // A row of two zeroes says nothing; a row where either side moved stays.
+  const shown = rows.filter((row) => (row.you ?? 0) !== 0 || (row.them ?? 0) !== 0);
+
+  return (
+    <div className="volley-ledger">
+      <div className="volley-ledger-row volley-ledger-head">
+        <span className="t-eyebrow">You</span>
+        <span className="t-eyebrow volley-ledger-label">Round</span>
+        <span className="t-eyebrow">{enemyName}</span>
+      </div>
+
+      <div className="volley-ledger-row volley-ledger-start">
+        <span className="volley-ledger-cell volley-ledger-hp">
+          <span className="t-num">{Math.max(0, you.hpBefore)}</span>
+        </span>
+        <span className="volley-ledger-label">Started with</span>
+        <span className="volley-ledger-cell volley-ledger-hp">
+          <span className="t-num">{them ? Math.max(0, them.hpBefore) : "\u00b7"}</span>
+        </span>
+      </div>
+
+      {(yourNote || enemyNote) && (
+        <div className="volley-ledger-row volley-ledger-weapon">
+          <span className="volley-ledger-note">{yourNote ?? "\u00b7"}</span>
+          <span className="volley-ledger-label">Weapon</span>
+          <span className="volley-ledger-note">{enemyNote ?? "\u00b7"}</span>
+        </div>
+      )}
+
+      {shown.map((row) => (
+        <div key={row.key} className="volley-ledger-row">
+          <LedgerCell value={row.you} tone={row.tone} sign={row.sign} mine={row.youIsYours} />
+          <span className="volley-ledger-label">{row.label}</span>
+          <LedgerCell value={row.them} tone={row.tone} sign={row.sign} mine={row.themIsYours} />
+        </div>
+      ))}
+
+      <div className="volley-ledger-row volley-ledger-total">
+        <span className="volley-ledger-cell volley-ledger-hp volley-ledger-hp-final">
+          <span className="t-num">{Math.max(0, you.hpAfter)}</span>
+        </span>
+        <span className="volley-ledger-label">Left with</span>
+        <span className="volley-ledger-cell volley-ledger-hp volley-ledger-hp-final">
+          <span className="t-num">{them ? Math.max(0, them.hpAfter) : "\u00b7"}</span>
+        </span>
+      </div>
+
+      <p className="volley-ledger-key">
+        A box marks what your own dice did.
+        {(yourNote || enemyNote) && " A weapon shows where it changed the sum, and is already counted in that row."}
+      </p>
+    </div>
+  );
+}
+
 export function RoundReportCard({
   report,
   them,
@@ -130,6 +392,11 @@ export function RoundReportCard({
   const nothingToBlock = report.incoming === 0 && (theirs?.attack ?? 0) > 0;
   const theirAfter = Math.max(0, them?.report?.hpAfter ?? them?.hp ?? 0);
   const theirBefore = them?.report?.hpBefore ?? theirAfter;
+
+  // Your column comes from your own report; theirs from theirs, which exists
+  // as soon as they have blocked. Until then that column shows only its start.
+  const yourSide = ledgerSide(report, theirs?.attack ?? 0)!;
+  const theirSide = ledgerSide(them?.report ?? null, yours.attack);
 
   const continueLabel = !survived ? "See the result" : "To the shipyard";
 
@@ -182,83 +449,39 @@ export function RoundReportCard({
           </div>
         </header>
 
-        <div className="volley-stats">
-          <div className="recap-stats-head">
-            <div className="round-report-who volley-who">
-              <span className="t-eyebrow">You</span>
-              <HpChange before={report.hpBefore} after={report.hpAfter} />
-            </div>
-            <div className="round-report-who volley-who">
-              <span className="t-eyebrow">{enemyName}</span>
-              <HpChange before={theirBefore} after={theirAfter} />
-            </div>
-          </div>
-          <StatRow label="Attack" you={yours.attack} them={theirs?.attack ?? 0} color="attack" />
-          <StatRow label="Shields" you={yours.defense} them={theirs?.defense ?? 0} color="shield" />
-          <StatRow label="Direct" you={yours.direct} them={theirs?.direct ?? 0} color="direct" />
-          <StatRow label="Repair" you={yours.heal} them={theirs?.heal ?? 0} color="repair" />
-          <StatRow label="Energy" you={yours.energy} them={theirs?.energy ?? 0} color="energy" />
-        </div>
+        {/* The round as one sum, read downwards. The sliders that used to sit
+            here compared two numbers but never showed how 47 became 46; the
+            end-of-match recap still has them, where totalling the whole game
+            is the job. */}
+        <VolleyLedger
+          you={yourSide}
+          them={theirSide}
+          enemyName={enemyName}
+          yourWeapon={report.weapon}
+          enemyWeapon={report.enemyWeapon}
+        />
 
-        <div className="volley-landed">
-          <p className="t-eyebrow">On your flagship</p>
-          <p className="battle-line flex flex-wrap items-center gap-1">
-            <HpBox value={report.hpBefore} />
-            <span className="c-dim">−</span>
-            <Box kind="attack" value={theirs?.attack ?? 0} />
-            {superShieldStopped > 0 && (
-              <>
-                <span className="c-dim">+</span>
-                <span title="Super Shield">
-                  <Box kind="shield" value={superShieldStopped} /> <small className="c-shield">Super</small>
-                </span>
-              </>
-            )}
-            {shieldsStopped > 0 && (
-              <>
-                <span className="c-dim">+</span>
-                <Box kind="shield" value={shieldsStopped} />
-              </>
-            )}
-            {report.blocked > 0 && (
-              <>
-                <span className="c-dim">+</span>
-                <ShipBlockBox value={report.blocked} />
-              </>
-            )}
-            {report.escalation > 0 && (
-              <>
-                <span className="c-dim">−</span>
-                <Box kind="attack" value={report.escalation} />
-              </>
-            )}
-            {report.direct > 0 && (
-              <>
-                <span className="c-dim">−</span>
-                <Box kind="direct" value={report.direct} />
-              </>
-            )}
-            {report.repair > 0 && (
-              <>
-                <span className="c-dim">+</span>
-                <Box kind="repair" value={report.repair} />
-              </>
-            )}
-            <span className="c-dim">=</span>
-            <HpBox value={Math.max(0, report.hpAfter)} big />
+        <p className="volley-ledger-energy">
+          <span className="t-eyebrow">Energy this round</span>
+          <span className="t-num c-energy">You +{yours.energy}</span>
+          <span className="t-num c-energy">
+            {enemyName} +{theirs?.energy ?? 0}
+          </span>
+        </p>
+
+        {nothingToBlock && (
+          <p className="report-noblock">
+            No blocking — your{" "}
+            <b className="c-shield">
+              {superShieldStopped > 0 ? "Super Shield and Shields" : `Shields ${report.tally.defense}`}
+            </b>{" "}
+            stopped their <b className="c-attack">Attack {theirs?.attack ?? 0}</b>.
           </p>
-          {nothingToBlock && (
-            <p className="report-noblock">
-              No blocking — your{" "}
-              <b className="c-shield">{superShieldStopped > 0 ? "Super Shield and Shields" : `Shields ${report.tally.defense}`}</b>{" "}
-              stopped their <b className="c-attack">Attack {theirs?.attack ?? 0}</b>.
-            </p>
-          )}
-          {report.weapon && <p className="round-report-used">{`You used ${weaponUseText(report.weapon)}`}</p>}
-          {report.enemyWeapon && (
-            <p className="round-report-used">{`${enemyName} used ${weaponUseText(report.enemyWeapon)}`}</p>
-          )}
-        </div>
+        )}
+        {report.weapon && <p className="round-report-used">{`You used ${weaponUseText(report.weapon)}`}</p>}
+        {report.enemyWeapon && (
+          <p className="round-report-used">{`${enemyName} used ${weaponUseText(report.enemyWeapon)}`}</p>
+        )}
 
         <div className="volley-weapons">
           <EnemyWeaponRow stock={report.weapons ?? newWeapons()} name="You" />

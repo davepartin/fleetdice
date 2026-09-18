@@ -173,6 +173,16 @@ a player reads.)
 
 Faces roll **"Attack N"** or **"Shield N"** — never "hits" or "blocks".
 
+**The round review is arithmetic, and it has to close.** The details view reads
+a round down the column — started with, minus Attack, plus Shields, minus
+Escalation, minus Direct, plus Repair, plus blocking, left with — for both
+commanders. Every term is what `settlePlayer` *used*, never what was rolled:
+shields that exceeded the attack stopped only the attack, blocking that exceeded
+what got through stopped only that. A weapon is named on its own line and never
+added again, because its effect is already inside Attack, Repair or Super
+Shield. `tests/round-ledger.test.mjs` replays real matches and fails if the
+column stops equalling the engine's `hpAfter`.
+
 **One mark, one meaning.** A ship spending a round out is drawn by
 `paintHullPlate` as a flat plate: its hull silhouette, its size, a red bar
 through it. The same mark appears the instant you tap a ship to block. Do not

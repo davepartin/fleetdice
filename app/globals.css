@@ -1365,14 +1365,135 @@ button {
 .volley-side .recap-cell-hull-label {
   display: none;
 }
-.volley-stats {
-  flex: none;
-  padding: 0.15rem 0.15rem 0;
+/* The round as one vertical sum: your number, what it is, theirs. The label
+   sits between the two columns so a row reads left-to-right as "18, Attack, 4"
+   and each column reads top-to-bottom as arithmetic. Signs are part of the
+   number, not decoration: a row either takes health away or gives it back. */
+.volley-ledger {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  padding: 0.5rem 0.2rem 0.35rem;
 }
-.volley-stats .recap-row {
-  padding: 0.28rem 0;
-  grid-template-columns: 2.2rem 1fr 2.2rem;
+.volley-ledger-row {
+  display: grid;
+  grid-template-columns: 1fr minmax(6.5rem, auto) 1fr;
+  align-items: center;
+  gap: 0.4rem;
 }
+.volley-ledger-head {
+  padding-bottom: 0.1rem;
+}
+.volley-ledger-head > span:first-child {
+  text-align: left;
+}
+.volley-ledger-head > span:last-child {
+  text-align: right;
+}
+.volley-ledger-label {
+  text-align: center;
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-hull-400, rgb(255 255 255 / 0.55));
+}
+.volley-ledger-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 1.85rem;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font-size: var(--text-base);
+  font-weight: 700;
+  line-height: 1;
+}
+.volley-ledger-row > .volley-ledger-cell:last-child {
+  justify-content: flex-start;
+}
+/* Your own dice, wherever they landed: their Attack and Direct are in the
+   enemy's column, your Shields, Repair and blocking in yours. One box, one
+   meaning — "this came off dice you rolled". */
+.volley-ledger-mine {
+  border-color: rgb(255 255 255 / 0.38);
+  background: rgb(255 255 255 / 0.05);
+}
+.volley-ledger-attack {
+  color: var(--color-attack);
+}
+.volley-ledger-shield {
+  color: var(--color-shield);
+}
+.volley-ledger-direct {
+  color: var(--color-direct);
+}
+.volley-ledger-repair {
+  color: var(--color-repair);
+}
+.volley-ledger-escalation {
+  color: var(--color-energy);
+}
+.volley-ledger-block {
+  color: #ffffff;
+}
+.volley-ledger-hp {
+  color: var(--color-hp);
+  font-size: var(--text-xl);
+}
+.volley-ledger-zero {
+  color: rgb(255 255 255 / 0.3);
+}
+.volley-ledger-empty {
+  color: rgb(255 255 255 / 0.25);
+}
+/* The two numbers that matter most: what you had, and what you have. */
+.volley-ledger-start {
+  padding-bottom: 0.15rem;
+  border-bottom: 1px solid rgb(255 255 255 / 0.1);
+}
+.volley-ledger-total {
+  margin-top: 0.15rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid rgb(255 255 255 / 0.16);
+}
+.volley-ledger-hp-final {
+  text-shadow: 0 0 14px color-mix(in srgb, var(--color-hp) 55%, transparent);
+}
+/* The weapon line names the row it moved. No sign, dimmer, its own hairline —
+   it must never read as another term to add, because its effect is already
+   inside Attack, Repair or Super Shield above. */
+.volley-ledger-weapon {
+  padding-bottom: 0.2rem;
+  border-bottom: 1px dashed rgb(255 255 255 / 0.12);
+}
+.volley-ledger-note {
+  font-size: var(--text-xs);
+  color: var(--color-hull-100);
+  opacity: 0.75;
+  text-align: right;
+}
+.volley-ledger-row > .volley-ledger-note:last-child {
+  text-align: left;
+}
+.volley-ledger-key {
+  margin-top: 0.3rem;
+  text-align: center;
+  font-size: var(--text-xs);
+  color: rgb(255 255 255 / 0.45);
+}
+.volley-ledger-energy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 12px;
+  background: rgb(255 255 255 / 0.03);
+  font-size: var(--text-sm);
+}
+
 .volley-landed {
   flex: none;
   padding: 0.55rem 0.65rem 0.6rem;
@@ -1513,24 +1634,6 @@ button {
 }
 .volley-who .volley-hp-after {
   font-size: var(--text-xl);
-}
-.volley-stats .recap-stats-head {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-  align-items: start;
-}
-.volley-stats .recap-stats-head .round-report-who,
-.volley-stats .recap-stats-head .round-report-who span {
-  max-width: none;
-  overflow: visible;
-  text-overflow: unset;
-  white-space: nowrap;
-}
-.volley-stats .recap-stats-head .round-report-who:last-child,
-.volley-stats .recap-stats-head .volley-who:last-child {
-  align-items: flex-end;
-  text-align: right;
 }
 .round-report-used {
   margin: 0;
@@ -1844,31 +1947,6 @@ button {
     margin: 0.25rem 0.4rem 0.45rem;
     padding: 0.5rem 0.55rem 0.55rem;
   }
-  .match-hud-solo .volley-stats .recap-row {
-    padding: 0.18rem 0;
-  }
-  .match-hud-solo .volley-banked {
-    font-size: var(--text-xl);
-  }
-
-@media (max-height: 700px) {
-  .volley-side .recap-cell {
-    aspect-ratio: 1 / 0.84;
-  }
-  .volley-side .recap-cell-face {
-    width: 70%;
-    height: 70%;
-  }
-  .volley-report-card {
-    gap: 0.4rem;
-  }
-  .volley-report-card .round-report-top {
-    gap: 0.4rem;
-  }
-  .volley-title {
-    font-size: var(--text-xl);
-  }
-}
 
   .match-hud-solo .shipyard-header h2 {
     font-size: var(--text-xl);

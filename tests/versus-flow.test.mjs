@@ -24,8 +24,13 @@ test("the round report paints both fleets and both volleys, like the recap", () 
   assert.match(src, /More details/);
   assert.doesNotMatch(src, /Show round details/);
   assert.doesNotMatch(src, /FleetBoard/);
-  assert.match(src, /StatRow/);
-  assert.match(src, /On your flagship/);
+  // The details view is a vertical sum now, not two numbers on a slider:
+  // started with, every term that moved it, left with — for both commanders.
+  // tests/round-ledger.test.mjs proves the column equals the engine's settle.
+  assert.match(src, /VolleyLedger/);
+  assert.match(src, /Started with/);
+  assert.match(src, /Left with/);
+  assert.doesNotMatch(src, /StatRow/);
   assert.match(src, /HpChange/);
   assert.match(src, /round-report-more/);
   assert.match(src, /EnemyWeaponRow/);
