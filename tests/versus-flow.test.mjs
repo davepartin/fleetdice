@@ -21,7 +21,9 @@ test("the round report paints both fleets and both volleys, like the recap", () 
   const src = read("../components/RoundReport.tsx");
   const match = read("../components/MatchScreen.tsx");
   assert.match(src, /TallyStrip/);
-  assert.match(src, /More details/);
+  // The button into the arithmetic. It used to say "More details".
+  assert.match(src, /Round Review/);
+  assert.doesNotMatch(src, /More details/);
   assert.doesNotMatch(src, /Show round details/);
   assert.doesNotMatch(src, /FleetBoard/);
   // The details view is a vertical sum now, not two numbers on a slider:

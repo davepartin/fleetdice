@@ -1,9 +1,11 @@
 "use client";
 
+import { useCallback, useEffect, useRef, useState } from "react";
+
 /**
  * After the volley: the same five total boxes from the roll screen, yours
- * then theirs. The comparison bars and flagship arithmetic live behind
- * More details — the board stays visible until someone asks.
+ * then theirs. The round's arithmetic lives behind the Round Review button —
+ * the board stays visible until someone asks.
  */
 
 import {
@@ -363,11 +365,7 @@ function VolleyLedger({
         </span>
       </div>
 
-      <p className="volley-ledger-key">
-        A box marks what is yours: your health, and what your own dice did — wherever
-        they landed. A weapon shows where it changed the sum, and is already counted in
-        that row.
-      </p>
+      <p className="volley-ledger-key">Boxes show your roll.</p>
     </div>
   );
 }
@@ -405,6 +403,21 @@ export function RoundReportCard({
   const theirAfter = Math.max(0, them?.report?.hpAfter ?? them?.hp ?? 0);
   const theirBefore = them?.report?.hpBefore ?? theirAfter;
 
+  // "There is more below" — measured, not assumed, so it never points at
+  // nothing on a tall screen.
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [more, setMore] = useState(false);
+  const checkMore = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setMore(el.scrollHeight - el.scrollTop - el.clientHeight > 12);
+  }, []);
+  useEffect(() => {
+    checkMore();
+    window.addEventListener("resize", checkMore);
+    return () => window.removeEventListener("resize", checkMore);
+  }, [checkMore, details]);
+
   // Your column comes from your own report; theirs from theirs, which exists
   // as soon as they have blocked. Until then that column shows only its start.
   const yourSide = ledgerSide(report, theirs?.attack ?? 0)!;
@@ -419,7 +432,7 @@ export function RoundReportCard({
           <header className="round-report-summary-head">
             <p className="t-eyebrow">Round {report.round}</p>
             <button type="button" className="round-report-more" onClick={onShowDetails}>
-              More details
+              Round Review
             </button>
           </header>
           <TallyLane label="You" tally={yours} hpBefore={report.hpBefore} hpAfter={report.hpAfter} />
@@ -453,11 +466,11 @@ export function RoundReportCard({
 
   return (
     <div className="round-report volley-report-card">
-      <div className="round-report-top">
+      <div className="round-report-top" ref={scrollRef} onScroll={checkMore}>
         <header className="volley-head">
           <div>
             <p className="t-eyebrow">Round {report.round}</p>
-            <h2 className="t-display volley-title">Round Review</h2>
+            <h2 className="t-display volley-title">Review</h2>
           </div>
           <div className="volley-earned" aria-label={`+${report.energyEarned} Energy`}>
             <svg className="volley-earned-bolt" viewBox="0 0 16 20" aria-hidden="true">
@@ -514,6 +527,22 @@ export function RoundReportCard({
             you both.
           </p>
         )}
+
+      {more && (
+        <div className="round-report-more-below" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18">
+            <path
+              d="M6 9l6 6 6-6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+      )}
+
       </div>
 
       <div className="round-report-actions">

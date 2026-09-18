@@ -1253,6 +1253,9 @@ button {
   height: 100%;
   gap: 0.55rem;
 }
+.volley-report-card {
+  position: relative;
+}
 .volley-report-card .round-report-top {
   flex: 1 1 auto;
   min-height: 0;
@@ -1487,6 +1490,35 @@ button {
 .volley-ledger-row > .volley-ledger-note:last-child {
   text-align: left;
 }
+/* "Keep going, there is more" — a single chevron at the foot of the scroller,
+   shown only while something is actually below it. It floats over the content
+   and never takes a tap. */
+.round-report-more-below {
+  position: sticky;
+  bottom: 0;
+  align-self: center;
+  margin-top: 0.1rem;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 0.16);
+  background: rgb(8 12 24 / 0.82);
+  color: var(--color-hull-100);
+  pointer-events: none;
+  animation: report-nudge 1.8s ease-in-out infinite;
+}
+@keyframes report-nudge {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .round-report-more-below {
+    animation: none;
+  }
+}
+
 .volley-ledger-key {
   margin-top: 0.3rem;
   text-align: center;
