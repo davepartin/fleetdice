@@ -11,12 +11,52 @@
 import type { DieValue, PlayerState } from "@/lib/engine";
 import { shipInSlot, slotForCell, weaponsOf } from "@/lib/engine";
 import { WeaponStatusList } from "./FlagshipWeapons";
+import { ledgerSide, VolleyLedger } from "./RoundReport";
 import { NOUN } from "@/lib/reference";
 import { HelpFlagFace, HelpHullPlate, HelpShipFace } from "./HelpArt";
 import { href } from "@/lib/paths";
 import { Button, Ticker } from "./ui";
 
 const CELLS = Array.from({ length: 9 }, (_, cell) => cell);
+
+/** A fireball on each wreck — two explosions, not a targeting reticle. */
+function MutualBlast({ tone }: { tone: "you" | "them" }) {
+  return (
+    <svg className={`recap-blast recap-blast-${tone}`} viewBox="0 0 120 120" aria-hidden="true">
+      <circle className="recap-blast-ring recap-blast-ring-outer" cx="60" cy="60" r="42" />
+      <circle className="recap-blast-ring recap-blast-ring-inner" cx="60" cy="60" r="24" />
+      <circle className="recap-blast-core" cx="60" cy="60" r="11" />
+      <path
+        className="recap-blast-spikes"
+        d="M60 18 66 46 54 46 Z M94 32 78 54 70 46 Z M102 60 74 66 74 54 Z M90 92 68 74 76 68 Z M60 102 54 74 66 74 Z M28 90 52 72 44 66 Z M18 60 46 54 46 66 Z M30 28 52 50 44 44 Z"
+      />
+    </svg>
+  );
+}
+
+/**
+ * Both fleets going up. The defeat painting is the wrecked flagship; we
+ * show it twice (one flipped) and put a blast on each so the header reads
+ * as two explosions, not one loser's poster. The victory painting stays
+ * for ordinary wins.
+ */
+function MutualArt() {
+  const wreck = href("/art/fleet-dice-defeat.png");
+  return (
+    <div className="recap-mutual-art" aria-hidden="true">
+      <div className="recap-mutual-ship recap-mutual-ship-you">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={wreck} alt="" width={1024} height={640} decoding="async" />
+        <MutualBlast tone="you" />
+      </div>
+      <div className="recap-mutual-ship recap-mutual-ship-them">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={wreck} alt="" width={1024} height={640} decoding="async" />
+        <MutualBlast tone="them" />
+      </div>
+    </div>
+  );
+}
 
 /** The 3×3 fleet, exactly as the shipyard draws it, at the size a screenshot needs. */
 /**
@@ -178,6 +218,10 @@ export function StatRow({
  * The volley that ended it. Both commanders lock in blind, so the two
  * fleets shown side by side are the only way — on a phone, not next to
  * each other — to see why the match actually went the way it did.
+ *
+ * When both flagships fall, this is the whole story: the damage that
+ * landed (the engine's `report.damage` / `damageAfterBlocking` figure)
+ * in huge numbers, then the same combat ledger as the Round Review.
  */
 function LastRound({
   you,
@@ -199,22 +243,58 @@ function LastRound({
   const yourDirect = yourReport.tally.direct;
   const theirDirect = theirReport.tally.direct;
 
-  // Both flagships falling in the same volley is the one outcome the HP
-  // numbers alone don't explain — the engine breaks that tie on the
-  // heavier volley, then on damage across the whole match, so this reads
-  // out exactly the numbers it used.
   const bothFell = you.hp <= 0 && them.hp <= 0;
-  let tiebreak: string | null = null;
+  // What you put on their flagship this volley, and what they put on yours.
+  const yourLanded = theirReport.damage;
+  const theirLanded = yourReport.damage;
+
   if (bothFell) {
-    if (yourAttack !== theirAttack) {
-      const youHadIt = yourAttack > theirAttack;
-      tiebreak = `Both flagships fell in the same volley — ${youHadIt ? "you" : enemyName} fired the heavier Attack that round, ${Math.max(yourAttack, theirAttack)} to ${Math.min(yourAttack, theirAttack)}, and it decided it.`;
-    } else if (you.stats.damageDealt !== them.stats.damageDealt) {
-      const youHadIt = you.stats.damageDealt > them.stats.damageDealt;
-      tiebreak = `Both flagships fell in the same volley with equal Attack — it came down to total damage across the whole match, ${Math.max(you.stats.damageDealt, them.stats.damageDealt)} to ${Math.min(you.stats.damageDealt, them.stats.damageDealt)}, and ${youHadIt ? "you" : enemyName} had it.`;
-    } else {
-      tiebreak = "Both flagships fell in the same volley, dead even all the way down — a draw.";
-    }
+    const yourSide = ledgerSide(yourReport, theirAttack);
+    const theirSide = ledgerSide(theirReport, yourAttack);
+    const volleyTied = yourLanded === theirLanded;
+    const youHadVolley = yourLanded > theirLanded;
+    const youHadMatch = you.stats.damageDealt > them.stats.damageDealt;
+    const matchTied = you.stats.damageDealt === them.stats.damageDealt;
+    return (
+      <div className="panel recap-stats recap-mutual-volley">
+        <p className="t-eyebrow recap-lastround-title">Round {yourReport.round} — the final volley</p>
+        <div className="recap-deciding">
+          <p className="t-eyebrow recap-deciding-label">Damage that landed</p>
+          <div className="recap-deciding-score">
+            <span className={`recap-deciding-num recap-deciding-you t-display t-num text-3xl${youHadVolley ? " is-ahead" : ""}`}>
+              <Ticker value={yourLanded} />
+            </span>
+            <span className="recap-deciding-vs">vs</span>
+            <span className={`recap-deciding-num recap-deciding-them t-display t-num text-3xl${!volleyTied && !youHadVolley ? " is-ahead" : ""}`}>
+              <Ticker value={theirLanded} />
+            </span>
+          </div>
+          <div className="recap-deciding-names">
+            <span>You</span>
+            <span>{enemyName}</span>
+          </div>
+          <p className="t-display recap-deciding-call">
+            {volleyTied ? "Even this volley" : youHadVolley ? "You landed more" : `${enemyName} landed more`}
+          </p>
+        </div>
+        {yourSide && (
+          <VolleyLedger
+            you={yourSide}
+            them={theirSide}
+            enemyName={enemyName}
+            yourWeapon={yourReport.weapon}
+            enemyWeapon={theirReport.weapon}
+          />
+        )}
+        {volleyTied && (
+          <p className="recap-mutual-fallback">
+            {matchTied
+              ? "Dead even all the way down — a draw."
+              : `This volley was even. ${youHadMatch ? "You" : enemyName} dealt more damage across the whole match, ${Math.max(you.stats.damageDealt, them.stats.damageDealt)} to ${Math.min(you.stats.damageDealt, them.stats.damageDealt)}, and that decided it.`}
+          </p>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -239,7 +319,6 @@ function LastRound({
       <StatRow label="Attack" you={yourAttack} them={theirAttack} color="attack" />
       <StatRow label="Shields" you={yourShields} them={theirShields} color="shield" />
       <StatRow label="Direct" you={yourDirect} them={theirDirect} color="direct" />
-      {tiebreak && <p className="recap-lastround-note">{tiebreak}</p>}
     </div>
   );
 }
@@ -267,43 +346,66 @@ export function BattleRecap({
 }) {
   const cancelled = Boolean(cancelledBy);
   const outcome = cancelled ? "cancelled" : draw ? "draw" : won ? "won" : "lost";
+  const bothFell = Boolean(them && you.hp <= 0 && them.hp <= 0) && !cancelled;
+
+  const title = cancelled
+    ? youCancelled
+      ? `You ended the ${NOUN.game}`
+      : `${cancelledBy} ended the ${NOUN.game}`
+    : bothFell
+      ? draw
+        ? "A draw"
+        : won
+          ? "You win"
+          : `${enemyName} wins`
+      : draw
+        ? "A draw"
+        : won
+          ? `You beat ${enemyName}`
+          : `${enemyName} wins`;
+
+  const mutualWhy = bothFell
+    ? draw
+      ? "even the damage"
+      : "for the greatest damage"
+    : null;
 
   return (
     <div className="recap">
       <div className="recap-scroll fade-edges">
-        {/* The painted flagship, whole or wrecked. Only for a win or a loss:
-            a draw is neither, and a cancelled game did not finish, so claiming
-            either would be a lie told in 1024 pixels. The art already shouts
-            VICTORY or DEFEAT, so the eyebrow above the heading would only be
-            saying it again — the heading stays because it is the one line that
-            names who you played. */}
-        {(outcome === "won" || outcome === "lost") && (
-          <div className="recap-art">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={href(outcome === "won" ? "/art/fleet-dice-victory.png" : "/art/fleet-dice-defeat.png")}
-              alt=""
-              width={1024}
-              height={640}
-              decoding="async"
-            />
-          </div>
+        {/* Ordinary wins and losses keep the painted flagship. A mutual
+            kill is both fleets going up, so that poster would lie — two
+            wrecks and two blasts instead, then the huge words. */}
+        {bothFell ? (
+          <MutualArt />
+        ) : (
+          (outcome === "won" || outcome === "lost") && (
+            <div className="recap-art">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={href(outcome === "won" ? "/art/fleet-dice-victory.png" : "/art/fleet-dice-defeat.png")}
+                alt=""
+                width={1024}
+                height={640}
+                decoding="async"
+              />
+            </div>
+          )
         )}
-        <div className="recap-head">
-          {outcome !== "won" && outcome !== "lost" && (
-            <p className="t-eyebrow">{cancelled ? "Game cancelled" : "Battle recap"}</p>
+        <div className={`recap-head${bothFell ? " recap-head-mutual" : ""}`}>
+          {bothFell ? (
+            <p className="recap-mutual-banner">
+              <span>Mutual</span>
+              <span>Destruction</span>
+            </p>
+          ) : (
+            outcome !== "won" &&
+            outcome !== "lost" && (
+              <p className="t-eyebrow">{cancelled ? "Game cancelled" : "Battle recap"}</p>
+            )
           )}
-          <h2 className={`t-display text-3xl recap-title-${outcome}`}>
-            {cancelled
-              ? youCancelled
-                ? `You ended the ${NOUN.game}`
-                : `${cancelledBy} ended the ${NOUN.game}`
-              : draw
-                ? "A draw"
-                : won
-                  ? `You beat ${enemyName}`
-                  : `${enemyName} wins`}
-          </h2>
+          <h2 className={`t-display text-3xl recap-title-${outcome}`}>{title}</h2>
+          {mutualWhy && <p className="recap-mutual-why">{mutualWhy}</p>}
         </div>
 
         {them && <LastRound you={you} them={them} enemyName={enemyName} />}

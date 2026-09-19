@@ -401,6 +401,11 @@ export function HowToPlayBody() {
       {/* ---------- 8. Winning ---------- */}
       <Card title={win?.title ?? "Winning"}>
         <Copy>{win?.summary ?? ""}</Copy>
+        {win?.blocks
+          ?.filter((block): block is { kind: "text"; text: string } => block.kind === "text")
+          .map((block) => (
+            <Copy key={block.text}>{block.text}</Copy>
+          ))}
       </Card>
     </div>
   );
