@@ -72,13 +72,15 @@ function ledgerTotal(report, attackAgainst) {
 }
 
 test("mutualKillBreak uses landed damage, not raw Attack", () => {
-  const host = playerWith(30);
-  const guest = playerWith(20);
+  // report.damage is what landed ON that flagship. Host put 30 on the guest;
+  // guest put 20 on the host.
+  const host = playerWith(20);
+  const guest = playerWith(30);
   const decided = mutualKillBreak(host, guest);
   assert.equal(decided.winner, "host");
   assert.equal(decided.decidedBy, "volley");
-  assert.equal(decided.hostLanded, 20);
-  assert.equal(decided.guestLanded, 30);
+  assert.equal(decided.hostLanded, 30);
+  assert.equal(decided.guestLanded, 20);
 });
 
 test("higher Direct with lower Attack wins a mutual kill", () => {

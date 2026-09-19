@@ -71,6 +71,7 @@ test("How to Play and the recap treat a mutual kill as landed damage, not heavie
   const reference = readFileSync(new URL("../lib/reference.ts", import.meta.url), "utf8");
   const recap = readFileSync(new URL("../components/BattleRecap.tsx", import.meta.url), "utf8");
   const engine = readFileSync(new URL("../lib/engine.ts", import.meta.url), "utf8");
+  const help = readFileSync(new URL("../components/HowToPlay.tsx", import.meta.url), "utf8");
   assert.match(reference, /from "@\/lib\/engine"/);
   assert.match(reference, /landed more damage that round/);
   assert.match(reference, /Attack after Shields, Super Shield and blocking, plus Escalation and Direct/);
@@ -80,6 +81,7 @@ test("How to Play and the recap treat a mutual kill as landed damage, not heavie
   assert.match(recap, /Damage that landed/);
   assert.match(recap, /VolleyLedger/);
   assert.match(recap, /ledgerSide/);
+  assert.match(help, /win\?\.blocks/);
   assert.match(engine, /export function mutualKillBreak/);
   assert.match(engine, /damageAfterBlocking/);
 });
