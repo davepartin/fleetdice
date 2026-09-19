@@ -77,7 +77,11 @@ test("How to Play and the recap treat a mutual kill as landed damage, not heavie
   assert.match(reference, /Attack after Shields, Super Shield and blocking, plus Escalation and Direct/);
   assert.doesNotMatch(reference, /heavier attack/i);
   assert.doesNotMatch(recap, /heavier Attack/);
-  assert.match(recap, /Both fleets destroyed/);
+  assert.match(recap, /Mutual/);
+  assert.match(recap, /Destruction/);
+  assert.match(recap, /greatest damage/);
+  assert.match(recap, /MutualArt/);
+  assert.match(recap, /MutualBlast/);
   assert.match(recap, /Damage that landed/);
   assert.match(recap, /VolleyLedger/);
   assert.match(recap, /ledgerSide/);

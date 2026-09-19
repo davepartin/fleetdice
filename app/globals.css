@@ -2547,10 +2547,36 @@ button {
 .recap-title-lost { color: var(--color-attack); }
 .recap-title-draw,
 .recap-title-cancelled { color: var(--color-hull-100); }
-.recap-mutual-kicker {
-  margin-bottom: 0.4rem;
+.recap-head-mutual {
+  padding-top: 0.15rem;
+}
+.recap-mutual-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 0 0.45rem;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 2.55rem;
+  line-height: 0.86;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  color: var(--color-attack);
+  text-shadow:
+    0 0 28px rgb(255 77 77 / 0.55),
+    0 0 8px rgb(255 210 61 / 0.35),
+    0 2px 0 rgb(0 0 0 / 0.55);
+}
+.recap-mutual-banner span {
+  display: block;
+}
+.recap-mutual-why {
+  margin-top: 0.28rem;
+  font-family: var(--font-body);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  letter-spacing: 0.04em;
   color: var(--color-hull-100);
-  text-shadow: 0 0 22px rgb(255 210 61 / 0.28);
 }
 
 /* ---------------- the two fleets ---------------- */
@@ -4056,6 +4082,100 @@ button {
     max-width: 15rem;
     margin-inline: auto;
   }
+  .recap-mutual-art {
+    max-height: 6.2rem;
+  }
+  .recap-mutual-banner {
+    font-size: 2.15rem;
+  }
+}
+
+/* Two wrecks, two blasts — both fleets going up. Crops the defeat
+   painting down to the flagship so the baked-in DEFEAT word is gone. */
+.recap-mutual-art {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+  margin: -0.15rem -0.35rem 0.15rem;
+  height: 8.4rem;
+  -webkit-mask-image: linear-gradient(180deg, #000 58%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 58%, transparent 100%);
+}
+.recap-mutual-ship {
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+}
+.recap-mutual-ship img {
+  display: block;
+  width: 140%;
+  max-width: none;
+  height: 150%;
+  object-fit: cover;
+  object-position: 50% 78%;
+  margin: -12% 0 0 -20%;
+}
+.recap-mutual-ship-them img {
+  transform: scaleX(-1);
+  object-position: 50% 78%;
+  filter: hue-rotate(-18deg) saturate(1.15);
+}
+.recap-blast {
+  position: absolute;
+  inset: 8% 6% auto;
+  width: 72%;
+  height: auto;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+.recap-blast-you {
+  color: var(--color-attack);
+  left: 6%;
+  right: auto;
+}
+.recap-blast-them {
+  color: var(--color-hp);
+  right: 6%;
+  left: auto;
+}
+.recap-blast-ring {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  opacity: 0.55;
+  transform-origin: 60px 60px;
+  animation: recap-blast-ring 1.35s ease-out infinite;
+}
+.recap-blast-ring-inner {
+  stroke-width: 2.2;
+  opacity: 0.8;
+  animation-delay: 0.18s;
+}
+.recap-blast-core {
+  fill: currentColor;
+  filter: blur(0.4px);
+  transform-origin: 60px 60px;
+  animation: recap-blast-core 1.1s ease-in-out infinite;
+}
+.recap-blast-spikes {
+  fill: currentColor;
+  opacity: 0.85;
+  transform-origin: 60px 60px;
+  animation: recap-blast-core 1.1s ease-in-out infinite;
+}
+@keyframes recap-blast-ring {
+  0% { transform: scale(0.72); opacity: 0.85; }
+  70% { opacity: 0.2; }
+  100% { transform: scale(1.18); opacity: 0; }
+}
+@keyframes recap-blast-core {
+  0%, 100% { transform: scale(0.92); opacity: 0.75; }
+  50% { transform: scale(1.12); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .recap-blast-ring,
+  .recap-blast-core,
+  .recap-blast-spikes { animation: none; }
 }
 
 /* The reroll button's two halves. The name on the left says which of the paid

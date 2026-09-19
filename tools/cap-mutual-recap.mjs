@@ -86,8 +86,10 @@ async function measureRecap(page) {
     const recap = document.querySelector(".recap");
     const box = recap?.getBoundingClientRect();
     const text = (recap?.innerText || "").replace(/\s+/g, " ").trim();
-    const kicker = document.querySelector(".recap-mutual-kicker")?.textContent?.trim() || null;
+    const kicker =
+      document.querySelector(".recap-mutual-banner")?.innerText.replace(/\s+/g, " ").trim() || null;
     const title = document.querySelector(".recap-head h2")?.textContent?.trim() || null;
+    const why = document.querySelector(".recap-mutual-why")?.textContent?.trim() || null;
     const call = document.querySelector(".recap-deciding-call")?.textContent?.trim() || null;
     const score = [...document.querySelectorAll(".recap-deciding-num")].map((el) =>
       (el.textContent || "").trim(),
@@ -97,16 +99,21 @@ async function measureRecap(page) {
       (el) => el.textContent.trim(),
     );
     const art = document.querySelector(".recap-art img");
+    const blasts = document.querySelectorAll(".recap-blast").length;
+    const mutualArt = Boolean(document.querySelector(".recap-mutual-art"));
     const overflowX = recap ? recap.scrollWidth > recap.clientWidth + 1 : null;
     return {
       text,
       kicker,
       title,
+      why,
       call,
       score,
       ledgerRows,
       hasLedger: Boolean(ledger),
       art: art ? art.getAttribute("src") : null,
+      blasts,
+      mutualArt,
       box: box ? { w: Math.round(box.width), h: Math.round(box.height) } : null,
       overflowX,
     };
@@ -171,7 +178,7 @@ for (const viewport of [
   const short = await page.evaluate(() => {
     const recap = document.querySelector(".recap");
     const scroll = document.querySelector(".recap-scroll");
-    const kicker = document.querySelector(".recap-mutual-kicker");
+    const kicker = document.querySelector(".recap-mutual-banner");
     const score = document.querySelector(".recap-deciding-score");
     const title = document.querySelector(".recap-head h2");
     const vis = (el) => {
@@ -201,7 +208,10 @@ for (const [name, recap] of [
   ["loss", results.loss],
   ["win", results.win],
 ]) {
-  if (recap.kicker !== "Both fleets destroyed") fail.push(`${name}: missing Both fleets destroyed`);
+  if (!/mutual destruction/i.test(recap.kicker || "")) fail.push(`${name}: missing MUTUAL DESTRUCTION`);
+  if (!/greatest damage/i.test(recap.why || "")) fail.push(`${name}: missing greatest damage`);
+  if (recap.blasts !== 2) fail.push(`${name}: expected two blasts, got ${recap.blasts}`);
+  if (!recap.mutualArt) fail.push(`${name}: missing dual wreck art`);
   if (!recap.hasLedger) fail.push(`${name}: missing combat ledger`);
   if (!recap.ledgerRows.includes("Repair")) fail.push(`${name}: ledger missing Repair`);
   if (!recap.ledgerRows.includes("Direct")) fail.push(`${name}: ledger missing Direct`);
@@ -211,11 +221,10 @@ for (const [name, recap] of [
 }
 if (!/Curtis wins/i.test(results.loss.title || "")) fail.push(`loss title was ${results.loss.title}`);
 if (!/You win/i.test(results.win.title || "")) fail.push(`win title was ${results.win.title}`);
-if (results.loss.kicker && results.normal.kicker) fail.push("normal win still shows Both fleets destroyed");
+if (results.normal.kicker) fail.push("normal win still shows MUTUAL DESTRUCTION");
+if (results.normal.mutualArt) fail.push("normal win used the mutual dual-blast header");
 if (!/You beat/i.test(results.normal.title || "")) fail.push(`normal title was ${results.normal.title}`);
 if (!results.normal.art?.includes("victory")) fail.push("normal win lost victory art");
-if (!results.loss.art?.includes("defeat")) fail.push("mutual loss lost defeat art");
-if (!results.win.art?.includes("victory")) fail.push("mutual win lost victory art");
 for (const name of ["390x620", "360x780"]) {
   const short = results[name];
   if (!short?.kickerOnScreen) fail.push(`${name}: Both fleets destroyed is off-screen`);

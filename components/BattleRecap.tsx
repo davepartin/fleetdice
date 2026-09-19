@@ -19,6 +19,51 @@ import { Button, Ticker } from "./ui";
 
 const CELLS = Array.from({ length: 9 }, (_, cell) => cell);
 
+/** Two shock-rings and a core — one blast for each flagship. */
+function MutualBlast({ tone }: { tone: "you" | "them" }) {
+  return (
+    <svg className={`recap-blast recap-blast-${tone}`} viewBox="0 0 120 120" aria-hidden="true">
+      <circle className="recap-blast-ring recap-blast-ring-outer" cx="60" cy="60" r="46" />
+      <circle className="recap-blast-ring recap-blast-ring-inner" cx="60" cy="60" r="28" />
+      <circle className="recap-blast-core" cx="60" cy="60" r="11" />
+      <g className="recap-blast-spikes">
+        <path d="M60 8 L64 38 L56 38 Z" />
+        <path d="M60 112 L64 82 L56 82 Z" />
+        <path d="M8 60 L38 64 L38 56 Z" />
+        <path d="M112 60 L82 64 L82 56 Z" />
+        <path d="M24 24 L44 48 L36 40 Z" />
+        <path d="M96 24 L80 48 L84 40 Z" />
+        <path d="M24 96 L44 72 L36 80 Z" />
+        <path d="M96 96 L80 72 L84 80 Z" />
+      </g>
+    </svg>
+  );
+}
+
+/**
+ * Both fleets going up. The defeat painting is the wrecked flagship; we
+ * show it twice (one flipped) and put a blast on each so the header reads
+ * as two explosions, not one loser's poster. The victory painting stays
+ * for ordinary wins.
+ */
+function MutualArt() {
+  const wreck = href("/art/fleet-dice-defeat.png");
+  return (
+    <div className="recap-mutual-art" aria-hidden="true">
+      <div className="recap-mutual-ship recap-mutual-ship-you">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={wreck} alt="" width={1024} height={640} decoding="async" />
+        <MutualBlast tone="you" />
+      </div>
+      <div className="recap-mutual-ship recap-mutual-ship-them">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={wreck} alt="" width={1024} height={640} decoding="async" />
+        <MutualBlast tone="them" />
+      </div>
+    </div>
+  );
+}
+
 /** The 3×3 fleet, exactly as the shipyard draws it, at the size a screenshot needs. */
 /**
  * The board as it stood at the end, with the last roll still on it.
@@ -325,31 +370,40 @@ export function BattleRecap({
           ? `You beat ${enemyName}`
           : `${enemyName} wins`;
 
+  const mutualWhy = bothFell
+    ? draw
+      ? "even the damage"
+      : "for the greatest damage"
+    : null;
+
   return (
     <div className="recap">
       <div className="recap-scroll fade-edges">
-        {/* The painted flagship, whole or wrecked. Only for a win or a loss:
-            a draw is neither, and a cancelled game did not finish, so claiming
-            either would be a lie told in 1024 pixels. The art already shouts
-            VICTORY or DEFEAT, so the eyebrow above the heading would only be
-            saying it again — the heading stays because it is the one line that
-            names who you played. A mutual kill still uses these paintings:
-            someone won, even though both fleets are gone. */}
-        {(outcome === "won" || outcome === "lost") && (
-          <div className="recap-art">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={href(outcome === "won" ? "/art/fleet-dice-victory.png" : "/art/fleet-dice-defeat.png")}
-              alt=""
-              width={1024}
-              height={640}
-              decoding="async"
-            />
-          </div>
+        {/* Ordinary wins and losses keep the painted flagship. A mutual
+            kill is both fleets going up, so that poster would lie — two
+            wrecks and two blasts instead, then the huge words. */}
+        {bothFell ? (
+          <MutualArt />
+        ) : (
+          (outcome === "won" || outcome === "lost") && (
+            <div className="recap-art">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={href(outcome === "won" ? "/art/fleet-dice-victory.png" : "/art/fleet-dice-defeat.png")}
+                alt=""
+                width={1024}
+                height={640}
+                decoding="async"
+              />
+            </div>
+          )
         )}
-        <div className="recap-head">
+        <div className={`recap-head${bothFell ? " recap-head-mutual" : ""}`}>
           {bothFell ? (
-            <p className="t-display text-xl recap-mutual-kicker">Both fleets destroyed</p>
+            <p className="recap-mutual-banner">
+              <span>Mutual</span>
+              <span>Destruction</span>
+            </p>
           ) : (
             outcome !== "won" &&
             outcome !== "lost" && (
@@ -357,6 +411,7 @@ export function BattleRecap({
             )
           )}
           <h2 className={`t-display text-3xl recap-title-${outcome}`}>{title}</h2>
+          {mutualWhy && <p className="recap-mutual-why">{mutualWhy}</p>}
         </div>
 
         {them && <LastRound you={you} them={them} enemyName={enemyName} />}
