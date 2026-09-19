@@ -19,23 +19,17 @@ import { Button, Ticker } from "./ui";
 
 const CELLS = Array.from({ length: 9 }, (_, cell) => cell);
 
-/** Two shock-rings and a core — one blast for each flagship. */
+/** A fireball on each wreck — two explosions, not a targeting reticle. */
 function MutualBlast({ tone }: { tone: "you" | "them" }) {
   return (
     <svg className={`recap-blast recap-blast-${tone}`} viewBox="0 0 120 120" aria-hidden="true">
-      <circle className="recap-blast-ring recap-blast-ring-outer" cx="60" cy="60" r="46" />
-      <circle className="recap-blast-ring recap-blast-ring-inner" cx="60" cy="60" r="28" />
+      <circle className="recap-blast-ring recap-blast-ring-outer" cx="60" cy="60" r="42" />
+      <circle className="recap-blast-ring recap-blast-ring-inner" cx="60" cy="60" r="24" />
       <circle className="recap-blast-core" cx="60" cy="60" r="11" />
-      <g className="recap-blast-spikes">
-        <path d="M60 8 L64 38 L56 38 Z" />
-        <path d="M60 112 L64 82 L56 82 Z" />
-        <path d="M8 60 L38 64 L38 56 Z" />
-        <path d="M112 60 L82 64 L82 56 Z" />
-        <path d="M24 24 L44 48 L36 40 Z" />
-        <path d="M96 24 L80 48 L84 40 Z" />
-        <path d="M24 96 L44 72 L36 80 Z" />
-        <path d="M96 96 L80 72 L84 80 Z" />
-      </g>
+      <path
+        className="recap-blast-spikes"
+        d="M60 18 66 46 54 46 Z M94 32 78 54 70 46 Z M102 60 74 66 74 54 Z M90 92 68 74 76 68 Z M60 102 54 74 66 74 Z M28 90 52 72 44 66 Z M18 60 46 54 46 66 Z M30 28 52 50 44 44 Z"
+      />
     </svg>
   );
 }

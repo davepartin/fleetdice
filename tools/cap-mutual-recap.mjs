@@ -100,13 +100,18 @@ async function measureRecap(page) {
     );
     const art = document.querySelector(".recap-art img");
     const blasts = document.querySelectorAll(".recap-blast").length;
-    const mutualArt = Boolean(document.querySelector(".recap-mutual-art"));
+    const mutualEl = document.querySelector(".recap-mutual-art");
+    const mutualArt = Boolean(mutualEl);
+    const mutualH = mutualEl ? Math.round(mutualEl.getBoundingClientRect().height) : 0;
     const overflowX = recap ? recap.scrollWidth > recap.clientWidth + 1 : null;
+    const banner = document.querySelector(".recap-mutual-banner");
+    const bannerClip = banner ? banner.scrollWidth > banner.clientWidth + 1 : false;
     return {
       text,
       kicker,
       title,
       why,
+      bannerClip,
       call,
       score,
       ledgerRows,
@@ -114,6 +119,7 @@ async function measureRecap(page) {
       art: art ? art.getAttribute("src") : null,
       blasts,
       mutualArt,
+      mutualH,
       box: box ? { w: Math.round(box.width), h: Math.round(box.height) } : null,
       overflowX,
     };
@@ -212,11 +218,13 @@ for (const [name, recap] of [
   if (!/greatest damage/i.test(recap.why || "")) fail.push(`${name}: missing greatest damage`);
   if (recap.blasts !== 2) fail.push(`${name}: expected two blasts, got ${recap.blasts}`);
   if (!recap.mutualArt) fail.push(`${name}: missing dual wreck art`);
+  if ((recap.mutualH ?? 0) < 80) fail.push(`${name}: dual art collapsed to ${recap.mutualH}px`);
   if (!recap.hasLedger) fail.push(`${name}: missing combat ledger`);
   if (!recap.ledgerRows.includes("Repair")) fail.push(`${name}: ledger missing Repair`);
   if (!recap.ledgerRows.includes("Direct")) fail.push(`${name}: ledger missing Direct`);
   if (!recap.ledgerRows.includes("Attack")) fail.push(`${name}: ledger missing Attack`);
   if (recap.overflowX) fail.push(`${name}: recap overflows horizontally`);
+  if (recap.bannerClip) fail.push(`${name}: MUTUAL DESTRUCTION is clipped`);
   if (recap.score.length !== 2) fail.push(`${name}: deciding score not two numbers`);
 }
 if (!/Curtis wins/i.test(results.loss.title || "")) fail.push(`loss title was ${results.loss.title}`);
