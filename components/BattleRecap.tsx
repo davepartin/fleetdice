@@ -19,41 +19,22 @@ import { Button, Ticker } from "./ui";
 
 const CELLS = Array.from({ length: 9 }, (_, cell) => cell);
 
-/** A fireball on each wreck — two explosions, not a targeting reticle. */
-function MutualBlast({ tone }: { tone: "you" | "them" }) {
-  return (
-    <svg className={`recap-blast recap-blast-${tone}`} viewBox="0 0 120 120" aria-hidden="true">
-      <circle className="recap-blast-ring recap-blast-ring-outer" cx="60" cy="60" r="42" />
-      <circle className="recap-blast-ring recap-blast-ring-inner" cx="60" cy="60" r="24" />
-      <circle className="recap-blast-core" cx="60" cy="60" r="11" />
-      <path
-        className="recap-blast-spikes"
-        d="M60 18 66 46 54 46 Z M94 32 78 54 70 46 Z M102 60 74 66 74 54 Z M90 92 68 74 76 68 Z M60 102 54 74 66 74 Z M28 90 52 72 44 66 Z M18 60 46 54 46 66 Z M30 28 52 50 44 44 Z"
-      />
-    </svg>
-  );
-}
-
 /**
- * Both fleets going up. The defeat painting is the wrecked flagship; we
- * show it twice (one flipped) and put a blast on each so the header reads
- * as two explosions, not one loser's poster. The victory painting stays
- * for ordinary wins.
+ * Both fleets going up. One still of two cube flagships detonating, with
+ * the dice flying off as shrapnel — a phone-width banner, not two copies
+ * of the defeat painting. Ordinary wins still use the victory painting.
  */
 function MutualArt() {
-  const wreck = href("/art/fleet-dice-defeat.png");
   return (
     <div className="recap-mutual-art" aria-hidden="true">
-      <div className="recap-mutual-ship recap-mutual-ship-you">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={wreck} alt="" width={1024} height={640} decoding="async" />
-        <MutualBlast tone="you" />
-      </div>
-      <div className="recap-mutual-ship recap-mutual-ship-them">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={wreck} alt="" width={1024} height={640} decoding="async" />
-        <MutualBlast tone="them" />
-      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={href("/art/fleet-dice-mutual.jpg")}
+        alt=""
+        width={1280}
+        height={720}
+        decoding="async"
+      />
     </div>
   );
 }
@@ -374,8 +355,8 @@ export function BattleRecap({
     <div className="recap">
       <div className="recap-scroll fade-edges">
         {/* Ordinary wins and losses keep the painted flagship. A mutual
-            kill is both fleets going up, so that poster would lie — two
-            wrecks and two blasts instead, then the huge words. */}
+            kill is both fleets going up, so that poster would lie — one
+            still of two exploding flagships instead, then the huge words. */}
         {bothFell ? (
           <MutualArt />
         ) : (

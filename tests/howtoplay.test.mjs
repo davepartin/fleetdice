@@ -81,7 +81,7 @@ test("How to Play and the recap treat a mutual kill as landed damage, not heavie
   assert.match(recap, /Destruction/);
   assert.match(recap, /greatest damage/);
   assert.match(recap, /MutualArt/);
-  assert.match(recap, /MutualBlast/);
+  assert.match(recap, /fleet-dice-mutual/);
   assert.match(recap, /Damage that landed/);
   assert.match(recap, /VolleyLedger/);
   assert.match(recap, /ledgerSide/);

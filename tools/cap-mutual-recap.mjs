@@ -99,7 +99,7 @@ async function measureRecap(page) {
       (el) => el.textContent.trim(),
     );
     const art = document.querySelector(".recap-art img");
-    const blasts = document.querySelectorAll(".recap-blast").length;
+    const mutualImg = document.querySelector(".recap-mutual-art img");
     const mutualEl = document.querySelector(".recap-mutual-art");
     const mutualArt = Boolean(mutualEl);
     const mutualH = mutualEl ? Math.round(mutualEl.getBoundingClientRect().height) : 0;
@@ -117,7 +117,7 @@ async function measureRecap(page) {
       ledgerRows,
       hasLedger: Boolean(ledger),
       art: art ? art.getAttribute("src") : null,
-      blasts,
+      mutualSrc: mutualImg ? mutualImg.getAttribute("src") : null,
       mutualArt,
       mutualH,
       box: box ? { w: Math.round(box.width), h: Math.round(box.height) } : null,
@@ -216,7 +216,7 @@ for (const [name, recap] of [
 ]) {
   if (!/mutual destruction/i.test(recap.kicker || "")) fail.push(`${name}: missing MUTUAL DESTRUCTION`);
   if (!/greatest damage/i.test(recap.why || "")) fail.push(`${name}: missing greatest damage`);
-  if (recap.blasts !== 2) fail.push(`${name}: expected two blasts, got ${recap.blasts}`);
+  if (!recap.mutualSrc?.includes("mutual")) fail.push(`${name}: missing two-flagship still`);
   if (!recap.mutualArt) fail.push(`${name}: missing dual wreck art`);
   if ((recap.mutualH ?? 0) < 80) fail.push(`${name}: dual art collapsed to ${recap.mutualH}px`);
   if (!recap.hasLedger) fail.push(`${name}: missing combat ledger`);
