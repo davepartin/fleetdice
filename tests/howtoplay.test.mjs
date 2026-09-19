@@ -67,6 +67,23 @@ test("each help face is clipped to the hull that first shows that number", () =>
   assert.match(reference, /HULLS\.find\(\(sides\) => sides >= value\)/);
 });
 
+test("How to Play and the recap treat a mutual kill as landed damage, not heavier Attack", () => {
+  const reference = readFileSync(new URL("../lib/reference.ts", import.meta.url), "utf8");
+  const recap = readFileSync(new URL("../components/BattleRecap.tsx", import.meta.url), "utf8");
+  const engine = readFileSync(new URL("../lib/engine.ts", import.meta.url), "utf8");
+  assert.match(reference, /from "@\/lib\/engine"/);
+  assert.match(reference, /landed more damage that round/);
+  assert.match(reference, /Attack after Shields, Super Shield and blocking, plus Escalation and Direct/);
+  assert.doesNotMatch(reference, /heavier attack/i);
+  assert.doesNotMatch(recap, /heavier Attack/);
+  assert.match(recap, /Both fleets destroyed/);
+  assert.match(recap, /Damage that landed/);
+  assert.match(recap, /VolleyLedger/);
+  assert.match(recap, /ledgerSide/);
+  assert.match(engine, /export function mutualKillBreak/);
+  assert.match(engine, /damageAfterBlocking/);
+});
+
 test("How to Play is generated from the engine and never mentions a Reactor cap", () => {
   const reference = readFileSync(new URL("../lib/reference.ts", import.meta.url), "utf8");
   const engine = readFileSync(new URL("../lib/engine.ts", import.meta.url), "utf8");

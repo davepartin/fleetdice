@@ -1038,8 +1038,9 @@ export function chooseCombatWeapon(
   const weDie = hpAfter <= 0;
 
   // Finish them this volley. If they already die without it, keep the charge
-  // unless this is a mutual kill — extra Attack can win the simultaneous-death
-  // comparison.
+  // unless this is a mutual kill — extra damage on their flagship can win
+  // the simultaneous-death comparison (Attack after their Shields and
+  // blocking, plus Direct).
   if (available("attack") && theyDieWithAttack && (!theyDie || weDie)) {
     return { type: "weapon", weapon: "attack" };
   }

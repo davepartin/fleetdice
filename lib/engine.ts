@@ -1154,6 +1154,47 @@ export function damageAfterBlocking(incoming: number, direct: number, blocked: n
   return Math.max(0, incoming - blocked) + direct;
 }
 
+/**
+ * Who takes a mutual kill, and on what number.
+ *
+ * The compared figure is the damage that actually landed on the other
+ * flagship this volley — `settlePlayer`'s `report.damage`, which is
+ * `damageAfterBlocking`: Attack after Super Shield, Shields, Escalation
+ * and blocking ships, then Direct. Repair is in the ledger so the column
+ * still closes, but it is not this score.
+ *
+ * Equal landed damage falls back to match-long `stats.damageDealt`, then
+ * a draw.
+ */
+export type MutualKillBreak = {
+  hostLanded: number;
+  guestLanded: number;
+  winner: SideId | "draw";
+  decidedBy: "volley" | "match" | "draw";
+};
+
+export function mutualKillBreak(host: PlayerState, guest: PlayerState): MutualKillBreak {
+  const hostLanded = guest.report?.damage ?? 0;
+  const guestLanded = host.report?.damage ?? 0;
+  if (hostLanded !== guestLanded) {
+    return {
+      hostLanded,
+      guestLanded,
+      winner: hostLanded > guestLanded ? "host" : "guest",
+      decidedBy: "volley",
+    };
+  }
+  if (host.stats.damageDealt !== guest.stats.damageDealt) {
+    return {
+      hostLanded,
+      guestLanded,
+      winner: host.stats.damageDealt > guest.stats.damageDealt ? "host" : "guest",
+      decidedBy: "match",
+    };
+  }
+  return { hostLanded, guestLanded, winner: "draw", decidedBy: "draw" };
+}
+
 function settlePlayer(state: MatchState, player: PlayerState) {
   const before = player.hp;
   let blocked = 0;
@@ -1243,13 +1284,9 @@ function finishIfNeeded(state: MatchState): boolean {
   if (outOfRounds && host.hp > 0 && guest.hp > 0) {
     state.winner = host.hp === guest.hp ? "draw" : host.hp > guest.hp ? "host" : "guest";
   } else if (host.hp <= 0 && guest.hp <= 0) {
-    // Both flagships fell together: heavier final volley, then damage across the match.
-    const hostVolley = host.tally?.attack ?? 0;
-    const guestVolley = guest.tally?.attack ?? 0;
-    if (hostVolley !== guestVolley) state.winner = hostVolley > guestVolley ? "host" : "guest";
-    else if (host.stats.damageDealt !== guest.stats.damageDealt) {
-      state.winner = host.stats.damageDealt > guest.stats.damageDealt ? "host" : "guest";
-    } else state.winner = "draw";
+    // Both flagships fell together: damage that landed this volley, then
+    // damage across the match, then a draw. See `mutualKillBreak`.
+    state.winner = mutualKillBreak(host, guest).winner;
   } else {
     state.winner = host.hp <= 0 ? "guest" : "host";
   }
