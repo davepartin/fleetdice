@@ -2547,6 +2547,11 @@ button {
 .recap-title-lost { color: var(--color-attack); }
 .recap-title-draw,
 .recap-title-cancelled { color: var(--color-hull-100); }
+.recap-mutual-kicker {
+  margin-bottom: 0.4rem;
+  color: var(--color-hull-100);
+  text-shadow: 0 0 22px rgb(255 210 61 / 0.28);
+}
 
 /* ---------------- the two fleets ---------------- */
 
@@ -2806,6 +2811,84 @@ button {
   font-size: var(--text-xs);
   line-height: 1.4;
   color: var(--color-hull-200);
+  text-align: center;
+}
+
+/* Mutual kill: the damage that landed is the score, not a footnote. */
+.recap-mutual-volley {
+  padding-top: 0.7rem;
+  padding-bottom: 0.7rem;
+}
+.recap-deciding {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+  padding: 0.35rem 0 0.7rem;
+  margin-bottom: 0.35rem;
+  border-bottom: 1px solid rgb(255 255 255 / 0.1);
+  text-align: center;
+}
+.recap-deciding-label {
+  color: var(--color-hull-300);
+}
+.recap-deciding-score {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.recap-deciding-num {
+  flex: 1 1 0;
+  min-width: 0;
+  color: var(--color-attack);
+  line-height: 0.9;
+  text-shadow: 0 0 18px rgb(255 77 77 / 0.35);
+}
+.recap-deciding-you { text-align: left; }
+.recap-deciding-them { text-align: right; }
+.recap-deciding-num.is-ahead {
+  color: var(--color-repair);
+  text-shadow: 0 0 20px rgb(69 224 139 / 0.4);
+}
+.recap-deciding-vs {
+  flex: none;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-hull-400);
+}
+.recap-deciding-names {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-hull-200);
+}
+.recap-deciding-names span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 46%;
+}
+.recap-deciding-call {
+  margin-top: 0.25rem;
+  font-size: var(--text-xl);
+  color: var(--color-hull-100);
+}
+.recap-mutual-fallback {
+  margin-top: 0.55rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid rgb(255 255 255 / 0.1);
+  font-size: var(--text-base);
+  line-height: 1.35;
+  font-weight: 700;
+  color: var(--color-hull-100);
   text-align: center;
 }
 

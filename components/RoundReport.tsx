@@ -219,7 +219,7 @@ function LedgerCell({
   );
 }
 
-function VolleyLedger({
+export function VolleyLedger({
   you,
   them,
   enemyName,
