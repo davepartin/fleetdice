@@ -19,6 +19,7 @@ import {
   activeShips,
   bestRun,
   cellForSlot,
+  damageAfterBlocking,
   escalationFor,
   flagBonusSize,
   fleetBlock,
@@ -1142,7 +1143,7 @@ function EnergyBolt() {
   );
 }
 
-/** One number in the block screen's HP arithmetic — "Now − Damage = After". */
+/** One number in the block screen's HP arithmetic — "Now − Damage + Blocked = After". */
 function EquationTerm({
   value,
   label,
@@ -1151,21 +1152,25 @@ function EquationTerm({
 }: {
   value: number;
   label: string;
-  tone?: "attack" | "repair";
+  tone?: "attack" | "repair" | "hp";
   /** Draw the number in a white box — a running tally, not a fixed term. */
   boxed?: boolean;
 }) {
+  const toneClass = tone === "hp" ? "c-hp-glow" : tone ? `c-${tone}` : "text-white";
   return (
-    <div className="flex flex-col items-center leading-none">
-      <span
-        className={`t-num text-xl ${boxed ? "brace-blocked-box" : ""} ${
-          tone ? `c-${tone}` : "text-white"
-        }`}
-      >
-        {value}
-      </span>
-      <span className="t-eyebrow mt-0.5 text-[0.6rem] c-dim">{label}</span>
+    <div className="brace-term flex flex-col items-center leading-none" data-brace-term={label}>
+      <span className={`t-num text-xl ${boxed ? "brace-blocked-box" : ""} ${toneClass}`}>{value}</span>
+      <span className="brace-term-label t-eyebrow mt-0.5 text-xs">{label}</span>
     </div>
+  );
+}
+
+function EquationOp({ children }: { children: string }) {
+  return (
+    <span className="brace-op flex flex-col items-center leading-none" aria-hidden>
+      <span className="t-num text-xl c-dim">{children}</span>
+      <span className="brace-term-label t-eyebrow mt-0.5 text-xs invisible">·</span>
+    </span>
   );
 }
 
@@ -1186,7 +1191,10 @@ function BraceDock({
   const blocked = available
     .filter((ship) => chosen.has(ship.id))
     .reduce((sum, ship) => sum + ship.sides, 0);
-  const landing = Math.max(0, you.incoming - blocked) + you.directIncoming;
+  // Same settle as the engine: ships only stop blockable incoming, never Direct.
+  const landing = damageAfterBlocking(you.incoming, you.directIncoming, blocked);
+  const shipsStopped = Math.min(blocked, you.incoming);
+  const incomingHit = you.incoming + you.directIncoming;
   const heal = you.tally?.heal ?? 0;
   const after = you.hp - landing + heal;
   const fatal = after <= 0;
@@ -1203,7 +1211,7 @@ function BraceDock({
           <p className="t-eyebrow">Choose your blockers</p>
           <h2 className="t-display text-xl">
             <span className="c-attack">{you.incoming}</span>
-            <span className="c-dim text-base"> blockable</span>
+            <span className="brace-blockable-label text-base text-white"> blockable</span>
             {you.directIncoming > 0 && (
               <>
                 {" "}
@@ -1247,27 +1255,30 @@ function BraceDock({
           })}
         </div>
 
-        <div className="brace-summary flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-black/30 px-2 py-2.5">
-          {/* What the fleet is taking instead of the flagship. Starts at zero
-            * and climbs with every ship tapped, so the trade the screen is
-            * asking about has a number on it while you are still deciding. */}
-          <EquationTerm value={blocked} label="Blocked" boxed />
-          {/* The arithmetic is one unit. On a narrow phone it drops to its own
-            * line whole, rather than wrapping mid-expression and stranding
-            * "= 50" under a dangling equals. */}
-          <span className="brace-equation">
-            <EquationTerm value={you.hp} label="Now" />
-            <span className="t-num c-dim text-lg">−</span>
-            <EquationTerm value={landing} label="Damage" tone="attack" />
+        <div className="brace-summary">
+          <p className="brace-summary-kicker">Your HP after blocking</p>
+          {/* Engine settle, rearranged so Blocked is a term:
+            * after = hp − (incoming + direct) + min(blocked, incoming) + repair
+            * Blocking saves health, so the sign is +, matching the round review. */}
+          <div className="brace-equation">
+            <EquationTerm value={you.hp} label="Now" tone="hp" />
+            <EquationOp>−</EquationOp>
+            <EquationTerm value={incomingHit} label="Damage" tone="attack" />
             {heal > 0 && (
               <>
-                <span className="t-num c-dim text-lg">+</span>
+                <EquationOp>+</EquationOp>
                 <EquationTerm value={heal} label="Repair" tone="repair" />
               </>
             )}
-            <span className="t-num c-dim text-lg">=</span>
-            <EquationTerm value={Math.max(0, after)} label="After" tone={fatal ? "attack" : "repair"} />
-          </span>
+            <EquationOp>+</EquationOp>
+            <EquationTerm value={shipsStopped} label="Blocked" boxed />
+            <EquationOp>=</EquationOp>
+            <EquationTerm
+              value={Math.max(0, after)}
+              label="After"
+              tone={fatal ? "attack" : "hp"}
+            />
+          </div>
         </div>
 
         {fatal && (

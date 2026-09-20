@@ -2,14 +2,12 @@
  * Does the five-term brace equation actually fit, or does the dock's
  * `overflow: hidden` silently eat it?
  *
- * With repair at zero the equation is three terms — Now − Damage = After —
- * and fits at any width. The fifth term only appears when this volley's
- * tally rolled repair: Now − Damage + Repair = After. That is the row that
- * forced `.match-hud-solo .brace-summary`'s tight gaps and font-size in the
- * first place, so it is the one that has to be measured, not eyeballed from
- * a screenshot — `.brace-dock-body` clips horizontal overflow, so a row a
- * few pixels too wide does not wrap or scroll, it just vanishes past the
- * edge.
+ * With repair at zero the equation is four terms — HP now − Damage + Blocked
+ * = HP after — and fits at any width. The fifth term only appears when this
+ * volley's tally rolled repair: HP now − Damage + Repair + Blocked = HP after.
+ * That is the row that has to be measured, not eyeballed from a screenshot —
+ * `.brace-dock-body` clips horizontal overflow, so a row a few pixels too
+ * wide does not wrap or scroll, it just vanishes past the edge.
  *
  * Forces repair > 0 by injecting a solo save straight into the brace phase
  * with a non-zero `tally.heal`, the same fixture shape `tests/repair.test.mjs`
@@ -112,10 +110,12 @@ try {
       const eqOverflow = measured.eqScrollWidth !== null && measured.eqScrollWidth > measured.eqClientWidth + 1;
       const dockOverflow = measured.dockScrollWidth !== null && measured.dockScrollWidth > measured.dockClientWidth + 1;
       const overflow = summaryOverflow || eqOverflow || dockOverflow;
-      // Now − Damage + Repair = After: four numeric terms and a non-zero
-      // Repair term is what the mobile rule exists for. Confirm the fixture
-      // actually produced that row rather than the plain three-term one.
-      const hasFiveTerms = /Now.*Damage.*Repair.*After/.test(measured.text ?? "") && /Repair/.test(measured.text ?? "");
+      // Now − Damage + Repair + Blocked = After: five numeric terms and a
+      // non-zero Repair term is what the mobile rule exists for. Confirm the
+      // fixture actually produced that row rather than the plain four-term one.
+      const hasFiveTerms =
+        /Now.*Damage.*Repair.*Blocked.*After/i.test(measured.text ?? "") &&
+        /Repair/.test(measured.text ?? "");
 
       rows.push({ vp: vp.name, digits, text: measured.text, overflow, hasFiveTerms,
         summary: `${measured.summaryScrollWidth}/${measured.summaryClientWidth}`,
