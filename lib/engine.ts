@@ -1157,42 +1157,53 @@ export function damageAfterBlocking(incoming: number, direct: number, blocked: n
 /**
  * Who takes a mutual kill, and on what number.
  *
- * The compared figure is the damage that actually landed on the other
- * flagship this volley — `settlePlayer`'s `report.damage`, which is
- * `damageAfterBlocking`: Attack after Super Shield, Shields, Escalation
- * and blocking ships, then Direct. Repair is in the ledger so the column
- * still closes, but it is not this score.
+ * **Least far below zero wins.** Both flagships are at or under zero by the
+ * time this is asked, and `settlePlayer` keeps the true figure — only the
+ * screens clamp it — so the depth is already the whole match in one number:
+ * every Attack that got through, minus every Shield, every blocking ship and
+ * every point of Repair.
  *
- * Equal landed damage falls back to match-long `stats.damageDealt`, then
- * a draw.
+ * Two earlier rules are gone. Comparing the Attack *rolled* handed the match to
+ * a commander whose volley was stopped: 30 Attack into full Shields and a
+ * blocking d10 beat a smaller Attack that went straight through. Comparing the
+ * damage *landed* this volley fixed that but threw away Repair, so a commander
+ * who had spent the match patching the hull got no credit for it — the owner's
+ * call, 20 September 2026, and the reason for this version.
+ *
+ * A commander cannot fumble it: when death is inescapable `autoSettleBrace`
+ * already blocks with every available ship, which is exactly what keeps the
+ * number closest to zero.
+ *
+ * Equal depth falls back to match-long `stats.damageDealt`, then a draw.
  */
 export type MutualKillBreak = {
-  hostLanded: number;
-  guestLanded: number;
+  /** Where each flagship ended up. At or below zero, and the bigger wins. */
+  hostHp: number;
+  guestHp: number;
   winner: SideId | "draw";
-  decidedBy: "volley" | "match" | "draw";
+  decidedBy: "health" | "match" | "draw";
 };
 
 export function mutualKillBreak(host: PlayerState, guest: PlayerState): MutualKillBreak {
-  const hostLanded = guest.report?.damage ?? 0;
-  const guestLanded = host.report?.damage ?? 0;
-  if (hostLanded !== guestLanded) {
+  const hostHp = host.hp;
+  const guestHp = guest.hp;
+  if (hostHp !== guestHp) {
     return {
-      hostLanded,
-      guestLanded,
-      winner: hostLanded > guestLanded ? "host" : "guest",
-      decidedBy: "volley",
+      hostHp,
+      guestHp,
+      winner: hostHp > guestHp ? "host" : "guest",
+      decidedBy: "health",
     };
   }
   if (host.stats.damageDealt !== guest.stats.damageDealt) {
     return {
-      hostLanded,
-      guestLanded,
+      hostHp,
+      guestHp,
       winner: host.stats.damageDealt > guest.stats.damageDealt ? "host" : "guest",
       decidedBy: "match",
     };
   }
-  return { hostLanded, guestLanded, winner: "draw", decidedBy: "draw" };
+  return { hostHp, guestHp, winner: "draw", decidedBy: "draw" };
 }
 
 function settlePlayer(state: MatchState, player: PlayerState) {
@@ -1284,7 +1295,7 @@ function finishIfNeeded(state: MatchState): boolean {
   if (outOfRounds && host.hp > 0 && guest.hp > 0) {
     state.winner = host.hp === guest.hp ? "draw" : host.hp > guest.hp ? "host" : "guest";
   } else if (host.hp <= 0 && guest.hp <= 0) {
-    // Both flagships fell together: damage that landed this volley, then
+    // Both flagships fell together: whoever ended least far below zero, then
     // damage across the match, then a draw. See `mutualKillBreak`.
     state.winner = mutualKillBreak(host, guest).winner;
   } else {

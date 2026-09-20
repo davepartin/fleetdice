@@ -12,7 +12,8 @@ const G = await import(bundlePath);
 const { applyAction, makeRng, newBrain, newMatch, newPlayer, setRng } = G;
 
 const BASE = "http://localhost:3000";
-const OUT = "/workspace/docs";
+// Resolve against this repo, not the machine the script was written on.
+const OUT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "docs");
 const PHONE = { width: 390, height: 844, deviceScaleFactor: 2 };
 
 function paint(player, shipFaces, flag = 1) {

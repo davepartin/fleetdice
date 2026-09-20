@@ -12,7 +12,8 @@ const G = await import(bundlePath);
 const { applyAction, makeRng, newBrain, newMatch, newPlayer, setRng } = G;
 
 const BASE = "http://localhost:3000";
-const OUT = "/workspace/docs";
+// Resolve against this repo, not the machine the script was written on.
+const OUT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "docs");
 const PHONE = { width: 390, height: 844, deviceScaleFactor: 2 };
 
 function paint(player, shipFaces, flag = 1) {
@@ -176,7 +177,8 @@ await page.goto(`${BASE}/solo/`, { waitUntil: "domcontentloaded" });
 await page.getByRole("button", { name: /How to play/i }).click();
 await page.waitForTimeout(600);
 const helpText = await page.evaluate(() => document.body.innerText);
-results.helpHasLanded = /landed more damage that round/i.test(helpText);
+// The live rule: health keeps counting past zero and the shallower flagship wins.
+results.helpHasLanded = /blown up by less wins/i.test(helpText);
 results.helpHasHeavier = /heavier attack/i.test(helpText);
 await page.evaluate(() => {
   const el = [...document.querySelectorAll("h3, .t-display")].find((n) =>
@@ -258,14 +260,15 @@ for (const viewport of [
 await browser.close();
 
 const fail = [];
-if (!results.helpHasLanded) fail.push("How to Play does not say landed more damage");
+if (!results.helpHasLanded) fail.push("How to Play does not say the shallower flagship wins");
 if (results.helpHasHeavier) fail.push("How to Play still says heavier Attack");
 for (const [name, recap] of [
   ["loss", results.loss],
   ["win", results.win],
 ]) {
   if (!/mutual destruction/i.test(recap.kicker || "")) fail.push(`${name}: missing MUTUAL DESTRUCTION`);
-  if (!/greatest damage/i.test(recap.why || "")) fail.push(`${name}: missing greatest damage`);
+  if (!/same volley/i.test(recap.why || "")) fail.push(`${name}: missing the why line`);
+  if (!/blown up by less/i.test(recap.call || "")) fail.push(`${name}: missing the deciding call`);
   if (!recap.mutualSrc?.includes("mutual")) fail.push(`${name}: missing two-flagship still`);
   if (!recap.mutualArt) fail.push(`${name}: missing dual wreck art`);
   if ((recap.mutualH ?? 0) < 80) fail.push(`${name}: dual art collapsed to ${recap.mutualH}px`);

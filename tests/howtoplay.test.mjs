@@ -81,27 +81,33 @@ test("a win or a loss recaps the last volley with the round-review column", () =
   );
 });
 
-test("How to Play and the recap treat a mutual kill as landed damage, not heavier Attack", () => {
+test("How to Play and the recap say a mutual kill goes to the shallower flagship", () => {
+  // The rule changed twice: the Attack rolled, then the damage landed, and now
+  // where the two flagships ended up. Every screen has to say the live one.
   const reference = readFileSync(new URL("../lib/reference.ts", import.meta.url), "utf8");
   const recap = readFileSync(new URL("../components/BattleRecap.tsx", import.meta.url), "utf8");
   const engine = readFileSync(new URL("../lib/engine.ts", import.meta.url), "utf8");
   const help = readFileSync(new URL("../components/HowToPlay.tsx", import.meta.url), "utf8");
   assert.match(reference, /from "@\/lib\/engine"/);
-  assert.match(reference, /landed more damage that round/);
-  assert.match(reference, /Attack after Shields, Super Shield and blocking, plus Escalation and Direct/);
+  assert.match(reference, /blown up by less wins/);
+  assert.match(reference, /Shields, blocking ships and Repair all keep you closer to zero/);
   assert.doesNotMatch(reference, /heavier attack/i);
+  assert.doesNotMatch(reference, /landed more damage that round/);
   assert.doesNotMatch(recap, /heavier Attack/);
+  assert.doesNotMatch(recap, /Damage that landed/);
   assert.match(recap, /Mutual/);
   assert.match(recap, /Destruction/);
-  assert.match(recap, /greatest damage/);
+  assert.match(recap, /blown up by less/);
+  assert.match(recap, /Where the flagships ended/);
   assert.match(recap, /MutualArt/);
   assert.match(recap, /fleet-dice-mutual/);
-  assert.match(recap, /Damage that landed/);
   assert.match(recap, /VolleyLedger/);
   assert.match(recap, /ledgerSide/);
   assert.match(help, /win\?\.blocks/);
   assert.match(engine, /export function mutualKillBreak/);
-  assert.match(engine, /damageAfterBlocking/);
+  // The figure compared is the flagship's own health, kept past zero.
+  assert.match(engine, /const hostHp = host\.hp;/);
+  assert.match(engine, /decidedBy: "health"/);
 });
 
 test("How to Play is generated from the engine and never mentions a Reactor cap", () => {

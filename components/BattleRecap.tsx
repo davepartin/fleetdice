@@ -203,8 +203,9 @@ export function StatRow({
  * The volley that ended it. Same column as Round Review: started with,
  * every term that moved health, left with. A win or a loss is still
  * "what just happened" — the three share-bars used to hide Shields that
- * stopped the attack, blocking, Repair, and the weapon. Mutual kills keep
- * the landed-damage score on top of that same sum.
+ * stopped the attack, blocking, Repair, and the weapon. A mutual kill puts
+ * the two final numbers on top of that same sum, because those two numbers
+ * are what decided it.
  */
 function LastRound({
   you,
@@ -225,10 +226,11 @@ function LastRound({
   const theirSide = ledgerSide(theirReport, yourAttack);
 
   const bothFell = you.hp <= 0 && them.hp <= 0;
-  const yourLanded = theirReport.damage;
-  const theirLanded = yourReport.damage;
-  const volleyTied = yourLanded === theirLanded;
-  const youHadVolley = yourLanded > theirLanded;
+  // Both flagships are under zero here, and the engine keeps the true figure.
+  // Least far below wins: it is the whole match in one number — every Attack
+  // that got through, minus every Shield, blocking ship and point of Repair.
+  const depthTied = you.hp === them.hp;
+  const youWereShallower = you.hp > them.hp;
   const youHadMatch = you.stats.damageDealt > them.stats.damageDealt;
   const matchTied = you.stats.damageDealt === them.stats.damageDealt;
 
@@ -237,14 +239,14 @@ function LastRound({
       <p className="t-eyebrow recap-lastround-title">Round {yourReport.round} — the final volley</p>
       {bothFell && (
         <div className="recap-deciding">
-          <p className="t-eyebrow recap-deciding-label">Damage that landed</p>
+          <p className="t-eyebrow recap-deciding-label">Where the flagships ended</p>
           <div className="recap-deciding-score">
-            <span className={`recap-deciding-num recap-deciding-you t-display t-num text-3xl${youHadVolley ? " is-ahead" : ""}`}>
-              <Ticker value={yourLanded} />
+            <span className={`recap-deciding-num recap-deciding-you t-display t-num text-3xl${youWereShallower ? " is-ahead" : ""}`}>
+              <Ticker value={you.hp} />
             </span>
             <span className="recap-deciding-vs">vs</span>
-            <span className={`recap-deciding-num recap-deciding-them t-display t-num text-3xl${!volleyTied && !youHadVolley ? " is-ahead" : ""}`}>
-              <Ticker value={theirLanded} />
+            <span className={`recap-deciding-num recap-deciding-them t-display t-num text-3xl${!depthTied && !youWereShallower ? " is-ahead" : ""}`}>
+              <Ticker value={them.hp} />
             </span>
           </div>
           <div className="recap-deciding-names">
@@ -252,7 +254,11 @@ function LastRound({
             <span>{enemyName}</span>
           </div>
           <p className="t-display recap-deciding-call">
-            {volleyTied ? "Even this volley" : youHadVolley ? "You landed more" : `${enemyName} landed more`}
+            {depthTied
+              ? "Blown up by exactly as much"
+              : youWereShallower
+                ? "You were blown up by less"
+                : `${enemyName} was blown up by less`}
           </p>
         </div>
       )}
@@ -265,11 +271,11 @@ function LastRound({
           enemyWeapon={theirReport.weapon}
         />
       )}
-      {bothFell && volleyTied && (
+      {bothFell && depthTied && (
         <p className="recap-mutual-fallback">
           {matchTied
             ? "Dead even all the way down — a draw."
-            : `This volley was even. ${youHadMatch ? "You" : enemyName} dealt more damage across the whole match, ${Math.max(you.stats.damageDealt, them.stats.damageDealt)} to ${Math.min(you.stats.damageDealt, them.stats.damageDealt)}, and that decided it.`}
+            : `Both flagships ended on the same number. ${youHadMatch ? "You" : enemyName} dealt more damage across the whole match, ${Math.max(you.stats.damageDealt, them.stats.damageDealt)} to ${Math.min(you.stats.damageDealt, them.stats.damageDealt)}, and that decided it.`}
         </p>
       )}
     </div>
@@ -325,10 +331,12 @@ export function BattleRecap({
           ? `You beat ${beatName}`
           : `${enemyName} wins`;
 
+  // Why the screen says MUTUAL DESTRUCTION at all. Who won, and on what
+  // number, is the panel underneath — this line only has to explain the wreck.
   const mutualWhy = bothFell
     ? draw
-      ? "even the damage"
-      : "for the greatest damage"
+      ? "Both flagships fell in the same volley, dead even all the way down."
+      : "Both flagships fell in the same volley."
     : null;
 
   // Same measured hint as Round Review: only point down while something

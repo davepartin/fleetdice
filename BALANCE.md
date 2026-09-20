@@ -115,37 +115,58 @@ another hull is a playtester question, not a retune.
 Newest finding first. Every number here comes from playing the real engine, not
 from arithmetic on paper. Where I am guessing, I say so.
 
-## Dave's call — a mutual kill goes to the damage that landed, 20 September 2026
+## Dave's call — a mutual kill goes to the flagship blown up by less, 20 September 2026
 
-When both flagships fall in the same volley, the winner is the commander who
-**caused the most damage, counted with all the maths** — not the biggest number
-rolled.
+When both flagships fall in the same volley, **health keeps counting past zero
+and the one closer to zero wins**: −12 beats −24. Equal depth falls back to
+damage across the whole match, then a draw. `mutualKillBreak` in
+`lib/engine.ts` is the only place it is decided, and the end screen prints the
+two numbers.
 
-The old rule compared raw `tally.attack`: the Attack on the dice, before
-anything answered it. That let the loser of an exchange take the match. A
-commander could roll Attack 30 into full Shields and a blocking d10, land almost
-none of it, and still be handed the win over someone whose smaller Attack went
+### Why, in the owner's words
+
+"If you play your repair right you should count it." The depth below zero is
+the whole match in one figure — every Attack that got through, minus every
+Shield, every blocking ship and every point of Repair. Nothing a commander did
+is left out, and it is the easiest version to explain out loud.
+
+### Two rules it replaces, both wrong in the same direction
+
+The original compared the **Attack rolled**, before anything answered it. A
+commander could throw 30 Attack into full Shields and a blocking d10, land
+almost none of it, and take the match off someone whose smaller Attack went
 straight through.
 
-The figure now compared is `report.damage` — the same number `settlePlayer`
-used to take the health off, which is `damageAfterBlocking`: Attack after Super
-Shield, after Shields, after blocking ships, plus Escalation, plus Direct.
-Repair is not in it. Repair is health coming back, not damage going out, and a
-commander who patched themselves up has not hit anyone any harder.
+The second, shipped earlier the same day, compared the **damage that landed
+this volley** (`report.damage`). Better — Shields and blocking finally counted
+— but Repair was thrown away, so a commander who had spent the match patching
+the hull got nothing for it. That is the gap this closes.
 
-Then, in order:
+### What it measures, on 1,200 AI matches
 
-1. **This volley's landed damage.** Different: that commander wins.
-2. **Damage across the whole match** (`stats.damageDealt`), if the volley tied.
-3. **A draw**, if both are equal.
+- **Mutual kills are 3.7% of finished matches** — 44 of 1,200, about 1 in 27.
+- **Landed damage and final health disagree about the winner in 29.5% of
+  them**, so the rule changes who wins roughly 1 match in 90.
+- **Exact ties needing the fallback: 4.5%** under this rule (2.3% under landed
+  damage). Both are rare enough that the second rung almost never runs.
+- **The median gap between the two flagships is 9** — −12 against −21 is a
+  typical pair — and the deepest single flagship seen was **−49**.
 
-`mutualKillBreak` in `lib/engine.ts` is the one place this is decided, so the
-end screen and the engine cannot disagree about who won or why. The recap shows
-the two landed figures side by side and says which rung decided it.
+`node sim/mutual-kill.mjs 1200` reprints all of it.
 
-**Not measured, and it did not need to be.** This is a fairness call, not a
-balance knob: a mutual kill ends the match either way, and nothing about how a
-round is played changes. `tests/mutual-kill.test.mjs` pins all three rungs.
+### Why it cannot be fumbled
+
+When death is inescapable the engine already calls `autoSettleBrace`, which
+blocks with every available ship. That is exactly what keeps the number closest
+to zero, so nobody loses a mutual kill by missing the block screen, and the
+ships sitting out next round cost nothing in a match that has ended.
+
+### Not measured for balance, and it did not need to be
+
+A mutual kill ends the match either way; nothing about how a round is played
+changes. This is a fairness call. `tests/mutual-kill.test.mjs` pins all three
+rungs, proves Repair can now decide one, and fails if `settlePlayer` ever
+clamps health at zero — which would quietly turn every mutual kill into a draw.
 How to Play states the rule, generated from the engine like the rest of it.
 
 ## Dave's call — the Reactor has no ceiling

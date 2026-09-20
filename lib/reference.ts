@@ -670,7 +670,7 @@ export const HOW_TO_PLAY: readonly HelpSection[] = [
       },
       {
         kind: "text",
-        text: `If both fleets somehow survive to round ${TUNING.roundLimit}, the commander with more health wins, and equal health is a draw. If both flagships fall in the same volley, the commander who landed more damage that round wins — Attack after Shields, Super Shield and blocking, plus Escalation and Direct. If those are equal, the most damage dealt across the whole game; and if that is equal too, it is a draw.`,
+        text: `If both fleets somehow survive to round ${TUNING.roundLimit}, the commander with more health wins, and equal health is a draw. If both flagships fall in the same volley, health keeps counting past zero and the one blown up by less wins — so a flagship on −12 beats one on −24. Everything you did is in that number: Shields, blocking ships and Repair all keep you closer to zero. If both end on the same number, the most damage dealt across the whole game decides it; and if that is equal too, it is a draw.`,
       },
     ],
   },
