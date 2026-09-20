@@ -13,5 +13,5 @@ export default defineConfig([
       "react-hooks/set-state-in-effect": "off",
     },
   },
-  globalIgnores([".next/**", "out/**", "shots/**", ".simbuild/**", "_to_delete/**"]),
+  globalIgnores([".next/**", "out/**", "shots/**", ".simbuild/**", ".iconbuild/**", "_to_delete/**"]),
 ]);

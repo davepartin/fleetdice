@@ -51,6 +51,17 @@ export const metadata: Metadata = {
     "Build the fleet. Break the flagship. A two-player dice battle you can play in any browser.",
   applicationName: "Fleet Dice",
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Fleet Dice" },
+  // Saved to the home screen this is the d4 showing 1 — the same face How to
+  // Play paints — not a letter F. apple-touch-icon.png is the filename iOS
+  // fetches on its own; the 192 and 512 cover Android / "Add to Home screen".
+  icons: {
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  manifest: "/manifest.webmanifest",
   // A shared link should show the ship, not a blank card. The image has to be
   // an absolute URL, and this game is served from two hosts, so the host comes
   // from `SITE_URL` at build time and the path from `BASE_PATH`.

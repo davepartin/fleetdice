@@ -16,3 +16,6 @@ _to_delete/
 # they are proof for one change, not a record worth carrying: the same folder
 # was cleared of 15MB in September. Run the tool again when you need them.
 docs/*.png
+# The home-screen icon preview is the one PNG this folder is meant to keep.
+!docs/app-icon-preview.png
+.iconbuild/
