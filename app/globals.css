@@ -2809,6 +2809,10 @@ button {
   padding-bottom: 0.35rem;
   text-align: center;
 }
+.recap-last-volley {
+  padding-top: 0.7rem;
+  padding-bottom: 0.7rem;
+}
 /* Under YOU / ENEMY above, each side's swing stays under its own name
    instead of collapsing into one centred cluster in the middle. */
 .recap-lastround-hp {

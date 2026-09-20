@@ -196,13 +196,11 @@ export function StatRow({
 }
 
 /**
- * The volley that ended it. Both commanders lock in blind, so the two
- * fleets shown side by side are the only way — on a phone, not next to
- * each other — to see why the match actually went the way it did.
- *
- * When both flagships fall, this is the whole story: the damage that
- * landed (the engine's `report.damage` / `damageAfterBlocking` figure)
- * in huge numbers, then the same combat ledger as the Round Review.
+ * The volley that ended it. Same column as Round Review: started with,
+ * every term that moved health, left with. A win or a loss is still
+ * "what just happened" — the three share-bars used to hide Shields that
+ * stopped the attack, blocking, Repair, and the weapon. Mutual kills keep
+ * the landed-damage score on top of that same sum.
  */
 function LastRound({
   you,
@@ -219,26 +217,21 @@ function LastRound({
 
   const yourAttack = yourReport.tally.attack;
   const theirAttack = theirReport.tally.attack;
-  const yourShields = yourReport.tally.defense;
-  const theirShields = theirReport.tally.defense;
-  const yourDirect = yourReport.tally.direct;
-  const theirDirect = theirReport.tally.direct;
+  const yourSide = ledgerSide(yourReport, theirAttack);
+  const theirSide = ledgerSide(theirReport, yourAttack);
 
   const bothFell = you.hp <= 0 && them.hp <= 0;
-  // What you put on their flagship this volley, and what they put on yours.
   const yourLanded = theirReport.damage;
   const theirLanded = yourReport.damage;
+  const volleyTied = yourLanded === theirLanded;
+  const youHadVolley = yourLanded > theirLanded;
+  const youHadMatch = you.stats.damageDealt > them.stats.damageDealt;
+  const matchTied = you.stats.damageDealt === them.stats.damageDealt;
 
-  if (bothFell) {
-    const yourSide = ledgerSide(yourReport, theirAttack);
-    const theirSide = ledgerSide(theirReport, yourAttack);
-    const volleyTied = yourLanded === theirLanded;
-    const youHadVolley = yourLanded > theirLanded;
-    const youHadMatch = you.stats.damageDealt > them.stats.damageDealt;
-    const matchTied = you.stats.damageDealt === them.stats.damageDealt;
-    return (
-      <div className="panel recap-stats recap-mutual-volley">
-        <p className="t-eyebrow recap-lastround-title">Round {yourReport.round} — the final volley</p>
+  return (
+    <div className={`panel recap-stats recap-last-volley${bothFell ? " recap-mutual-volley" : ""}`}>
+      <p className="t-eyebrow recap-lastround-title">Round {yourReport.round} — the final volley</p>
+      {bothFell && (
         <div className="recap-deciding">
           <p className="t-eyebrow recap-deciding-label">Damage that landed</p>
           <div className="recap-deciding-score">
@@ -258,48 +251,23 @@ function LastRound({
             {volleyTied ? "Even this volley" : youHadVolley ? "You landed more" : `${enemyName} landed more`}
           </p>
         </div>
-        {yourSide && (
-          <VolleyLedger
-            you={yourSide}
-            them={theirSide}
-            enemyName={enemyName}
-            yourWeapon={yourReport.weapon}
-            enemyWeapon={theirReport.weapon}
-          />
-        )}
-        {volleyTied && (
-          <p className="recap-mutual-fallback">
-            {matchTied
-              ? "Dead even all the way down — a draw."
-              : `This volley was even. ${youHadMatch ? "You" : enemyName} dealt more damage across the whole match, ${Math.max(you.stats.damageDealt, them.stats.damageDealt)} to ${Math.min(you.stats.damageDealt, them.stats.damageDealt)}, and that decided it.`}
-          </p>
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <div className="panel recap-stats">
-      <p className="t-eyebrow recap-lastround-title">Round {yourReport.round} — the final volley</p>
-      <div className="recap-stats-head">
-        <span className="t-eyebrow">You</span>
-        <span className="t-eyebrow">{enemyName}</span>
-      </div>
-      <div className="recap-lastround-hp">
-        <span className="recap-lastround-hp-side recap-lastround-hp-you">
-          <span className="c-hp t-num">{Math.max(0, yourReport.hpBefore)}</span>
-          <span className="recap-lastround-arrow" aria-hidden="true">→</span>
-          <span className="c-hp t-num">{Math.max(0, yourReport.hpAfter)}</span>
-        </span>
-        <span className="recap-lastround-hp-side recap-lastround-hp-them">
-          <span className="c-hp t-num">{Math.max(0, theirReport.hpBefore)}</span>
-          <span className="recap-lastround-arrow" aria-hidden="true">→</span>
-          <span className="c-hp t-num">{Math.max(0, theirReport.hpAfter)}</span>
-        </span>
-      </div>
-      <StatRow label="Attack" you={yourAttack} them={theirAttack} color="attack" />
-      <StatRow label="Shields" you={yourShields} them={theirShields} color="shield" />
-      <StatRow label="Direct" you={yourDirect} them={theirDirect} color="direct" />
+      )}
+      {yourSide && (
+        <VolleyLedger
+          you={yourSide}
+          them={theirSide}
+          enemyName={enemyName}
+          yourWeapon={yourReport.weapon}
+          enemyWeapon={theirReport.weapon}
+        />
+      )}
+      {bothFell && volleyTied && (
+        <p className="recap-mutual-fallback">
+          {matchTied
+            ? "Dead even all the way down — a draw."
+            : `This volley was even. ${youHadMatch ? "You" : enemyName} dealt more damage across the whole match, ${Math.max(you.stats.damageDealt, them.stats.damageDealt)} to ${Math.min(you.stats.damageDealt, them.stats.damageDealt)}, and that decided it.`}
+        </p>
+      )}
     </div>
   );
 }

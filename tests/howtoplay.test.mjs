@@ -67,6 +67,20 @@ test("each help face is clipped to the hull that first shows that number", () =>
   assert.match(reference, /HULLS\.find\(\(sides\) => sides >= value\)/);
 });
 
+test("a win or a loss recaps the last volley with the round-review column", () => {
+  const recap = readFileSync(new URL("../components/BattleRecap.tsx", import.meta.url), "utf8");
+  assert.match(recap, /fleet-dice-victory/);
+  assert.match(recap, /fleet-dice-defeat/);
+  const lastRound = recap.slice(recap.indexOf("function LastRound"), recap.indexOf("export function BattleRecap"));
+  assert.match(lastRound, /VolleyLedger/);
+  assert.match(lastRound, /ledgerSide/);
+  assert.doesNotMatch(
+    lastRound,
+    /StatRow/,
+    "the last volley is the round-review column, not the three share-bars",
+  );
+});
+
 test("How to Play and the recap treat a mutual kill as landed damage, not heavier Attack", () => {
   const reference = readFileSync(new URL("../lib/reference.ts", import.meta.url), "utf8");
   const recap = readFileSync(new URL("../components/BattleRecap.tsx", import.meta.url), "utf8");
