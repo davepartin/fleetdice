@@ -11,3 +11,8 @@ tsconfig.tsbuildinfo
 /shots/
 _to_delete/
 .simbuild/
+
+# Playtest screenshots. tools/*-shots.mjs and tools/cap-*.mjs write here, and
+# they are proof for one change, not a record worth carrying: the same folder
+# was cleared of 15MB in September. Run the tool again when you need them.
+docs/*.png
