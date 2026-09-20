@@ -455,7 +455,7 @@ export function BattleRecap({
           data-recap-more-below={moreBelow ? "shown" : "hidden"}
           aria-hidden="true"
         >
-          <svg viewBox="0 0 24 24" width="18" height="18">
+          <svg viewBox="0 0 24 24" width="20" height="20">
             <path
               d="M6 9l6 6 6-6"
               fill="none"
