@@ -4162,12 +4162,17 @@ button {
   }
 }
 
-/* The victory and defeat paintings at the top of the recap. Bled to the panel
-   edges and faded out at the bottom, the same way the key art hands over on the
-   title screen, so the picture and the numbers under it read as one screen
-   rather than a poster stuck above a table. */
+/* The victory and defeat paintings at the top of the recap. A phone-width
+   banner, cropped rather than letterboxed: shrinking the poster to save
+   height used to leave black gutters on each side. Fade the bottom into
+   the numbers the same way the key art hands over on the title screen. */
 .recap-art {
-  margin: -0.25rem -1rem 0.25rem;
+  flex: none;
+  margin: -0.25rem -0.9rem 0.15rem;
+  height: 9rem;
+  min-height: 9rem;
+  overflow: hidden;
+  background: #07060c;
   line-height: 0;
   -webkit-mask-image: linear-gradient(180deg, #000 62%, transparent 100%);
   mask-image: linear-gradient(180deg, #000 62%, transparent 100%);
@@ -4175,13 +4180,16 @@ button {
 .recap-art img {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 46%;
 }
-/* A short screen needs the numbers more than it needs the painting. */
+/* A short screen needs the numbers more than it needs the painting.
+   Keep the banner full width — only the height gives way. */
 @media (max-height: 700px) {
   .recap-art {
-    max-width: 15rem;
-    margin-inline: auto;
+    height: 7.2rem;
+    min-height: 7.2rem;
   }
   .recap-mutual-art {
     height: 7.6rem;

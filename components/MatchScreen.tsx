@@ -33,7 +33,7 @@ import {
   type PlayerState,
   type Straight,
 } from "@/lib/engine";
-import { rollHint } from "@/lib/ai";
+import { DIFFICULTY, rollHint } from "@/lib/ai";
 import { FLAGSHIP_FACES, NOUN, STAT_LABEL } from "@/lib/reference";
 import { isPhoneLayout } from "@/lib/viewport";
 import type { MatchController } from "@/lib/useMatch";
@@ -769,6 +769,11 @@ export function MatchScreen({ controller, onExit, title, subtitle }: Props) {
               you={you}
               them={them}
               enemyName={enemyName}
+              difficultyLabel={
+                controller.mode === "solo" && controller.difficulty
+                  ? DIFFICULTY[controller.difficulty].label
+                  : undefined
+              }
               onExit={onExit}
               onRestart={controller.restart}
             />

@@ -67,6 +67,11 @@ export type MatchController = {
   recoveringMove?: boolean;
   recoveryNotice?: string | null;
   mode: "solo" | "versus";
+  /**
+   * Solo only: the AI tier this match is on. Versus leaves this unset so the
+   * recap keeps naming the other commander, not a difficulty.
+   */
+  difficulty?: Difficulty;
 };
 
 /* ------------------------------------------------------------------ */
@@ -209,6 +214,7 @@ export function useSoloMatch(settings: SoloSettings): MatchController {
     restart: start,
     recoveryNotice: saveWarning,
     mode: "solo",
+    difficulty: settings.difficulty,
   };
 }
 

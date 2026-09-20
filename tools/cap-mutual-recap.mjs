@@ -128,6 +128,8 @@ async function measureRecap(page) {
       (el) => el.textContent.trim(),
     );
     const art = document.querySelector(".recap-art img");
+    const artEl = document.querySelector(".recap-art");
+    const artRect = artEl?.getBoundingClientRect();
     const mutualImg = document.querySelector(".recap-mutual-art img");
     const mutualEl = document.querySelector(".recap-mutual-art");
     const mutualArt = Boolean(mutualEl);
@@ -146,6 +148,7 @@ async function measureRecap(page) {
       ledgerRows,
       hasLedger: Boolean(ledger),
       art: art ? art.getAttribute("src") : null,
+      artBox: artRect ? { w: Math.round(artRect.width), h: Math.round(artRect.height) } : null,
       mutualSrc: mutualImg ? mutualImg.getAttribute("src") : null,
       mutualArt,
       mutualH,
@@ -289,7 +292,14 @@ if ((results.caretAfter?.opacity ?? 1) > 0.15) fail.push(`caret after scroll sti
 if ((results.caretAfter?.remaining ?? 99) > 16) fail.push(`scrolled recap still has ${results.caretAfter?.remaining}px below`);
 if (results.normal.kicker) fail.push("normal win still shows MUTUAL DESTRUCTION");
 if (results.normal.mutualArt) fail.push("normal win used the mutual dual-blast header");
-if (!/You beat/i.test(results.normal.title || "")) fail.push(`normal title was ${results.normal.title}`);
+if (!/^You beat Medium$/i.test(results.normal.title || "")) fail.push(`normal title was ${results.normal.title}`);
+  const recapBox = results.normal.box;
+  const artBox = results.normal.artBox;
+  if (!artBox) fail.push("normal win has no victory art box");
+  if (recapBox && artBox && recapBox.w - artBox.w > 8) {
+    fail.push(`victory art letterboxed: art ${artBox.w}px in recap ${recapBox.w}px`);
+  }
+  if (artBox && artBox.h > 180) fail.push(`victory art still ${artBox.h}px tall`);
 if (!results.normal.art?.includes("victory")) fail.push("normal win lost victory art");
 for (const name of ["390x620", "360x780"]) {
   const short = results[name];

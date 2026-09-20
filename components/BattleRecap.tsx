@@ -284,6 +284,7 @@ export function BattleRecap({
   you,
   them,
   enemyName,
+  difficultyLabel,
   onExit,
   onRestart,
 }: {
@@ -294,12 +295,19 @@ export function BattleRecap({
   you: PlayerState;
   them: PlayerState | null;
   enemyName: string;
+  /**
+   * Solo wins name the AI tier the player chose (Low, Medium, Hard, Expert).
+   * Versus leaves this unset so a human opponent keeps their own name.
+   * Losses and mutual kills still use `enemyName`.
+   */
+  difficultyLabel?: string;
   onExit(): void;
   onRestart?(): void;
 }) {
   const cancelled = Boolean(cancelledBy);
   const outcome = cancelled ? "cancelled" : draw ? "draw" : won ? "won" : "lost";
   const bothFell = Boolean(them && you.hp <= 0 && them.hp <= 0) && !cancelled;
+  const beatName = difficultyLabel || enemyName;
 
   const title = cancelled
     ? youCancelled
@@ -314,7 +322,7 @@ export function BattleRecap({
       : draw
         ? "A draw"
         : won
-          ? `You beat ${enemyName}`
+          ? `You beat ${beatName}`
           : `${enemyName} wins`;
 
   const mutualWhy = bothFell
