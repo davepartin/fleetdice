@@ -37,16 +37,18 @@ function soloWinSave(difficulty) {
   paint(state.players.guest, [4, 4, 4, 1]);
   for (const side of ["host", "guest"]) {
     for (const ship of state.players[side].ships) ship.disabledRound = state.players[side].round;
+    state.players[side].hp = 8;
   }
-  state.players.host.hp = 18;
-  state.players.guest.hp = 0;
   applyAction(state, "host", { type: "submit" });
   applyAction(state, "guest", { type: "submit" });
+  // Keep it loadable as a solo save: status must stay "active". Then
+  // restore a one-sided win so this is the ordinary victory screen.
   state.status = "active";
   state.players.host.phase = "over";
   state.players.guest.phase = "over";
-  state.winner = "host";
+  state.players.host.hp = 18;
   if (state.players.host.report) state.players.host.report.hpAfter = 18;
+  state.winner = "host";
   return {
     schema: 1,
     savedAt: Date.now(),
@@ -55,14 +57,22 @@ function soloWinSave(difficulty) {
   };
 }
 
+async function hideDevChrome(page) {
+  await page.addStyleTag({
+    content: "nextjs-portal, #__next-build-watcher { display: none !important; }",
+  });
+}
+
 async function injectAndOpen(page, save) {
   await page.goto(`${BASE}/solo/`, { waitUntil: "domcontentloaded" });
   await page.evaluate((payload) => {
     localStorage.setItem("fd3.solo.battle.v1", JSON.stringify(payload));
   }, save);
   await page.reload({ waitUntil: "domcontentloaded" });
+  await hideDevChrome(page);
   await page.getByRole("button", { name: /Carry on/i }).click({ timeout: 8000 });
   await page.locator(".recap").waitFor({ state: "visible", timeout: 12000 });
+  await hideDevChrome(page);
 }
 
 function measure(page) {
@@ -89,6 +99,7 @@ function measure(page) {
       recapLeft: recapBox ? Math.round(recapBox.left) : null,
       src: img?.getAttribute("src") || null,
       objectFit: img ? getComputedStyle(img).objectFit : null,
+      objectPosition: img ? getComputedStyle(img).objectPosition : null,
       maxWidth: style?.maxWidth || null,
       overflowX: recap ? recap.scrollWidth > recap.clientWidth + 1 : null,
       ledgerOnScreen: Boolean(

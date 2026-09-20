@@ -4133,8 +4133,8 @@ button {
 .recap-art {
   flex: none;
   margin: -0.25rem -0.9rem 0.15rem;
-  height: 8.5rem;
-  min-height: 8.5rem;
+  height: 9rem;
+  min-height: 9rem;
   overflow: hidden;
   background: #07060c;
   line-height: 0;
@@ -4146,14 +4146,14 @@ button {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 34%;
+  object-position: center 46%;
 }
 /* A short screen needs the numbers more than it needs the painting.
    Keep the banner full width — only the height gives way. */
 @media (max-height: 700px) {
   .recap-art {
-    height: 6.8rem;
-    min-height: 6.8rem;
+    height: 7.2rem;
+    min-height: 7.2rem;
   }
   .recap-mutual-art {
     height: 7.6rem;

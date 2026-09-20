@@ -47,8 +47,8 @@ test("difficulty labels on screen come from the tiers, not a hardcoded Easy", ()
 test("the victory banner fills the column and stays short", () => {
   const art = css.match(/\.recap-art \{[^}]+\}/);
   assert.ok(art, "recap-art block is missing");
-  assert.match(art[0], /height:\s*8\.5rem/);
-  assert.match(art[0], /min-height:\s*8\.5rem/);
+  assert.match(art[0], /height:\s*9rem/);
+  assert.match(art[0], /min-height:\s*9rem/);
   assert.match(art[0], /overflow:\s*hidden/);
   assert.doesNotMatch(art[0], /max-width/);
   assert.match(css, /\.recap-art img \{[^}]*width:\s*100%/);
@@ -59,7 +59,7 @@ test("the victory banner fills the column and stays short", () => {
   assert.doesNotMatch(css, /\.recap-art \{[^}]*margin-inline:\s*auto/);
   assert.match(
     css,
-    /@media \(max-height: 700px\) \{\s*\.recap-art \{\s*height:\s*6\.8rem/,
+    /@media \(max-height: 700px\) \{\s*\.recap-art \{\s*height:\s*7\.2rem/,
     "short-screen recap-art must stay a full-width banner",
   );
 });
