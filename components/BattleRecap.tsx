@@ -8,6 +8,7 @@
  * they played — this is the screen worth a screenshot when they do.
  */
 
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { DieValue, PlayerState } from "@/lib/engine";
 import { shipInSlot, slotForCell, weaponsOf } from "@/lib/engine";
 import { WeaponStatusList } from "./FlagshipWeapons";
@@ -16,6 +17,9 @@ import { NOUN } from "@/lib/reference";
 import { HelpFlagFace, HelpHullPlate, HelpShipFace } from "./HelpArt";
 import { href } from "@/lib/paths";
 import { Button, Ticker } from "./ui";
+
+/** Pixels still below the fold before the "more" caret hides. */
+const MORE_BELOW_PX = 16;
 
 const CELLS = Array.from({ length: 9 }, (_, cell) => cell);
 
@@ -319,9 +323,37 @@ export function BattleRecap({
       : "for the greatest damage"
     : null;
 
+  // Same measured hint as Round Review: only point down while something
+  // is actually below the fold. Victory art loading can grow the scroll
+  // after the first paint, so this re-checks on resize and image load.
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [moreBelow, setMoreBelow] = useState(false);
+  const checkMore = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setMoreBelow(el.scrollHeight - el.scrollTop - el.clientHeight > MORE_BELOW_PX);
+  }, []);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    checkMore();
+    const ro = new ResizeObserver(checkMore);
+    ro.observe(el);
+    for (const child of el.children) ro.observe(child);
+    window.addEventListener("resize", checkMore);
+    const imgs = [...el.querySelectorAll("img")];
+    imgs.forEach((img) => img.addEventListener("load", checkMore));
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", checkMore);
+      imgs.forEach((img) => img.removeEventListener("load", checkMore));
+    };
+  }, [checkMore, bothFell, outcome]);
+
   return (
     <div className="recap">
-      <div className="recap-scroll fade-edges">
+      <div className="recap-body">
+        <div className="recap-scroll fade-edges" ref={scrollRef} onScroll={checkMore}>
         {/* Ordinary wins and losses keep the painted flagship. A mutual
             kill is both fleets going up, so that poster would lie — one
             still of two exploding flagships instead, then the huge words. */}
@@ -417,6 +449,23 @@ export function BattleRecap({
             <StatRow label="Energy spent rerolling" you={you.stats.rerollEnergy} them={0} color="energy" />
           </div>
         )}
+        </div>
+        <div
+          className={`recap-more-below${moreBelow ? " is-shown" : ""}`}
+          data-recap-more-below={moreBelow ? "shown" : "hidden"}
+          aria-hidden="true"
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18">
+            <path
+              d="M6 9l6 6 6-6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
       </div>
 
       <div className="recap-foot">

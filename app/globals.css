@@ -2527,6 +2527,16 @@ button {
   overflow: hidden;
 }
 
+/* Scroll column plus the overlay caret. The caret sits on this wrap so
+   the fade-edges mask on .recap-scroll cannot eat it. */
+.recap-body {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .recap-scroll {
   flex: 1 1 auto;
   min-height: 0;
@@ -2927,6 +2937,57 @@ button {
   display: flex;
   gap: 0.5rem;
   padding-top: 0.15rem;
+}
+
+/* "There is more below" — same hint as Round Review: a small chevron
+   over the last visible recap rows, never a button. Fades out once the
+   player has scrolled far enough that little remains. */
+.recap-more-below {
+  position: absolute;
+  left: 50%;
+  bottom: 0.2rem;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 0.22);
+  background: rgb(8 12 24 / 0.82);
+  box-shadow:
+    0 0 14px rgb(0 0 0 / 0.55),
+    0 0 0 1px rgb(255 210 61 / 0.14);
+  color: var(--color-hull-100);
+  pointer-events: none;
+  transform: translateX(-50%);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.35s ease, visibility 0.35s ease;
+}
+.recap-more-below.is-shown {
+  opacity: 0.92;
+  visibility: visible;
+  animation: recap-caret-hint 1.8s ease-in-out infinite;
+}
+.recap-more-below.is-shown svg {
+  animation: recap-caret-pulse 1.8s ease-in-out infinite;
+}
+@keyframes recap-caret-hint {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(4px); }
+}
+@keyframes recap-caret-pulse {
+  0%, 100% { opacity: 0.62; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .recap-more-below.is-shown {
+    animation: none;
+  }
+  .recap-more-below.is-shown svg {
+    animation: none;
+    opacity: 0.9;
+  }
 }
 
 /* ==================================================================
