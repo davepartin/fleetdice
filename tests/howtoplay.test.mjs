@@ -5,6 +5,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { bundlePath } from "../sim/bundle.mjs";
+
+const G = await import(bundlePath);
+const { HOW_TO_PLAY, MUTUAL_KILL_EXAMPLE, mutualKillBreak, signedHp } = G;
 
 test("how to play is one illustrated scroll, not an accordion", () => {
   const src = readFileSync(new URL("../components/HowToPlay.tsx", import.meta.url), "utf8");
@@ -81,18 +85,57 @@ test("a win or a loss recaps the last volley with the round-review column", () =
   );
 });
 
-test("How to Play and the recap say a mutual kill goes to the shallower flagship", () => {
+test("How to Play has a Mutual Destruction card that matches mutualKillBreak", () => {
   // The rule changed twice: the Attack rolled, then the damage landed, and now
-  // where the two flagships ended up. Every screen has to say the live one.
+  // where the two flagships ended up. Every screen has to say the live one,
+  // and How to Play has to say it as its own card — not a paragraph inside Winning.
   const reference = readFileSync(new URL("../lib/reference.ts", import.meta.url), "utf8");
   const recap = readFileSync(new URL("../components/BattleRecap.tsx", import.meta.url), "utf8");
   const engine = readFileSync(new URL("../lib/engine.ts", import.meta.url), "utf8");
   const help = readFileSync(new URL("../components/HowToPlay.tsx", import.meta.url), "utf8");
+
+  const section = HOW_TO_PLAY.find((entry) => entry.id === "mutual-destruction");
+  assert.ok(section, "HOW_TO_PLAY is missing the mutual-destruction section");
+  assert.equal(section.title, "Mutual Destruction");
+  const copy = [
+    section.summary,
+    ...section.blocks.filter((block) => block.kind === "text").map((block) => block.text),
+  ].join(" ");
+
+  assert.match(copy, /blown up by less wins/);
+  assert.match(copy, /Health keeps counting past zero/);
+  assert.match(copy, /MUTUAL DESTRUCTION/);
+  assert.match(copy, /Shields/);
+  assert.match(copy, /blocking ships/);
+  assert.match(copy, /Repair/);
+  assert.match(copy, /whole match/);
+  assert.doesNotMatch(copy, /heavier attack/i);
+  assert.doesNotMatch(copy, /landed more damage that round/);
+
+  // The example pair is the engine's own comparison, not a second opinion.
+  assert.ok(
+    MUTUAL_KILL_EXAMPLE.closer > MUTUAL_KILL_EXAMPLE.deeper,
+    "the help's 'closer' number must actually be closer to zero",
+  );
+  const decided = mutualKillBreak(
+    { hp: MUTUAL_KILL_EXAMPLE.closer, stats: { damageDealt: 0 } },
+    { hp: MUTUAL_KILL_EXAMPLE.deeper, stats: { damageDealt: 0 } },
+  );
+  assert.equal(decided.winner, "host", "the help's closer flagship must be the one mutualKillBreak picks");
+  assert.equal(decided.decidedBy, "health");
+  assert.match(
+    copy,
+    new RegExp(
+      `${signedHp(MUTUAL_KILL_EXAMPLE.closer)} beats one on ${signedHp(MUTUAL_KILL_EXAMPLE.deeper)}`,
+    ),
+  );
+
   assert.match(reference, /from "@\/lib\/engine"/);
-  assert.match(reference, /blown up by less wins/);
-  assert.match(reference, /Shields, blocking ships and Repair all keep you closer to zero/);
+  assert.match(reference, /id: "mutual-destruction"/);
+  assert.match(reference, /MUTUAL_KILL_EXAMPLE/);
   assert.doesNotMatch(reference, /heavier attack/i);
   assert.doesNotMatch(reference, /landed more damage that round/);
+
   assert.doesNotMatch(recap, /heavier Attack/);
   assert.doesNotMatch(recap, /Damage that landed/);
   assert.match(recap, /Mutual/);
@@ -103,11 +146,36 @@ test("How to Play and the recap say a mutual kill goes to the shallower flagship
   assert.match(recap, /fleet-dice-mutual/);
   assert.match(recap, /VolleyLedger/);
   assert.match(recap, /ledgerSide/);
-  assert.match(help, /win\?\.blocks/);
+
+  // The card is actually drawn, with the recap's two numbers, not only stored.
+  assert.match(help, /section\("mutual-destruction"\)/);
+  assert.match(help, /data-help-section=\{id\}/);
+  assert.match(help, /MUTUAL_KILL_EXAMPLE/);
+  assert.match(help, /signedHp/);
+  assert.match(help, /Where the flagships ended/);
+  assert.match(help, /help-mutual-banner/);
+  assert.doesNotMatch(help, /heavier attack/i);
+  assert.doesNotMatch(
+    help,
+    /−12|−24|-12|-24/,
+    "HowToPlay must not type the example numbers; they come from MUTUAL_KILL_EXAMPLE",
+  );
+
   assert.match(engine, /export function mutualKillBreak/);
-  // The figure compared is the flagship's own health, kept past zero.
   assert.match(engine, /const hostHp = host\.hp;/);
   assert.match(engine, /decidedBy: "health"/);
+  assert.match(engine, /winner: hostHp > guestHp \? "host" : "guest"/);
+});
+
+test("Winning no longer buries the mutual-kill rule in a leftover paragraph", () => {
+  const winning = HOW_TO_PLAY.find((entry) => entry.id === "winning");
+  assert.ok(winning);
+  const copy = [
+    winning.summary,
+    ...winning.blocks.filter((block) => block.kind === "text").map((block) => block.text),
+  ].join(" ");
+  assert.doesNotMatch(copy, /blown up by less/);
+  assert.doesNotMatch(copy, /MUTUAL DESTRUCTION/);
 });
 
 test("How to Play is generated from the engine and never mentions a Reactor cap", () => {

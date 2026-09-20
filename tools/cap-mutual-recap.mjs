@@ -180,14 +180,44 @@ const helpText = await page.evaluate(() => document.body.innerText);
 // The live rule: health keeps counting past zero and the shallower flagship wins.
 results.helpHasLanded = /blown up by less wins/i.test(helpText);
 results.helpHasHeavier = /heavier attack/i.test(helpText);
+results.helpHasCard = /Mutual Destruction/i.test(helpText);
+results.helpHasEndScreen = /MUTUAL DESTRUCTION/i.test(helpText);
 await page.evaluate(() => {
-  const el = [...document.querySelectorAll("h3, .t-display")].find((n) =>
-    /Winning/i.test(n.textContent || ""),
-  );
+  const el = document.querySelector('[data-help-section="mutual-destruction"]');
   el?.scrollIntoView({ block: "start" });
 });
 await page.waitForTimeout(400);
-await page.screenshot({ path: `${OUT}/howtoplay-winning.png`, fullPage: false });
+results.helpCard = await page.evaluate(() => {
+  const card = document.querySelector('[data-help-section="mutual-destruction"]');
+  const sheet = document.querySelector(".sheet-scroll") || document.querySelector(".help-scroll");
+  if (!card) return { missing: true };
+  const box = card.getBoundingClientRect();
+  const sheetBox = sheet?.getBoundingClientRect();
+  const banner = card.querySelector(".help-mutual-banner");
+  const nums = [...card.querySelectorAll(".help-mutual-num")].map((el) =>
+    (el.textContent || "").trim(),
+  );
+  return {
+    missing: false,
+    overflowX: card.scrollWidth > card.clientWidth + 1,
+    bannerClip: banner ? banner.scrollWidth > banner.clientWidth + 1 : true,
+    nums,
+    cardH: Math.round(box.height),
+    inSheet: sheetBox
+      ? box.top >= sheetBox.top - 8 && box.top < sheetBox.bottom
+      : null,
+  };
+});
+await page.screenshot({ path: `${OUT}/howtoplay-mutual-destruction.png`, fullPage: false });
+await page.setViewportSize({ width: 360, height: 780 });
+await page.waitForTimeout(200);
+await page.evaluate(() => {
+  const el = document.querySelector('[data-help-section="mutual-destruction"]');
+  el?.scrollIntoView({ block: "start" });
+});
+await page.waitForTimeout(200);
+await page.screenshot({ path: `${OUT}/howtoplay-mutual-destruction-360x780.png`, fullPage: false });
+await page.setViewportSize({ width: PHONE.width, height: PHONE.height });
 
 // --- Mutual kill: you lose (Dave vs Curtis) ---
 await injectAndOpen(page, saveFor(mutualKillState({ youWin: false })));
@@ -262,6 +292,12 @@ await browser.close();
 const fail = [];
 if (!results.helpHasLanded) fail.push("How to Play does not say the shallower flagship wins");
 if (results.helpHasHeavier) fail.push("How to Play still says heavier Attack");
+if (!results.helpHasCard) fail.push("How to Play is missing the Mutual Destruction card");
+if (!results.helpHasEndScreen) fail.push("How to Play does not name the MUTUAL DESTRUCTION end screen");
+if (results.helpCard?.missing) fail.push("How to Play Mutual Destruction card is not in the DOM");
+if (results.helpCard?.overflowX) fail.push("How to Play Mutual Destruction card overflows horizontally");
+if (results.helpCard?.bannerClip) fail.push("How to Play Mutual Destruction banner is clipped");
+if (results.helpCard?.nums?.length !== 2) fail.push("How to Play Mutual Destruction is missing the two numbers");
 for (const [name, recap] of [
   ["loss", results.loss],
   ["win", results.win],

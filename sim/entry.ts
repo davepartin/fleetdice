@@ -6,6 +6,7 @@ export * from "../lib/record";
 export * from "../lib/throwSync";
 export * from "../lib/versusSync";
 export * from "../lib/tutorialSlides";
+export { HOW_TO_PLAY, MUTUAL_KILL_EXAMPLE, signedHp } from "../lib/reference";
 
 export * from "../lib/moveReceipt";
 export * from "../lib/soloSave";

@@ -22,8 +22,10 @@ import {
   FLAGSHIP_FACES,
   FORMATIONS,
   HOW_TO_PLAY,
+  MUTUAL_KILL_EXAMPLE,
   STRAIGHT_LADDER,
   STAT_SYMBOL,
+  signedHp,
   type StatKind,
 } from "@/lib/reference";
 import { TUNING, type DieSize, type Tally } from "@/lib/engine";
@@ -66,9 +68,9 @@ function section(id: string) {
   return HOW_TO_PLAY.find((entry) => entry.id === id);
 }
 
-function Card({ title, children }: { title: string; children: ReactNode }) {
+function Card({ title, children, id }: { title: string; children: ReactNode; id?: string }) {
   return (
-    <article className="help-card">
+    <article className="help-card" data-help-section={id}>
       <h3 className="t-display">{title}</h3>
       {children}
     </article>
@@ -92,6 +94,7 @@ function Pay({ kind, amount }: { kind: StatKind; amount: number }) {
 export function HowToPlayBody() {
   const intro = section("one-minute");
   const win = section("winning");
+  const mutual = section("mutual-destruction");
   return (
     <div className="help-scroll">
       <p className="help-lede">{intro?.summary}</p>
@@ -399,9 +402,40 @@ export function HowToPlayBody() {
       </Card>
 
       {/* ---------- 8. Winning ---------- */}
-      <Card title={win?.title ?? "Winning"}>
+      <Card title={win?.title ?? "Winning"} id="winning">
         <Copy>{win?.summary ?? ""}</Copy>
         {win?.blocks
+          ?.filter((block): block is { kind: "text"; text: string } => block.kind === "text")
+          .map((block) => (
+            <Copy key={block.text}>{block.text}</Copy>
+          ))}
+      </Card>
+
+      {/* ---------- 9. Mutual Destruction — same words and numbers as the
+          end screen, generated from `mutualKillBreak` via reference.ts. */}
+      <Card title={mutual?.title ?? "Mutual Destruction"} id="mutual-destruction">
+        <p className="help-mutual-banner" aria-hidden="true">
+          <span>Mutual</span>
+          <span>Destruction</span>
+        </p>
+        <Copy>{mutual?.summary ?? ""}</Copy>
+        <div className="help-mutual-score">
+          <p className="t-eyebrow help-mutual-label">Where the flagships ended</p>
+          <div className="help-mutual-nums">
+            <span className="help-mutual-num is-ahead t-display t-num">
+              {signedHp(MUTUAL_KILL_EXAMPLE.closer)}
+            </span>
+            <span className="help-mutual-vs">vs</span>
+            <span className="help-mutual-num t-display t-num">
+              {signedHp(MUTUAL_KILL_EXAMPLE.deeper)}
+            </span>
+          </div>
+          <div className="help-mutual-names">
+            <span>Wins</span>
+            <span>Loses</span>
+          </div>
+        </div>
+        {mutual?.blocks
           ?.filter((block): block is { kind: "text"; text: string } => block.kind === "text")
           .map((block) => (
             <Copy key={block.text}>{block.text}</Copy>
