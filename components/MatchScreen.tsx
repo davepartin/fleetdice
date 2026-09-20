@@ -1149,24 +1149,17 @@ function EquationTerm({
   label,
   tone,
   boxed,
-  large,
 }: {
   value: number;
   label: string;
   tone?: "attack" | "repair" | "hp";
   /** Draw the number in a white box — a running tally, not a fixed term. */
   boxed?: boolean;
-  /** Hit-point terms read larger than Damage / Repair / Blocked. */
-  large?: boolean;
 }) {
   const toneClass = tone === "hp" ? "c-hp-glow" : tone ? `c-${tone}` : "text-white";
   return (
     <div className="brace-term flex flex-col items-center leading-none" data-brace-term={label}>
-      <span
-        className={`t-num ${large ? "text-3xl" : "text-xl"} ${boxed ? "brace-blocked-box" : ""} ${toneClass}`}
-      >
-        {value}
-      </span>
+      <span className={`t-num text-xl ${boxed ? "brace-blocked-box" : ""} ${toneClass}`}>{value}</span>
       <span className="brace-term-label t-eyebrow mt-0.5 text-xs">{label}</span>
     </div>
   );
@@ -1200,7 +1193,7 @@ function BraceDock({
     .reduce((sum, ship) => sum + ship.sides, 0);
   // Same settle as the engine: ships only stop blockable incoming, never Direct.
   const landing = damageAfterBlocking(you.incoming, you.directIncoming, blocked);
-  const absorbed = Math.min(blocked, you.incoming);
+  const shipsStopped = Math.min(blocked, you.incoming);
   const incomingHit = you.incoming + you.directIncoming;
   const heal = you.tally?.heal ?? 0;
   const after = you.hp - landing + heal;
@@ -1268,7 +1261,7 @@ function BraceDock({
             * after = hp − (incoming + direct) + min(blocked, incoming) + repair
             * Blocking saves health, so the sign is +, matching the round review. */}
           <div className="brace-equation">
-            <EquationTerm value={you.hp} label="HP now" tone="hp" large />
+            <EquationTerm value={you.hp} label="Now" tone="hp" />
             <EquationOp>−</EquationOp>
             <EquationTerm value={incomingHit} label="Damage" tone="attack" />
             {heal > 0 && (
@@ -1278,13 +1271,12 @@ function BraceDock({
               </>
             )}
             <EquationOp>+</EquationOp>
-            <EquationTerm value={absorbed} label="Blocked" boxed />
+            <EquationTerm value={shipsStopped} label="Blocked" boxed />
             <EquationOp>=</EquationOp>
             <EquationTerm
               value={Math.max(0, after)}
-              label="HP after"
+              label="After"
               tone={fatal ? "attack" : "hp"}
-              large
             />
           </div>
         </div>

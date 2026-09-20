@@ -114,7 +114,7 @@ try {
       // non-zero Repair term is what the mobile rule exists for. Confirm the
       // fixture actually produced that row rather than the plain four-term one.
       const hasFiveTerms =
-        /HP now.*Damage.*Repair.*Blocked.*HP after/i.test(measured.text ?? "") &&
+        /Now.*Damage.*Repair.*Blocked.*After/i.test(measured.text ?? "") &&
         /Repair/.test(measured.text ?? "");
 
       rows.push({ vp: vp.name, digits, text: measured.text, overflow, hasFiveTerms,

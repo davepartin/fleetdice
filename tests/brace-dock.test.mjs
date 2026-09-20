@@ -20,7 +20,7 @@ function braceDockSource() {
 
 test("NOW uses the same HP orange as the top battle numbers", () => {
   const dock = braceDockSource();
-  assert.match(dock, /label="HP now"[\s\S]*tone="hp"/);
+  assert.match(dock, /label="Now"[\s\S]*tone="hp"/);
   assert.match(screen, /tone === "hp" \? "c-hp-glow"/);
   assert.match(css, /\.c-hp-glow \{ color: var\(--color-hp-glow\); \}/);
 });
@@ -28,7 +28,7 @@ test("NOW uses the same HP orange as the top battle numbers", () => {
 test("Blocked sits in the equation immediately before the equals", () => {
   const dock = braceDockSource();
   const blocked = dock.indexOf('label="Blocked"');
-  const after = dock.indexOf('label="HP after"');
+  const after = dock.indexOf('label="After"');
   const equals = dock.lastIndexOf("<EquationOp>=</EquationOp>");
   assert.ok(blocked > 0 && after > blocked, "Blocked must appear before HP after");
   assert.ok(equals > 0 && equals < after && equals > blocked, "the equals sits between Blocked and HP after");
@@ -39,7 +39,7 @@ test("the displayed sum is the engine settle, not a new formula", () => {
   const dock = braceDockSource();
   assert.match(dock, /damageAfterBlocking\(/);
   assert.match(dock, /incomingHit = you\.incoming \+ you\.directIncoming/);
-  assert.match(dock, /absorbed = Math\.min\(blocked, you\.incoming\)/);
+  assert.match(dock, /shipsStopped = Math\.min\(blocked, you\.incoming\)/);
   assert.match(dock, /after = you\.hp - landing \+ heal/);
 });
 
