@@ -81,6 +81,35 @@ async function injectAndOpen(page, save) {
   await page.locator(".recap").waitFor({ state: "visible", timeout: 12000 });
 }
 
+function measureCaret(page) {
+  return page.evaluate(() => {
+    const recap = document.querySelector(".recap");
+    const scroll = document.querySelector(".recap-scroll");
+    const caret = document.querySelector("[data-recap-more-below]");
+    const foot = document.querySelector(".recap-foot");
+    if (!recap || !scroll || !caret) {
+      return { missing: true };
+    }
+    const recapBox = recap.getBoundingClientRect();
+    const scrollBox = scroll.getBoundingClientRect();
+    const caretBox = caret.getBoundingClientRect();
+    const footBox = foot?.getBoundingClientRect();
+    const style = getComputedStyle(caret);
+    return {
+      missing: false,
+      shown: caret.getAttribute("data-recap-more-below"),
+      opacity: Number(style.opacity),
+      visibility: style.visibility,
+      pointerEvents: style.pointerEvents,
+      canScroll: scroll.scrollHeight > scroll.clientHeight + 8,
+      remaining: scroll.scrollHeight - scroll.scrollTop - scroll.clientHeight,
+      inLowerHalf: caretBox.top > scrollBox.top + scrollBox.height * 0.5,
+      aboveFoot: footBox ? caretBox.bottom <= footBox.top + 2 : null,
+      fromRecapBottom: Math.round(recapBox.bottom - caretBox.bottom),
+    };
+  });
+}
+
 async function measureRecap(page) {
   return page.evaluate(() => {
     const recap = document.querySelector(".recap");
@@ -164,8 +193,26 @@ await page.screenshot({ path: `${OUT}/mutual-kill-defeat.png` });
 // --- Mutual kill: you win ---
 await injectAndOpen(page, saveFor(mutualKillState({ youWin: true })));
 await page.waitForTimeout(800);
+await page.waitForFunction(
+  () => document.querySelector("[data-recap-more-below]")?.getAttribute("data-recap-more-below") === "shown",
+  { timeout: 8000 },
+);
 results.win = await measureRecap(page);
+results.caretBefore = await measureCaret(page);
 await page.screenshot({ path: `${OUT}/mutual-kill-victory.png` });
+await page.screenshot({ path: `${OUT}/end-caret-mutual-before.png` });
+
+await page.evaluate(() => {
+  const scroll = document.querySelector(".recap-scroll");
+  if (scroll) scroll.scrollTop = scroll.scrollHeight;
+});
+await page.waitForFunction(
+  () => document.querySelector("[data-recap-more-below]")?.getAttribute("data-recap-more-below") === "hidden",
+  { timeout: 8000 },
+);
+await page.waitForTimeout(400);
+results.caretAfter = await measureCaret(page);
+await page.screenshot({ path: `${OUT}/end-caret-mutual-after.png` });
 
 // --- Normal single-side win ---
 await injectAndOpen(page, saveFor(normalWinState()));
@@ -229,6 +276,17 @@ for (const [name, recap] of [
 }
 if (!/Curtis wins/i.test(results.loss.title || "")) fail.push(`loss title was ${results.loss.title}`);
 if (!/You win/i.test(results.win.title || "")) fail.push(`win title was ${results.win.title}`);
+if (results.caretBefore?.missing) fail.push("caret: missing from the mutual-win recap");
+if (results.caretBefore?.shown !== "shown") fail.push(`caret before scroll was ${results.caretBefore?.shown}`);
+if ((results.caretBefore?.opacity ?? 0) < 0.5) fail.push(`caret before scroll opacity ${results.caretBefore?.opacity}`);
+if (results.caretBefore?.visibility !== "visible") fail.push("caret before scroll is not visible");
+if (!results.caretBefore?.canScroll) fail.push("caret shown but the recap cannot scroll");
+if ((results.caretBefore?.remaining ?? 0) <= 16) fail.push("caret shown with nothing left below");
+if (!results.caretBefore?.inLowerHalf) fail.push("caret is not at the bottom of the visible recap");
+if (results.caretBefore?.pointerEvents !== "none") fail.push("caret steals taps");
+if (results.caretAfter?.shown !== "hidden") fail.push(`caret after scroll was ${results.caretAfter?.shown}`);
+if ((results.caretAfter?.opacity ?? 1) > 0.15) fail.push(`caret after scroll still at opacity ${results.caretAfter?.opacity}`);
+if ((results.caretAfter?.remaining ?? 99) > 16) fail.push(`scrolled recap still has ${results.caretAfter?.remaining}px below`);
 if (results.normal.kicker) fail.push("normal win still shows MUTUAL DESTRUCTION");
 if (results.normal.mutualArt) fail.push("normal win used the mutual dual-blast header");
 if (!/You beat/i.test(results.normal.title || "")) fail.push(`normal title was ${results.normal.title}`);
