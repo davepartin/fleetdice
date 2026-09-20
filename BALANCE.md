@@ -115,6 +115,39 @@ another hull is a playtester question, not a retune.
 Newest finding first. Every number here comes from playing the real engine, not
 from arithmetic on paper. Where I am guessing, I say so.
 
+## Dave's call — a mutual kill goes to the damage that landed, 20 September 2026
+
+When both flagships fall in the same volley, the winner is the commander who
+**caused the most damage, counted with all the maths** — not the biggest number
+rolled.
+
+The old rule compared raw `tally.attack`: the Attack on the dice, before
+anything answered it. That let the loser of an exchange take the match. A
+commander could roll Attack 30 into full Shields and a blocking d10, land almost
+none of it, and still be handed the win over someone whose smaller Attack went
+straight through.
+
+The figure now compared is `report.damage` — the same number `settlePlayer`
+used to take the health off, which is `damageAfterBlocking`: Attack after Super
+Shield, after Shields, after blocking ships, plus Escalation, plus Direct.
+Repair is not in it. Repair is health coming back, not damage going out, and a
+commander who patched themselves up has not hit anyone any harder.
+
+Then, in order:
+
+1. **This volley's landed damage.** Different: that commander wins.
+2. **Damage across the whole match** (`stats.damageDealt`), if the volley tied.
+3. **A draw**, if both are equal.
+
+`mutualKillBreak` in `lib/engine.ts` is the one place this is decided, so the
+end screen and the engine cannot disagree about who won or why. The recap shows
+the two landed figures side by side and says which rung decided it.
+
+**Not measured, and it did not need to be.** This is a fairness call, not a
+balance knob: a mutual kill ends the match either way, and nothing about how a
+round is played changes. `tests/mutual-kill.test.mjs` pins all three rungs.
+How to Play states the rule, generated from the engine like the rest of it.
+
 ## Dave's call — the Reactor has no ceiling
 
 The owner asked to take the income cap off. A flagship 1 now always adds the

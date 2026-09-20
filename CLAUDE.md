@@ -281,6 +281,14 @@ it in ±3.5 points of noise.
   brain was never undervaluing bays — instrumented, it reaches the shipyard with
   4.4 Energy and simply cannot afford one. Do not rebuild `patience`.
 
+- **A mutual kill goes to the damage that landed, not the Attack rolled.** Both
+  flagships falling in the same volley is decided by `report.damage` — Attack
+  after Super Shield, Shields and blocking, plus Escalation and Direct — then by
+  damage across the match, then a draw. Repair is deliberately not in it: it is
+  health coming back, not damage going out. One function, `mutualKillBreak`, so
+  the engine and the end screen cannot disagree. Owner's call, 20 September
+  2026; see BALANCE.md. `tests/mutual-kill.test.mjs` pins all three rungs.
+
 - **Direct is unblockable, and that is what gives Repair a job.** Shields answer
   Attack, ship blocking answers what gets past Shields, Repair answers Direct —
   and nothing else does. Letting hulls block Direct measured *safe* (a commander
