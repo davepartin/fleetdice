@@ -688,20 +688,15 @@ export const HOW_TO_PLAY: readonly HelpSection[] = [
   {
     id: "mutual-destruction",
     title: "Mutual Destruction",
-    summary:
-      "If both flagships hit 0 or below in the same volley, the one blown up by less wins. Health keeps counting past zero.",
+    summary: `If both flagships hit 0 or below in the same volley, the one blown up by less wins — ${signedHp(MUTUAL_KILL_EXAMPLE.closer)} beats ${signedHp(MUTUAL_KILL_EXAMPLE.deeper)}. Health keeps counting past zero.`,
     blocks: [
-      {
-        kind: "text",
-        text: `The end screen says MUTUAL DESTRUCTION and shows two numbers — where each flagship ended. A flagship on ${signedHp(MUTUAL_KILL_EXAMPLE.closer)} beats one on ${signedHp(MUTUAL_KILL_EXAMPLE.deeper)}. The commander blown up by less takes the match.`,
-      },
       {
         kind: "text",
         text: "That number is everything you did: Attack that got through, minus Shields, minus blocking ships, minus Repair. Direct still lands; Repair is how you answer it.",
       },
       {
         kind: "text",
-        text: "If both end on the same number, the most damage dealt across the whole match decides it. If that is equal too, it is a draw.",
+        text: "If both end on the same number, the most damage dealt across the whole match decides it. If that is equal too, it is a draw. The end screen says MUTUAL DESTRUCTION and shows these two numbers.",
       },
     ],
   },

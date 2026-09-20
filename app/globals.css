@@ -3313,15 +3313,14 @@ button {
 /* Mutual Destruction — a compact version of the end-screen banner and the
    two numbers `mutualKillBreak` actually compares. Same words, smaller type,
    so a phone player can match the recap at a glance. */
-.help-mutual-banner {
+.help-card > h3.help-mutual-banner {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 0 0 0.7rem;
-  font-family: var(--font-display);
+  margin: 0 0 0.65rem;
   font-weight: 900;
-  font-size: 1.55rem;
-  line-height: 0.88;
+  font-size: 1.7rem;
+  line-height: 0.86;
   letter-spacing: -0.04em;
   text-transform: uppercase;
   color: var(--color-attack);

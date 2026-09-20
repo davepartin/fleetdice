@@ -126,7 +126,7 @@ test("How to Play has a Mutual Destruction card that matches mutualKillBreak", (
   assert.match(
     copy,
     new RegExp(
-      `${signedHp(MUTUAL_KILL_EXAMPLE.closer)} beats one on ${signedHp(MUTUAL_KILL_EXAMPLE.deeper)}`,
+      `${signedHp(MUTUAL_KILL_EXAMPLE.closer)} beats ${signedHp(MUTUAL_KILL_EXAMPLE.deeper)}`,
     ),
   );
 
@@ -149,7 +149,7 @@ test("How to Play has a Mutual Destruction card that matches mutualKillBreak", (
 
   // The card is actually drawn, with the recap's two numbers, not only stored.
   assert.match(help, /section\("mutual-destruction"\)/);
-  assert.match(help, /data-help-section=\{id\}/);
+  assert.match(help, /data-help-section="mutual-destruction"/);
   assert.match(help, /MUTUAL_KILL_EXAMPLE/);
   assert.match(help, /signedHp/);
   assert.match(help, /Where the flagships ended/);

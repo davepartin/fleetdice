@@ -411,13 +411,13 @@ export function HowToPlayBody() {
           ))}
       </Card>
 
-      {/* ---------- 9. Mutual Destruction — same words and numbers as the
-          end screen, generated from `mutualKillBreak` via reference.ts. */}
-      <Card title={mutual?.title ?? "Mutual Destruction"} id="mutual-destruction">
-        <p className="help-mutual-banner" aria-hidden="true">
+      {/* ---------- 9. Mutual Destruction — the end-screen kicker is the
+          title, and the two numbers are what `mutualKillBreak` compares. */}
+      <article className="help-card" data-help-section="mutual-destruction">
+        <h3 className="t-display help-mutual-banner">
           <span>Mutual</span>
           <span>Destruction</span>
-        </p>
+        </h3>
         <Copy>{mutual?.summary ?? ""}</Copy>
         <div className="help-mutual-score">
           <p className="t-eyebrow help-mutual-label">Where the flagships ended</p>
@@ -440,7 +440,7 @@ export function HowToPlayBody() {
           .map((block) => (
             <Copy key={block.text}>{block.text}</Copy>
           ))}
-      </Card>
+      </article>
     </div>
   );
 }
