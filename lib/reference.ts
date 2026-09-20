@@ -464,6 +464,17 @@ export type HelpSection = {
   blocks: readonly HelpBlock[];
 };
 
+/**
+ * The pair BALANCE.md and `tests/mutual-kill.test.mjs` use to show the live
+ * rule: health keeps counting past zero, so the flagship closer to zero wins.
+ * How to Play draws these two numbers; do not type a different example in.
+ */
+export const MUTUAL_KILL_EXAMPLE = { closer: -12, deeper: -24 } as const;
+
+export function signedHp(n: number): string {
+  return n < 0 ? `−${Math.abs(n)}` : String(n);
+}
+
 const FACE_TABLE_BLOCK: HelpBlock = {
   kind: "table",
   head: ["Face", "Rolls", "Mark pays"],
@@ -670,7 +681,22 @@ export const HOW_TO_PLAY: readonly HelpSection[] = [
       },
       {
         kind: "text",
-        text: `If both fleets somehow survive to round ${TUNING.roundLimit}, the commander with more health wins, and equal health is a draw. If both flagships fall in the same volley, health keeps counting past zero and the one blown up by less wins — so a flagship on −12 beats one on −24. Everything you did is in that number: Shields, blocking ships and Repair all keep you closer to zero. If both end on the same number, the most damage dealt across the whole game decides it; and if that is equal too, it is a draw.`,
+        text: `If both fleets somehow survive to round ${TUNING.roundLimit}, the commander with more health wins, and equal health is a draw.`,
+      },
+    ],
+  },
+  {
+    id: "mutual-destruction",
+    title: "Mutual Destruction",
+    summary: `If both flagships hit 0 or below in the same volley, the one blown up by less wins — ${signedHp(MUTUAL_KILL_EXAMPLE.closer)} beats ${signedHp(MUTUAL_KILL_EXAMPLE.deeper)}. Health keeps counting past zero.`,
+    blocks: [
+      {
+        kind: "text",
+        text: "That number is everything you did: Attack that got through, minus Shields, minus blocking ships, minus Repair. Direct still lands; Repair is how you answer it.",
+      },
+      {
+        kind: "text",
+        text: "If both end on the same number, the most damage dealt across the whole match decides it. If that is equal too, it is a draw. The end screen says MUTUAL DESTRUCTION and shows these two numbers.",
       },
     ],
   },

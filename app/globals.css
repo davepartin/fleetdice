@@ -3310,6 +3310,85 @@ button {
   color: white;
 }
 
+/* Mutual Destruction — a compact version of the end-screen banner and the
+   two numbers `mutualKillBreak` actually compares. Same words, smaller type,
+   so a phone player can match the recap at a glance. */
+.help-card > h3.help-mutual-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 0 0.65rem;
+  font-weight: 900;
+  font-size: 1.7rem;
+  line-height: 0.86;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  color: var(--color-attack);
+  text-shadow:
+    0 0 18px rgb(255 77 77 / 0.45),
+    0 1px 0 rgb(0 0 0 / 0.5);
+}
+.help-mutual-banner span {
+  display: block;
+}
+.help-mutual-score {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.28rem;
+  margin: 0.15rem 0 0.85rem;
+  padding: 0.7rem 0.75rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid rgb(255 255 255 / 0.09);
+  background: rgb(255 255 255 / 0.03);
+  text-align: center;
+}
+.help-mutual-label {
+  color: var(--color-hull-300);
+}
+.help-mutual-nums {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.help-mutual-num {
+  flex: 1 1 0;
+  min-width: 0;
+  font-size: var(--text-3xl);
+  line-height: 0.9;
+  color: var(--color-attack);
+  text-shadow: 0 0 18px rgb(255 77 77 / 0.35);
+}
+.help-mutual-num:first-child {
+  text-align: left;
+}
+.help-mutual-num:last-child {
+  text-align: right;
+}
+.help-mutual-num.is-ahead {
+  color: var(--color-repair);
+  text-shadow: 0 0 20px rgb(69 224 139 / 0.4);
+}
+.help-mutual-vs {
+  flex: none;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-hull-400);
+}
+.help-mutual-names {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-hull-200);
+}
+
 /* The "parts of the screen" diagram — real HUD components (HpRail,
    TallyStrip, the same board cells the recap uses), each captioned like a
    labelled part on a board game's first page rather than a screenshot. */
