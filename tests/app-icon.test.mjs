@@ -54,6 +54,7 @@ test("layout and manifest point at the die, not a generated letter", () => {
   assert.match(manifest, /icon-192\.png/);
   assert.match(manifest, /icon-512\.png/);
   assert.match(manifest, /#04060d/);
+  assert.match(manifest, /force-static/, "static export needs a static manifest");
 });
 
 test("the playtest-screenshot ignore still keeps the icon preview", () => {

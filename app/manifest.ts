@@ -3,7 +3,12 @@ import type { MetadataRoute } from "next";
 /**
  * What a phone uses when the site is installed. Icons are the same d4
  * face 1 as apple-touch-icon — one look, every install path.
+ *
+ * `force-static` is required: this site is a static export for GitHub Pages,
+ * and Next will not emit a manifest route without it.
  */
+export const dynamic = "force-static";
+
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Fleet Dice",
