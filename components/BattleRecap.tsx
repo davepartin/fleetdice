@@ -377,15 +377,20 @@ export function BattleRecap({
           <MutualArt />
         ) : (
           (outcome === "won" || outcome === "lost") && (
-            <div className="recap-art">
+            <div className={`recap-art recap-art-${outcome}`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={href(outcome === "won" ? "/art/fleet-dice-victory.png" : "/art/fleet-dice-defeat.png")}
+                src={href(outcome === "won"
+                  ? "/art/fleet-dice-recap-victory.jpg"
+                  : "/art/fleet-dice-recap-defeated.jpg")}
                 alt=""
-                width={1024}
-                height={640}
+                width={1672}
+                height={941}
                 decoding="async"
               />
+              <span className="recap-outcome-word" aria-hidden="true">
+                {outcome === "won" ? "Victory" : "Defeated"}
+              </span>
             </div>
           )
         )}

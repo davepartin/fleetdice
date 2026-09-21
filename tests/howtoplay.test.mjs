@@ -73,8 +73,8 @@ test("each help face is clipped to the hull that first shows that number", () =>
 
 test("a win or a loss recaps the last volley with the round-review column", () => {
   const recap = readFileSync(new URL("../components/BattleRecap.tsx", import.meta.url), "utf8");
-  assert.match(recap, /fleet-dice-victory/);
-  assert.match(recap, /fleet-dice-defeat/);
+  assert.match(recap, /fleet-dice-recap-victory/);
+  assert.match(recap, /fleet-dice-recap-defeated/);
   const lastRound = recap.slice(recap.indexOf("function LastRound"), recap.indexOf("export function BattleRecap"));
   assert.match(lastRound, /VolleyLedger/);
   assert.match(lastRound, /ledgerSide/);

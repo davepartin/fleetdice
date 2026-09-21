@@ -1,17 +1,20 @@
 /**
- * Phone shots of a solo win recap: the headline names the difficulty, and
- * the victory painting fills the column without letterbox gutters.
+ * Phone shots of solo win and loss recaps: both new header paintings fill the
+ * column, the outcome word stays readable, and the final-volley math remains
+ * on the first screen.
  *
  *   node tools/cap-solo-win-recap.mjs        (needs pnpm dev on :3000)
  */
 import { chromium } from "playwright";
 import { mkdir } from "node:fs/promises";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { bundlePath } from "../sim/bundle.mjs";
 
 const G = await import(bundlePath);
 const { applyAction, makeRng, newBrain, newMatch, newPlayer, setRng } = G;
 
-const BASE = "http://localhost:3000";
+const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 // Resolve against this repo, not the machine the script was written on.
 const OUT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "docs");
 const PHONE = { width: 390, height: 844, deviceScaleFactor: 2 };
@@ -26,7 +29,7 @@ function paint(player, shipFaces, flag = 1) {
   player.flag.face = flag;
 }
 
-function soloWinSave(difficulty) {
+function soloRecapSave(difficulty, winner = "host") {
   setRng(makeRng(11));
   const state = newMatch("solo-win-ui", "0000", "you", "You", "solo");
   state.players.guest = newPlayer("enemy", "Enemy", "ready");
@@ -47,9 +50,11 @@ function soloWinSave(difficulty) {
   state.status = "active";
   state.players.host.phase = "over";
   state.players.guest.phase = "over";
-  state.players.host.hp = 18;
-  if (state.players.host.report) state.players.host.report.hpAfter = 18;
-  state.winner = "host";
+  state.players.host.hp = winner === "host" ? 18 : -8;
+  state.players.guest.hp = winner === "guest" ? 18 : -8;
+  if (state.players.host.report) state.players.host.report.hpAfter = state.players.host.hp;
+  if (state.players.guest.report) state.players.guest.report.hpAfter = state.players.guest.hp;
+  state.winner = winner;
   return {
     schema: 1,
     savedAt: Date.now(),
@@ -71,8 +76,15 @@ async function injectAndOpen(page, save) {
   }, save);
   await page.reload({ waitUntil: "domcontentloaded" });
   await hideDevChrome(page);
-  await page.getByRole("button", { name: /Carry on/i }).click({ timeout: 8000 });
-  await page.locator(".recap").waitFor({ state: "visible", timeout: 12000 });
+  const carry = page.getByRole("button", { name: /Carry on/i });
+  const recap = page.locator(".recap");
+  const landed = await Promise.race([
+    carry.waitFor({ state: "visible", timeout: 12000 }).then(() => "carry"),
+    recap.waitFor({ state: "visible", timeout: 12000 }).then(() => "recap"),
+  ]);
+  if (landed === "carry") await carry.click();
+  await recap.waitFor({ state: "visible", timeout: 12000 });
+  await page.locator(".recap-scroll").evaluate((element) => { element.scrollTop = 0; });
   await hideDevChrome(page);
 }
 
@@ -88,6 +100,7 @@ function measure(page) {
     const ledger = document.querySelector(".volley-ledger");
     const ledgerBox = ledger?.getBoundingClientRect();
     const style = art ? getComputedStyle(art) : null;
+    const scroll = document.querySelector(".recap-scroll");
     return {
       title,
       recapW: recapBox ? Math.round(recapBox.width) : null,
@@ -102,6 +115,7 @@ function measure(page) {
       objectFit: img ? getComputedStyle(img).objectFit : null,
       objectPosition: img ? getComputedStyle(img).objectPosition : null,
       maxWidth: style?.maxWidth || null,
+      scrollTop: scroll ? Math.round(scroll.scrollTop) : null,
       overflowX: recap ? recap.scrollWidth > recap.clientWidth + 1 : null,
       ledgerOnScreen: Boolean(
         recapBox &&
@@ -118,48 +132,69 @@ const browser = await chromium.launch({
   args: ["--use-gl=swiftshader", "--enable-webgl", "--ignore-gpu-blocklist", "--disable-gpu-sandbox"],
 });
 const errors = [];
-const page = await browser.newPage({ viewport: PHONE, isMobile: true, hasTouch: true });
-page.on("pageerror", (e) => errors.push(String(e)));
-page.on("console", (m) => {
-  if (m.type() === "error") errors.push(m.text());
-});
-
 const results = {};
 const fail = [];
 
-async function capture(name, difficulty, viewport = PHONE) {
-  await page.setViewportSize({ width: viewport.width, height: viewport.height });
-  await injectAndOpen(page, soloWinSave(difficulty));
-  await page.waitForTimeout(700);
-  const shot = await measure(page);
-  results[name] = shot;
-  await page.screenshot({ path: `${OUT}/${name}.png` });
+async function capture(name, difficulty, outcome = "won", viewport = PHONE) {
+  const context = await browser.newContext({
+    viewport: { width: viewport.width, height: viewport.height },
+    deviceScaleFactor: viewport.deviceScaleFactor,
+    isMobile: true,
+    hasTouch: true,
+  });
+  const page = await context.newPage();
+  page.on("pageerror", (e) => errors.push(`[${name}] ${String(e)}`));
+  page.on("console", (m) => {
+    if (m.type() === "error") errors.push(`[${name}] ${m.text()}`);
+  });
+  try {
+    await injectAndOpen(page, soloRecapSave(difficulty, outcome === "won" ? "host" : "guest"));
+    await page.waitForTimeout(700);
+    await page.locator(".recap-scroll").evaluate((element) => { element.scrollTop = 0; });
+    const shot = await measure(page);
+    results[name] = shot;
+    await page.screenshot({ path: `${OUT}/${name}.png` });
 
-  const label = difficulty[0].toUpperCase() + difficulty.slice(1);
-  if (shot.title !== `You beat ${label}`) fail.push(`${name}: title was ${shot.title}`);
-  if (!shot.src?.includes("victory")) fail.push(`${name}: missing victory art`);
-  if (shot.objectFit !== "cover") fail.push(`${name}: art object-fit is ${shot.objectFit}`);
-  if (shot.maxWidth && shot.maxWidth !== "none") fail.push(`${name}: art max-width is ${shot.maxWidth}`);
-  if ((shot.artW ?? 0) + 8 < (shot.recapW ?? 0)) {
-    fail.push(`${name}: art ${shot.artW}px wide in a ${shot.recapW}px column`);
+    const label = difficulty[0].toUpperCase() + difficulty.slice(1);
+    const expectedTitle = outcome === "won" ? `You beat ${label}` : "Enemy wins";
+    if (shot.title !== expectedTitle) fail.push(`${name}: title was ${shot.title}`);
+    if (!shot.src?.includes(outcome === "won" ? "victory" : "defeated")) {
+      fail.push(`${name}: missing ${outcome} art`);
+    }
+    const outcomeWord = await page.locator(".recap-outcome-word").innerText();
+    if (outcomeWord !== (outcome === "won" ? "VICTORY" : "DEFEATED")) {
+      fail.push(`${name}: outcome word was ${outcomeWord}`);
+    }
+    if (shot.objectFit !== "cover") fail.push(`${name}: art object-fit is ${shot.objectFit}`);
+    if (shot.maxWidth && shot.maxWidth !== "none") fail.push(`${name}: art max-width is ${shot.maxWidth}`);
+    if ((shot.artW ?? 0) + 8 < (shot.recapW ?? 0)) {
+      fail.push(`${name}: art ${shot.artW}px wide in a ${shot.recapW}px column`);
+    }
+    if (Math.abs((shot.artLeft ?? 0) - (shot.recapLeft ?? 0)) > 4) {
+      fail.push(`${name}: art left ${shot.artLeft} vs recap ${shot.recapLeft}`);
+    }
+    if ((shot.artH ?? 99) > 180) fail.push(`${name}: art still ${shot.artH}px tall`);
+    if (shot.overflowX) fail.push(`${name}: recap overflows horizontally`);
+    if (shot.scrollTop !== 0) fail.push(`${name}: recap opened at scroll ${shot.scrollTop}`);
+    if (!shot.ledgerOnScreen) fail.push(`${name}: final-volley ledger is not on the first screen`);
+  } finally {
+    await context.close();
   }
-  if (Math.abs((shot.artLeft ?? 0) - (shot.recapLeft ?? 0)) > 4) {
-    fail.push(`${name}: art left ${shot.artLeft} vs recap ${shot.recapLeft}`);
-  }
-  if ((shot.artH ?? 99) > 180) fail.push(`${name}: art still ${shot.artH}px tall`);
-  if (shot.overflowX) fail.push(`${name}: recap overflows horizontally`);
-  if (!shot.ledgerOnScreen) fail.push(`${name}: final-volley ledger is not on the first screen`);
 }
 
 await capture("solo-win-expert", "expert");
 await capture("solo-win-low", "low");
-await capture("solo-win-expert-390x620", "expert", { width: 390, height: 620, deviceScaleFactor: 2 });
+await capture("solo-defeat", "medium", "lost");
+await capture("solo-win-375x812", "expert", "won", { width: 375, height: 812, deviceScaleFactor: 3 });
+await capture("solo-defeat-375x812", "medium", "lost", { width: 375, height: 812, deviceScaleFactor: 3 });
+await capture("solo-win-expert-390x620", "expert", "won", { width: 390, height: 620, deviceScaleFactor: 2 });
+await capture("solo-defeat-390x620", "medium", "lost", { width: 390, height: 620, deviceScaleFactor: 2 });
 
 await browser.close();
 
 console.log(JSON.stringify({ results, errors: errors.slice(0, 12), fail }, null, 2));
-if (fail.length) {
-  console.error("FAIL", fail);
+if (fail.length || errors.length) {
+  console.error("FAIL", [...fail, ...errors]);
   process.exit(1);
 }
 console.log("PASS solo win recap");
