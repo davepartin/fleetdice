@@ -410,18 +410,12 @@ export function BattleRecap({
           {mutualWhy && <p className="recap-mutual-why">{mutualWhy}</p>}
         </div>
 
-        {them && <LastRound you={you} them={them} enemyName={enemyName} />}
-
-        <div className="panel recap-stats">
-          <p className="t-eyebrow">Flagship weapons</p>
-          <WeaponStatusList stock={weaponsOf(you)} name="You" />
-          {them && <WeaponStatusList stock={weaponsOf(them)} name={enemyName} />}
-        </div>
-
         <div className="recap-fleets">
           <FleetPanel player={you} name="You" you />
           {them && <FleetPanel player={them} name={enemyName} you={false} />}
         </div>
+
+        {them && <LastRound you={you} them={them} enemyName={enemyName} />}
 
         {them ? (
           <div className="panel recap-stats">
@@ -470,6 +464,12 @@ export function BattleRecap({
             <StatRow label="Energy spent rerolling" you={you.stats.rerollEnergy} them={0} color="energy" />
           </div>
         )}
+
+        <div className="panel recap-stats">
+          <p className="t-eyebrow">Flagship weapons</p>
+          <WeaponStatusList stock={weaponsOf(you)} name="You" />
+          {them && <WeaponStatusList stock={weaponsOf(them)} name={enemyName} />}
+        </div>
         </div>
         <div
           className={`recap-more-below${moreBelow ? " is-shown" : ""}`}
