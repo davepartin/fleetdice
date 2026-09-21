@@ -68,3 +68,19 @@ test("the new home-art victory banner fills the column and keeps the math close"
     "short-screen recap-art must stay a full-width banner",
   );
 });
+
+test("the final recap tells the battle in the requested order", () => {
+  const recapStart = recap.indexOf("export function BattleRecap");
+  const screen = recap.slice(recap.indexOf("return (", recapStart));
+  const outcomeArt = screen.indexOf('recap-art-${outcome}');
+  const fleetMaps = screen.indexOf('className="recap-fleets"');
+  const lastVolley = screen.indexOf('<LastRound');
+  const battleTotals = screen.indexOf('label="Total attack"');
+  const weapons = screen.indexOf('>Flagship weapons<');
+
+  assert.ok(outcomeArt >= 0, "outcome art is missing");
+  assert.ok(fleetMaps > outcomeArt, "final fleet maps must follow the outcome art");
+  assert.ok(lastVolley > fleetMaps, "last-roll math must follow the fleet maps");
+  assert.ok(battleTotals > lastVolley, "battle-total sliders must follow last-roll math");
+  assert.ok(weapons > battleTotals, "flagship weapons must be the last recap section");
+});
