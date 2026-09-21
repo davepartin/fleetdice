@@ -4162,34 +4162,77 @@ button {
   }
 }
 
-/* The victory and defeat paintings at the top of the recap. A phone-width
-   banner, cropped rather than letterboxed: shrinking the poster to save
-   height used to leave black gutters on each side. Fade the bottom into
-   the numbers the same way the key art hands over on the title screen. */
+/* The win/loss header uses the same flagship and dice language as the home
+   painting. The word is live type rather than baked into the art, so it stays
+   sharp and correctly sized on every phone. The final-volley math remains
+   immediately below it. */
 .recap-art {
+  position: relative;
+  isolation: isolate;
   flex: none;
   margin: -0.25rem -0.9rem 0.15rem;
-  height: 9rem;
-  min-height: 9rem;
+  height: 10.75rem;
+  min-height: 10.75rem;
   overflow: hidden;
   background: #07060c;
   line-height: 0;
-  -webkit-mask-image: linear-gradient(180deg, #000 62%, transparent 100%);
-  mask-image: linear-gradient(180deg, #000 62%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, #000 70%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 70%, transparent 100%);
 }
 .recap-art img {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 46%;
+  object-position: center 51%;
+}
+.recap-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgb(0 0 0 / 0.72) 0%, rgb(0 0 0 / 0.12) 42%, transparent 68%);
+}
+.recap-outcome-word {
+  position: absolute;
+  z-index: 1;
+  top: 0.45rem;
+  left: 0.5rem;
+  right: 0.5rem;
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(3.2rem, 16vw, 4.35rem);
+  font-weight: 900;
+  letter-spacing: -0.045em;
+  line-height: 0.88;
+  text-align: center;
+  text-transform: uppercase;
+}
+.recap-art-won .recap-outcome-word {
+  color: #ffe27a;
+  text-shadow:
+    0 0 28px rgb(255 210 61 / 0.72),
+    0 3px 0 rgb(91 52 0 / 0.9),
+    0 5px 18px rgb(0 0 0 / 0.95);
+}
+.recap-art-lost .recap-outcome-word {
+  color: #ff5656;
+  text-shadow:
+    0 0 28px rgb(255 77 77 / 0.72),
+    0 3px 0 rgb(79 0 0 / 0.95),
+    0 5px 18px rgb(0 0 0 / 0.95);
 }
 /* A short screen needs the numbers more than it needs the painting.
    Keep the banner full width — only the height gives way. */
 @media (max-height: 700px) {
   .recap-art {
-    height: 7.2rem;
-    min-height: 7.2rem;
+    height: 8.4rem;
+    min-height: 8.4rem;
+  }
+  .recap-outcome-word {
+    top: 0.35rem;
+    font-size: 3rem;
   }
   .recap-mutual-art {
     height: 7.6rem;

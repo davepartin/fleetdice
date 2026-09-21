@@ -44,22 +44,27 @@ test("difficulty labels on screen come from the tiers, not a hardcoded Easy", ()
   assert.doesNotMatch(recap, /You beat Easy/);
 });
 
-test("the victory banner fills the column and stays short", () => {
+test("the new home-art victory banner fills the column and keeps the math close", () => {
   const art = css.match(/\.recap-art \{[^}]+\}/);
   assert.ok(art, "recap-art block is missing");
-  assert.match(art[0], /height:\s*9rem/);
-  assert.match(art[0], /min-height:\s*9rem/);
+  assert.match(art[0], /height:\s*10\.75rem/);
+  assert.match(art[0], /min-height:\s*10\.75rem/);
   assert.match(art[0], /overflow:\s*hidden/);
   assert.doesNotMatch(art[0], /max-width/);
   assert.match(css, /\.recap-art img \{[^}]*width:\s*100%/);
   assert.match(css, /\.recap-art img \{[^}]*object-fit:\s*cover/);
+  assert.match(recap, /fleet-dice-recap-victory\.jpg/);
+  assert.match(recap, /fleet-dice-recap-defeated\.jpg/);
+  assert.match(recap, /recap-outcome-word/);
+  assert.match(recap, /"Victory"\s*:\s*"Defeated"/);
+  assert.match(css, /\.recap-outcome-word \{[^}]*font-size:\s*clamp\(3\.2rem, 16vw, 4\.35rem\)/);
   // Shrinking the poster used to leave black side gutters. Height may drop
   // on a short phone; width must not.
   assert.doesNotMatch(css, /\.recap-art \{[^}]*max-width:\s*15rem/);
   assert.doesNotMatch(css, /\.recap-art \{[^}]*margin-inline:\s*auto/);
   assert.match(
     css,
-    /@media \(max-height: 700px\) \{\s*\.recap-art \{\s*height:\s*7\.2rem/,
+    /@media \(max-height: 700px\) \{\s*\.recap-art \{\s*height:\s*8\.4rem/,
     "short-screen recap-art must stay a full-width banner",
   );
 });
