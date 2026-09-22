@@ -63,7 +63,7 @@ try {
 
   const grownD6 = page.getByRole("button", { name: /d6 ship, upgrade available next round/i });
   await grownD6.click();
-  await page.getByText(/This ship already grew one step/i).waitFor({ state: "visible" });
+  await page.getByRole("button", { name: /Already upgraded this round/i }).waitFor({ state: "visible" });
   assert.equal(await page.getByRole("button", { name: /Upgrade · 3 Energy/i }).count(), 0);
 
   await page.getByRole("button", { name: /Close/i }).click();

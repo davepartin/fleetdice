@@ -93,20 +93,20 @@ test("one weapon per volley; used charges cannot fire or recharge again", () => 
 });
 
 test("Super Shield halves the entire Attack before Shields; Direct and War still land", () => {
-  const s = match(9); charge(s, "host", "shield"); charge(s, "guest", "attack"); rollBoth(s);
+  const s = match(TUNING.escalateAfterRound + 1); charge(s, "host", "shield"); charge(s, "guest", "attack"); rollBoth(s);
   faces(s.players.host, [5, 5, 5, 5]); // 20 Shields, 4 Repair
-  faces(s.players.guest, [10, 10, 10, 10]); // 40 Attack + 18 weapon, 12 Direct
+  faces(s.players.guest, [10, 10, 10, 10]); // 40 Attack + 24 weapon, 12 Direct
   applyAction(s, "host", { type: "weapon", weapon: "shield" });
   applyAction(s, "guest", { type: "weapon", weapon: "attack" });
   settle(s);
   const r = s.players.host.report;
-  assert.equal(r.superShieldStopped, 29);
-  assert.equal(r.incoming, 13); // 58 - 29 - 20 + 4 War
+  assert.equal(r.superShieldStopped, 32);
+  assert.equal(r.incoming, 16); // 64 - 32 - 20 + 4 War
   assert.equal(r.direct, 12);
-  assert.equal(r.hpAfter, 39); // 60 - 13 - 12 + 4
+  assert.equal(r.hpAfter, 36); // 60 - 16 - 12 + 4
   assert.equal(s.players.host.stats.shieldsBlocked, 20);
-  assert.equal(r.weapon.amount, 29);
-  assert.equal(r.enemyWeapon.amount, 18);
+  assert.equal(r.weapon.amount, 32);
+  assert.equal(r.enemyWeapon.amount, 24);
   assert.equal(superShieldReduction(s.players.host, 21), 10);
 });
 

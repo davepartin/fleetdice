@@ -336,11 +336,7 @@ function CellButton({
         <span className="yard-cell-name">d{offer.ship.sides} ship</span>
         {offer.benched ? (
           <span className="yard-cell-sub yard-cell-out">out this round</span>
-        ) : (
-          <span className="yard-cell-sub yard-cell-sub-plain">
-            {offer.next ? offer.upgradeAvailable ? `upgrade → d${offer.next}` : "upgrade used" : "max ship"}
-          </span>
-        )}
+        ) : null}
       </>
     );
   } else if (offer.kind === "empty") {
@@ -371,7 +367,10 @@ function CellButton({
     );
   }
 
-  const dead = cost === null;
+  const dead =
+    (offer.kind === "ship" && offer.next === null) ||
+    (offer.kind === "flagship" && offer.cost === null) ||
+    (offer.kind === "locked" && offer.cost === null);
 
   return (
     <button
@@ -501,6 +500,7 @@ function Drawer({
               </div>
             </div>
             <p className="yard-copy">{HULL_BLURB[offer.next]}</p>
+            <p className="yard-copy">Each die can upgrade once per round.</p>
             {offer.upgradeAvailable ? (
               <PurchaseButton
                 verb="Upgrade"
@@ -510,7 +510,9 @@ function Drawer({
                 onClick={() => onAct({ type: "shop", operation: "upgrade", shipId: offer.ship.id })}
               />
             ) : (
-              <Notice tone="info">This ship already grew one step. It can grow again after the next volley.</Notice>
+              <Button tone="buy" full disabled>
+                Already upgraded this round
+              </Button>
             )}
           </>
         )}
