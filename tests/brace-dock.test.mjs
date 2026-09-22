@@ -49,3 +49,11 @@ test("blockable is white, not muted", () => {
   assert.doesNotMatch(dock, /c-dim text-base"> blockable/);
   assert.match(css, /\.brace-blockable-label/);
 });
+
+test("under the blockable total there is one line", () => {
+  const dock = braceDockSource();
+  assert.match(dock, /Includes war \+\$\{war\}\. Tap ships to block/);
+  assert.match(dock, /"Tap ships to block"/);
+  assert.doesNotMatch(dock, /Shields cannot stop that extra/);
+  assert.doesNotMatch(dock, /out for one round/);
+});

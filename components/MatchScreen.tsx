@@ -1225,17 +1225,12 @@ function BraceDock({
               </>
             )}
           </h2>
-          {war > 0 && (
-            <p className="mt-1 text-sm font-semibold c-attack">
-              Includes war +{war} — Shields cannot stop that extra, but ships can block it.
-            </p>
-          )}
           <p className="brace-explanation mt-1 text-sm leading-snug c-dim">
             Send ships in to block. Each one blocks damage equal to its own size, then sits out
             the next round. Nothing blocks Direct.
           </p>
           <p className="brace-mobile-guide mt-1 text-sm font-semibold c-attack">
-            Tap ships to block, out for one round.
+            {war > 0 ? `Includes war +${war}. Tap ships to block` : "Tap ships to block"}
           </p>
         </div>
 
