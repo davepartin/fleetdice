@@ -1,5 +1,38 @@
 # Fleet Dice 3 — balance notes
 
+## War waits for the capital-ship game — 22 September 2026
+
+War Escalation now begins in round 12 instead of round 9. It still starts at
++4 and grows by 4 each round. The paced hull economy was delivering its first
+d10s around rounds 10.5–12.4, so the old War clock started almost exactly when
+the larger ships arrived.
+
+The real-engine escalation sweep found that delaying the start solved that
+timing problem without weakening the closing clock:
+
+| War rule | mean rounds | median | range | backstop finishes |
+| --- | ---: | ---: | ---: | ---: |
+| begins round 9, +4 | 12.4 | 12 | 5–18 | 0 |
+| begins round 11, +4 | 13.5 | 14 | 5–20 | 0 |
+| **begins round 12, +4** | **14.1** | **14** | **5–20** | **0** |
+| begins round 11, +2 | 14.6 | 14 | 5–30 | 0 |
+| begins round 9, +2 | 13.9 | 13 | 5–29 | 0 |
+
+The two-point step made the tail much longer without buying much more average
+play. Four remains the useful endgame pressure; it now arrives after eleven
+full fleet-building rounds rather than after eight.
+
+With the final round-12 rule, `node sim/d10.mjs 150` measured first d10s in
+rounds 11.9–13.8 by tier and final d10 shares of 12–43%. Average ending banks
+were 4.8–11.8 Energy. `node sim/simulate.mjs matchups 120` measured a 13.9-round
+mean, 14-round median, 3–22 range and no unfinished matches.
+
+Fresh larger hulls remain out of this change. At the current prices, buying a
+d10 for 13 costs exactly the same as d4 + all three upgrades (4 + 2 + 3 + 4),
+so a direct purchase would be strictly better because it skips the waiting.
+A real fast-build choice would need an explicit time premium and a separate
+measurement; adding it now would reintroduce the rush this pacing rule removed.
+
 ## d4-first shipbuilding and one step per ship — 22 September 2026
 
 Empty bays now build only a d4. A ship may be upgraded by only one hull step

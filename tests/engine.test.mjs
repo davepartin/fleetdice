@@ -603,6 +603,8 @@ test("nothing rolls outside its own hull", () => {
 });
 
 test("the war escalates on schedule and not before", () => {
+  assert.equal(TUNING.escalateAfterRound + 1, 12, "War should leave eleven full rounds to build fleets");
+  assert.equal(TUNING.escalateStep, 4, "War should still close the endgame decisively");
   assert.equal(escalationFor(TUNING.escalateAfterRound), 0);
   assert.equal(escalationFor(TUNING.escalateAfterRound + 1), TUNING.escalateStep);
   assert.equal(escalationFor(TUNING.escalateAfterRound + 3), TUNING.escalateStep * 3);

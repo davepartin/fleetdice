@@ -540,7 +540,16 @@ function modeEscalate(n) {
   console.log(`\n=== ESCALATION ===\n`);
   console.log(`Plain attack rises by a step each round after the war escalates.\n`);
   const rows = [];
-  for (const [after, step] of [[8, 4], [8, 6], [7, 4], [6, 4], [10, 4], [8, 2], [6, 6]]) {
+  for (const [after, step] of [
+    [8, 4],
+    [9, 4],
+    [10, 4],
+    [11, 4],
+    [10, 3],
+    [11, 3],
+    [10, 2],
+    [8, 2],
+  ]) {
     const h = withTuning({ escalateAfterRound: after, escalateStep: step }, () => healthCheck(Math.max(20, Math.round(n / 20))));
     rows.push([
       `after ${after}, +${step}`, h.mean.toFixed(1), `\u00b1${h.meanCi.toFixed(2)}`, h.median,

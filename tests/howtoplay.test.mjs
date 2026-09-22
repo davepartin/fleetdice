@@ -82,6 +82,15 @@ test("the shipyard teaches d4-first building and one step per ship per round", (
   assert.match(copy, /you may upgrade other ships/i);
 });
 
+test("shipyard tiles stay clean and the drawer explains the one-upgrade limit", () => {
+  const yard = readFileSync(new URL("../components/Shipyard.tsx", import.meta.url), "utf8");
+  const tiles = yard.slice(yard.indexOf("function CellButton"), yard.indexOf("function Drawer"));
+  const drawer = yard.slice(yard.indexOf("function Drawer"));
+  assert.doesNotMatch(tiles, /upgrade →/);
+  assert.match(drawer, /Each die can upgrade once per round/);
+  assert.match(drawer, /Already upgraded this round/);
+});
+
 test("a win or a loss recaps the last volley with the round-review column", () => {
   const recap = readFileSync(new URL("../components/BattleRecap.tsx", import.meta.url), "utf8");
   assert.match(recap, /fleet-dice-recap-victory/);

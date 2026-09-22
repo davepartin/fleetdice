@@ -29,6 +29,18 @@ support the game state, never obscure numbers or controls. Do not call a visual
 pass finished while a die value, resource, action, or outcome is hard to read.
 
 
+## Owner-requested midgame and shipyard clarity — 22 September 2026
+
+- [x] War begins in round 12 at +4 and still grows by 4 each round. A real
+  engine sweep kept the decisive close, removed the old collision with first
+  d10s, and produced a 14.1-round mean with no backstop finishes. Two-point War
+  produced 29–30-round tails and was rejected.
+- [x] Shipyard fleet tiles no longer squeeze a clipped upgrade sentence above
+  the Energy price. The upgrade drawer says “Each die can upgrade once per
+  round,” and a second attempt shows a disabled “Already upgraded this round”
+  control. The engine remains the final guard for people and the Solo opponent.
+
+
 ## Owner-requested hull pacing — 22 September 2026
 
 - [x] Empty bays build only a d4, and each individual ship may grow only one

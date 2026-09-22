@@ -284,8 +284,12 @@ export const TUNING = {
   /**
    * Extra flagship damage both sides take after this many rounds.
    * Shields cannot stop it; ships still can.
+   *
+   * Beginning in round 12 gives the paced d4 -> d6 -> d8 -> d10 economy time
+   * to produce a real capital-ship endgame before the closing clock starts.
+   * The four-point step still ends long matches decisively once it arrives.
    */
-  escalateAfterRound: 8,
+  escalateAfterRound: 11,
   escalateStep: 4,
   /** Hard stop so a stalled match cannot run forever. */
   roundLimit: 40,
