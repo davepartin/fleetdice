@@ -251,7 +251,7 @@ export const TUTORIAL_SLIDES: readonly TutorialSlide[] = [
     id: "shop_bay",
     eyebrow: "The shipyard",
     title: "Spend Energy between rounds",
-    body: `Every round pays Energy, and the shipyard is where it goes. Opening another bay gives you another ship — and another chance at a line.`,
+    body: `Every round pays Energy, and the shipyard is where it goes. Open a bay, then build its d4 — every new ship starts small and gives you another chance at a line.`,
     action: "Open the bay",
     visual: {
       kind: "shop",
@@ -272,7 +272,7 @@ export const TUTORIAL_SLIDES: readonly TutorialSlide[] = [
     id: "shop_upgrade",
     eyebrow: "The shipyard",
     title: "Trade a small hull up",
-    body: `A bigger hull rolls bigger numbers, and it blocks more when it steps in front. You pay the difference, not the whole price.`,
+    body: `A bigger hull rolls bigger numbers, and it blocks more when it steps in front. Each ship may grow one step per round, and you pay only the difference.`,
     action: "Upgrade to a d6",
     visual: {
       kind: "shop",

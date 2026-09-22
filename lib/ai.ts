@@ -28,6 +28,7 @@ import {
   energyOf,
   flagshipUpgradeCost,
   FLEET_LINES,
+  hullUpgradeAvailable,
   nextSlotCost,
   priceOf,
   random,
@@ -597,16 +598,17 @@ function affordableBuys(player: PlayerState): Buy[] {
     const slotIndex = [...empties].sort(
       (a, b) => lineAffinity(player, b) - lineAffinity(player, a) || a - b,
     )[0]!;
-    for (const sides of [4, 6, 8, 10] as DieSize[]) {
-      if (priceOf(sides) <= player.energy) {
-        out.push({ kind: "ship", sides, slotIndex, cost: priceOf(sides) });
-      }
+    const sides: DieSize = 4;
+    if (priceOf(sides) <= player.energy) {
+      out.push({ kind: "ship", sides, slotIndex, cost: priceOf(sides) });
     }
   }
   for (const ship of player.ships) {
-    const cost = upgradeCost(ship.sides);
-    if (cost !== null && cost <= player.energy) {
-      out.push({ kind: "upgrade", shipId: ship.id, from: ship.sides, cost });
+    if (hullUpgradeAvailable(player, ship)) {
+      const cost = upgradeCost(ship.sides);
+      if (cost !== null && cost <= player.energy) {
+        out.push({ kind: "upgrade", shipId: ship.id, from: ship.sides, cost });
+      }
     }
   }
   const flagCost = flagshipUpgradeCost(player.flag.level);
@@ -806,12 +808,15 @@ export function planShopping(
     } else if (buy.kind === "ship") {
       actions.push({ type: "shop", operation: "buy", sides: buy.sides, slotIndex: buy.slotIndex });
       scratch.energy -= buy.cost;
-      scratch.ships.push({ id: `sim${step}`, sides: buy.sides, disabledRound: null, slot: buy.slotIndex });
+      scratch.ships.push({ id: `sim${step}`, sides: buy.sides, disabledRound: null, upgradedRound: null, slot: buy.slotIndex });
     } else if (buy.kind === "upgrade") {
       actions.push({ type: "shop", operation: "upgrade", shipId: buy.shipId });
       scratch.energy -= buy.cost;
       const ship = scratch.ships.find((candidate) => candidate.id === buy.shipId);
-      if (ship) ship.sides = upgradeTarget(ship.sides) ?? ship.sides;
+      if (ship) {
+        ship.sides = upgradeTarget(ship.sides) ?? ship.sides;
+        ship.upgradedRound = scratch.round;
+      }
     } else if (buy.kind === "weapon") {
       actions.push({ type: "shop", operation: "weapon", weapon: buy.weapon });
       scratch.energy -= buy.cost;

@@ -81,15 +81,14 @@ function shopCapital(player) {
       (slot) => !acts.some((a) => a.operation === "buy" && a.slotIndex === slot),
     );
     if (empty.length) {
-      const afford = [10, 8, 6, 4].find((sides) => energy >= priceOf(sides));
-      if (afford) {
-        acts.push({ type: "shop", operation: "buy", sides: afford, slotIndex: empty[0] });
-        energy -= priceOf(afford);
+      if (energy >= priceOf(4)) {
+        acts.push({ type: "shop", operation: "buy", sides: 4, slotIndex: empty[0] });
+        energy -= priceOf(4);
         continue;
       }
     }
     const slotCost = nextSlotCost(player);
-    if (player.ships.length < 5 && slotCost !== null && energy >= slotCost + priceOf(6)) {
+    if (player.ships.length < 5 && slotCost !== null && energy >= slotCost + priceOf(4)) {
       const closed = [0, 1, 2, 3, 4, 5, 6, 7].find(
         (s) => !player.open[s] && !acts.some((a) => a.operation === "slot" && a.slotIndex === s),
       );

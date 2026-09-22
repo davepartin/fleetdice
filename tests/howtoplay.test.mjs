@@ -8,7 +8,7 @@ import { readFileSync } from "node:fs";
 import { bundlePath } from "../sim/bundle.mjs";
 
 const G = await import(bundlePath);
-const { HOW_TO_PLAY, MUTUAL_KILL_EXAMPLE, mutualKillBreak, signedHp } = G;
+const { HOW_TO_PLAY, MUTUAL_KILL_EXAMPLE, SHOP_ROWS, mutualKillBreak, signedHp } = G;
 
 test("how to play is one illustrated scroll, not an accordion", () => {
   const src = readFileSync(new URL("../components/HowToPlay.tsx", import.meta.url), "utf8");
@@ -69,6 +69,17 @@ test("each help face is clipped to the hull that first shows that number", () =>
   assert.match(help, /ctx\.clip\(\)/);
   assert.match(reference, /export function hullForFace/);
   assert.match(reference, /HULLS\.find\(\(sides\) => sides >= value\)/);
+});
+
+test("the shipyard teaches d4-first building and one step per ship per round", () => {
+  const hullRows = SHOP_ROWS.filter((row) => row.kind === "hull");
+  assert.deepEqual(hullRows.map((row) => row.name), ["Buy a d4"]);
+  const section = HOW_TO_PLAY.find((entry) => entry.id === "shipyard");
+  assert.ok(section);
+  const copy = [section.summary, ...section.blocks.filter((block) => block.kind === "text").map((block) => block.text)].join(" ");
+  assert.match(copy, /Every new ship starts as a d4/);
+  assert.match(copy, /Each ship may grow (?:by )?one (?:hull )?step per round/);
+  assert.match(copy, /you may upgrade other ships/i);
 });
 
 test("a win or a loss recaps the last volley with the round-review column", () => {

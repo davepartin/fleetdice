@@ -35,6 +35,8 @@ export type Ship = {
   sides: DieSize;
   /** Round number this ship sits out because it took a hit. */
   disabledRound: number | null;
+  /** Last shipyard round in which this hull grew. Missing on older saves. */
+  upgradedRound?: number | null;
   /** Which of the 8 cells around the flagship this ship occupies (0–7). */
   slot: number;
 };
@@ -592,6 +594,10 @@ export function upgradeCost(sides: DieSize): number | null {
   if (!next) return null;
   return priceOf(next) - priceOf(sides);
 }
+/** Each ship may grow by one hull step between a pair of volleys. */
+export function hullUpgradeAvailable(player: Pick<PlayerState, "round">, ship: Ship): boolean {
+  return ship.upgradedRound !== player.round;
+}
 export function openSlotCount(player: PlayerState): number {
   return player.open.filter(Boolean).length;
 }
@@ -953,17 +959,22 @@ function handleShop(player: PlayerState, action: Extract<MatchAction, { type: "s
   if (action.operation === "buy") {
     const slot = action.slotIndex;
     if (!emptyOpenSlots(player).includes(slot)) throw new Error("Tap an open, empty cell first.");
+    if (action.sides !== 4) throw new Error("Every new ship starts as a d4. Grow it one step per round.");
     spend(player, priceOf(action.sides));
-    player.ships.push({ id: `s${randomId(9)}`, sides: action.sides, disabledRound: null, slot });
+    player.ships.push({ id: `s${randomId(9)}`, sides: action.sides, disabledRound: null, upgradedRound: null, slot });
     return;
   }
 
   const ship = player.ships.find((candidate) => candidate.id === action.shipId);
   if (!ship) throw new Error("That ship is no longer in your fleet.");
+  if (!hullUpgradeAvailable(player, ship)) {
+    throw new Error("That ship already grew one step this round.");
+  }
   const next = upgradeTarget(ship.sides);
   if (!next) throw new Error("That ship is already a d10.");
   spend(player, priceOf(next) - priceOf(ship.sides));
   ship.sides = next;
+  ship.upgradedRound = player.round;
 }
 
 function prepareRound(player: PlayerState) {

@@ -1,5 +1,43 @@
 # Fleet Dice 3 — balance notes
 
+## d4-first shipbuilding and one step per ship — 22 September 2026
+
+Empty bays now build only a d4. A ship may be upgraded by only one hull step
+in a shipyard visit, but different ships may each take a step in the same
+round. This stops a human from spending 9 Energy to turn one d4 directly into
+a d10 without imposing a fleet-wide upgrade quota. Old saved battles have no
+upgrade marker and remain eligible for their next step.
+
+The stricter interpretation — one upgrade total for the whole fleet each round
+— was implemented and measured first. It raised Expert's average ending bank
+from 9.9 to 23.8 Energy and cut Expert's final d10 share from 28% to 1%. That
+solved the rush by almost removing the capital endgame and created exactly the
+dead-Energy problem the owner anticipated, so it was discarded.
+
+`node sim/d10.mjs 150`, 150 seeded same-tier matches per tier (1,200
+commanders), before and after the final per-ship rule:
+
+| tier | bank before | bank after | first d10 before | first d10 after | final d10 before | final d10 after |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Low | 4.9 | 5.1 | round 11.9 | round 12.4 | 27% | 27% |
+| Medium | 4.5 | 4.6 | round 10.3 | round 10.5 | 8% | 8% |
+| Hard | 7.9 | 7.7 | round 10.3 | round 10.7 | 14% | 14% |
+| Expert | 9.9 | 10.4 | round 10.7 | round 11.0 | 28% | 29% |
+
+The bank and final mix are effectively unchanged because the opponent was
+already buying only d4s and rarely chained the same hull twice in one visit.
+The rule targets the human shortcut while leaving measured AI balance intact.
+`node sim/simulate.mjs matchups 120` produced byte-for-byte identical matchup
+results on the old commit and this rule: 12.2 mean rounds and a 13.8-point plan
+spread in this current post-weapon brain. The spread therefore predates this
+rule rather than being caused by it.
+
+General weapon recharging is deliberately not part of this change. Repeatable
+late Attack, Repair and Super Shield would turn four visible once-per-match
+decisions into a renewable loop. If human playtests still reveal dead Energy,
+test one expensive recharge total per match before considering unlimited
+recharges.
+
 ## Four flagship weapons — owner-directed beta rules, 14 September 2026
 
 Each weapon costs 6 Energy to charge in the shipyard, once per weapon per match.
