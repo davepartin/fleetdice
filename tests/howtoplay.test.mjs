@@ -87,6 +87,10 @@ test("shipyard tiles stay clean and the drawer explains the one-upgrade limit", 
   const tiles = yard.slice(yard.indexOf("function CellButton"), yard.indexOf("function Drawer"));
   const drawer = yard.slice(yard.indexOf("function Drawer"));
   assert.doesNotMatch(tiles, /upgrade →/);
+  assert.doesNotMatch(tiles, /open it/i);
+  assert.match(tiles, /yard-action-verb/);
+  assert.match(tiles, /spent/);
+  assert.doesNotMatch(tiles, /upgradeAvailable \? offer\.cost : null/);
   assert.match(drawer, /Each die can upgrade once per round/);
   assert.match(drawer, /Already upgraded this round/);
 });

@@ -293,9 +293,16 @@ function CellButton({
   let body: React.ReactNode = null;
   let label = "";
 
+  // The word beside the price. Locked bays open. Ships and the flagship
+  // upgrade. An empty bay builds. A step already taken this round keeps its
+  // next price on the tile, darkened, instead of hiding it.
+  let verb: "open" | "upgrade" | "build" | null = null;
+  let spent = false;
+
   if (offer.kind === "flagship") {
     cost = offer.cost;
     affordable = cost !== null && cost <= energy;
+    verb = cost !== null ? "upgrade" : null;
     state = "flag";
     const levelName = flagshipLevelWord(offer.level);
     const nextName = cost === null ? null : flagshipLevelWord(offer.level + 1);
@@ -316,8 +323,10 @@ function CellButton({
       </>
     );
   } else if (offer.kind === "ship") {
-    cost = offer.upgradeAvailable ? offer.cost : null;
-    affordable = cost !== null && cost <= energy;
+    cost = offer.cost;
+    spent = cost !== null && !offer.upgradeAvailable;
+    affordable = cost !== null && !spent && cost <= energy;
+    verb = cost !== null ? "upgrade" : null;
     state = "ship";
     label =
       `d${offer.ship.sides} ship${offer.next ? offer.upgradeAvailable ? `, upgrade to d${offer.next}` : ", upgrade available next round" : ", at maximum"}` +
@@ -342,6 +351,7 @@ function CellButton({
   } else if (offer.kind === "empty") {
     cost = offer.cheapest;
     affordable = cost <= energy;
+    verb = "build";
     state = "empty";
     label = `Open ${NOUN.bay}, add a ship`;
     body = (
@@ -354,15 +364,20 @@ function CellButton({
   } else {
     cost = offer.cost;
     affordable = cost !== null && cost <= energy;
+    verb = cost !== null ? "open" : null;
     state = "locked";
-    label = `Locked ${NOUN.bay}`;
+    label = offer.opensLines.length
+      ? `Locked ${NOUN.bay}, open, ${offer.opensLines[0]}`
+      : `Locked ${NOUN.bay}, open`;
     body = (
       <>
         <span className="yard-cell-art yard-cell-lock"><LockIcon /></span>
         <span className="yard-cell-name">Locked</span>
-        <span className="yard-cell-sub">
-          {offer.opensLines.length ? `opens a ${offer.opensLines[0]!.split(" ")[1]}` : "open it"}
-        </span>
+        {offer.opensLines.length > 0 && (
+          <span className="yard-cell-sub">
+            opens a {offer.opensLines[0]!.split(" ")[1]}
+          </span>
+        )}
       </>
     );
   }
@@ -381,10 +396,18 @@ function CellButton({
       className={`yard-cell yard-cell-${state}`}
       data-selected={selected || undefined}
       data-affordable={!dead && affordable ? "" : undefined}
+      data-spent={spent ? "" : undefined}
       data-dead={dead ? "" : undefined}
     >
-      {body}
-      {cost !== null && <EnergyPrice cost={cost} affordable={affordable} />}
+      <span className="yard-cell-body">{body}</span>
+      <span className="yard-action">
+        {cost !== null && verb !== null && (
+          <>
+            <EnergyPrice cost={cost} affordable={affordable} spent={spent} />
+            <span className="yard-action-verb">{verb}</span>
+          </>
+        )}
+      </span>
     </button>
   );
 }

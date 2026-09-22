@@ -412,12 +412,25 @@ export function Chip({
   );
 }
 
-/** The cool-blue Energy price on shipyard tiles — red when you cannot afford it. */
-export function EnergyPrice({ cost, affordable }: { cost: number; affordable: boolean }) {
+/**
+ * Energy price. Yellow bolt and number — Energy's own colour.
+ * `spent` is a step already taken this round: the next price stays readable
+ * and goes dark, so it is not mistaken for something you can buy now.
+ */
+export function EnergyPrice({
+  cost,
+  affordable,
+  spent = false,
+}: {
+  cost: number;
+  affordable: boolean;
+  spent?: boolean;
+}) {
+  const tone = spent ? "yard-price-spent" : affordable ? "yard-price-ok" : "yard-price-no";
   return (
     <span
-      className={`yard-price ${affordable ? "yard-price-ok" : "yard-price-no"}`}
-      aria-label={`${cost} Energy`}
+      className={`yard-price ${tone}`}
+      aria-label={spent ? `${cost} Energy next round` : `${cost} Energy`}
     >
       <svg className="yard-price-icon" viewBox="0 0 16 20" aria-hidden="true">
         <path d="M9.1 0 1.8 11.1h4.7L5.6 20l8.6-12.3H9.4L9.1 0Z" fill="currentColor" />
