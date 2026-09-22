@@ -338,7 +338,7 @@ test("chooseRerollDetailed sends back the odd die on a one-away column", () => {
   assert.ok(choice.reroll.includes("s6"), "the 1 sitting on two 6s should go back");
 });
 
-test("Formation opens bays and keeps small hulls; Capital upgrades instead", () => {
+test("Formation opens bays first; Capital grows ships before widening", () => {
   const formation = newPlayer("f", "F", "shop");
   formation.energy = 20;
   const formActs = planShopping(formation, "formation", 3, 1, 0);
@@ -355,8 +355,11 @@ test("Formation opens bays and keeps small hulls; Capital upgrades instead", () 
   const capActs = planShopping(capital, "capital", 3, 1, 0);
   const capSlots = capActs.filter((a) => a.type === "shop" && a.operation === "slot");
   const capUpgrades = capActs.filter((a) => a.type === "shop" && a.operation === "upgrade");
-  assert.equal(capSlots.length, 0, "Capital almost never opens a bay on this budget");
-  assert.ok(capUpgrades.length >= 1, "Capital spends the same money growing hulls");
+  assert.ok(capUpgrades.length >= 1, "Capital grows its existing hulls");
+  assert.ok(
+    capSlots.length === 0 || capActs.indexOf(capUpgrades[0]) < capActs.indexOf(capSlots[0]),
+    "Capital grows a hull before spending the remaining bank on a bay",
+  );
 });
 
 test("Formation parks a new hull on the bay that finishes a live line", () => {
@@ -374,6 +377,55 @@ test("Formation parks a new hull on the bay that finishes a live line", () => {
     1,
     "the empty that sits on two live lines, not the first empty bay",
   );
+});
+
+test("new ships start as d4s and each hull grows only one step per round", () => {
+  const state = newMatch("yard", "0000", "A", "A", "solo");
+  const player = state.players.host;
+  player.phase = "shop";
+  player.energy = 30;
+
+  const openedSlot = player.ships[0].slot;
+  player.ships = player.ships.slice(1);
+  assert.throws(
+    () => applyAction(state, "host", { type: "shop", operation: "buy", sides: 6, slotIndex: openedSlot }),
+    /starts as a d4/,
+  );
+  assert.equal(player.energy, 30, "a refused larger hull spends nothing");
+
+  applyAction(state, "host", { type: "shop", operation: "buy", sides: 4, slotIndex: openedSlot });
+  const fresh = player.ships.find((ship) => ship.slot === openedSlot);
+  assert.ok(fresh);
+  applyAction(state, "host", { type: "shop", operation: "upgrade", shipId: fresh.id });
+  assert.equal(fresh.sides, 6, "the new d4 may be this round's one chosen upgrade");
+
+  const afterFirstUpgrade = player.energy;
+  assert.throws(
+    () => applyAction(state, "host", { type: "shop", operation: "upgrade", shipId: fresh.id }),
+    /already grew one step/,
+  );
+  assert.equal(player.energy, afterFirstUpgrade, "a refused second upgrade spends nothing");
+
+  const other = player.ships.find((ship) => ship.id !== fresh.id);
+  assert.ok(other);
+  applyAction(state, "host", { type: "shop", operation: "upgrade", shipId: other.id });
+  assert.equal(other.sides, 6, "a different ship may take its own step in the same shipyard");
+
+  player.round += 1;
+  applyAction(state, "host", { type: "shop", operation: "upgrade", shipId: fresh.id });
+  assert.equal(fresh.sides, 8, "the same ship may grow again next round");
+});
+
+test("the opponent buys only d4s and never jumps one hull twice in a round", () => {
+  const player = newPlayer("yard-ai", "Yard AI", "shop");
+  player.energy = 40;
+  player.open[0] = true;
+  player.ships = player.ships.filter((ship) => ship.slot !== 0);
+  const actions = planShopping(player, "capital", player.round, 1, 0);
+  const buys = actions.filter((action) => action.type === "shop" && action.operation === "buy");
+  const upgrades = actions.filter((action) => action.type === "shop" && action.operation === "upgrade");
+  assert.ok(buys.every((action) => action.sides === 4));
+  assert.equal(new Set(upgrades.map((action) => action.shipId)).size, upgrades.length);
 });
 
 test("a paid reroll spends the last Energy on the odd die of a one-away column", () => {

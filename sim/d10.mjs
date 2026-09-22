@@ -17,7 +17,7 @@ const N = Number(process.argv[2] ?? 200);
 const TIERS = ["low", "medium", "hard", "expert"];
 
 function playTier(tier, n) {
-  const s0 = { rounds: 0, energyEarned: 0, energySpent: 0,
+  const s0 = { rounds: 0, energyEarned: 0, energySpent: 0, finalEnergy: 0,
                boughtFresh: { 4: 0, 6: 0, 8: 0, 10: 0 },
                upgradesTo: { 6: 0, 8: 0, 10: 0 },
                slots: 0, flagship: 0,
@@ -68,6 +68,7 @@ function playTier(tier, n) {
       s0.ships += p.ships.length;
       for (const sh of p.ships) s0.finalMix[sh.sides] += 1;
       s0.energyEarned += p.stats.energyEarned ?? 0;
+      s0.finalEnergy += p.energy;
     }
     s0.rounds += Math.max(s.players.host.round, s.players.guest.round);
   }
@@ -85,6 +86,7 @@ for (const tier of TIERS) {
     tier,
     rounds: fmt(r.rounds / N, 1),
     spent: fmt(r.energySpent / c, 1),
+    bank: fmt(r.finalEnergy / c, 1),
     d10pct: `${((r.finalMix[10] / totalShips) * 100).toFixed(0)}%`,
     d10each: fmt(d10Acquired / c),
     fresh: fmt(r.boughtFresh[10] / c),
@@ -96,11 +98,11 @@ for (const tier of TIERS) {
 }
 
 console.log(`\n=== ${N} matches per tier, both sides same tier, seeded ===\n`);
-console.log("tier      rounds  spent/cmdr  final d10%  d10s/cmdr   fresh   upgrade   avg round  cells  ships");
+console.log("tier      rounds  spent/cmdr  bank/cmdr  final d10%  d10s/cmdr   fresh   upgrade   avg round  cells  ships");
 for (const r of rows) {
   console.log(
     r.tier.padEnd(9) + r.rounds.padStart(6) + r.spent.padStart(12) +
-    r.d10pct.padStart(12) + r.d10each.padStart(11) + r.fresh.padStart(8) +
+    r.bank.padStart(11) + r.d10pct.padStart(12) + r.d10each.padStart(11) + r.fresh.padStart(8) +
     r.upg.padStart(10) + r.when.padStart(11) + r.slots.padStart(7) + r.ships.padStart(7));
 }
-console.log("\nfresh = bought straight into an empty cell for 13; upgrade = paid 4 to step a d8 up.");
+console.log("\nEmpty bays build only d4s; d10s arrive by upgrading a d8 for 4 Energy.");

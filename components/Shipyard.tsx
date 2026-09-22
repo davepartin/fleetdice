@@ -25,6 +25,7 @@ import {
   flagshipUpgradeCost,
   flagBonusSize,
   fleetBlock,
+  hullUpgradeAvailable,
   nextSlotCost,
   openSlotCount,
   priceOf,
@@ -79,7 +80,7 @@ function LockIcon() {
 
 type CellOffer =
   | { kind: "flagship"; cell: 4; level: number; cost: number | null }
-  | { kind: "ship"; cell: number; slot: number; ship: Ship; next: DieSize | null; cost: number | null; benched: boolean }
+  | { kind: "ship"; cell: number; slot: number; ship: Ship; next: DieSize | null; cost: number | null; benched: boolean; upgradeAvailable: boolean }
   | { kind: "empty"; cell: number; slot: number; cheapest: number }
   | { kind: "locked"; cell: number; slot: number; cost: number | null; opensLines: string[] };
 
@@ -129,6 +130,7 @@ function linesOpenedBy(player: PlayerState, cell: number): string[] {
  *  a hull is tapped. */
 function spendFor(offer: CellOffer | null, energy: number): number {
   if (!offer || offer.kind === "empty") return 0;
+  if (offer.kind === "ship" && !offer.upgradeAvailable) return 0;
   const cost = offer.cost;
   if (cost === null || cost > energy) return 0;
   return cost;
@@ -151,7 +153,16 @@ function offerFor(player: PlayerState, cell: number): CellOffer {
   // saying here: spending Energy upgrading a hull that cannot fire next round
   // is a purchase people make by accident and only notice a round later.
   const benched = ship.disabledRound === player.round;
-  return { kind: "ship", cell, slot, ship, next, cost: next ? upgradeCost(ship.sides) : null, benched };
+  return {
+    kind: "ship",
+    cell,
+    slot,
+    ship,
+    next,
+    cost: next ? upgradeCost(ship.sides) : null,
+    benched,
+    upgradeAvailable: hullUpgradeAvailable(player, ship),
+  };
 }
 
 /* ------------------------------------------------------------------ */
@@ -305,11 +316,11 @@ function CellButton({
       </>
     );
   } else if (offer.kind === "ship") {
-    cost = offer.cost;
+    cost = offer.upgradeAvailable ? offer.cost : null;
     affordable = cost !== null && cost <= energy;
     state = "ship";
     label =
-      `d${offer.ship.sides} ship${offer.next ? `, upgrade to d${offer.next}` : ", at maximum"}` +
+      `d${offer.ship.sides} ship${offer.next ? offer.upgradeAvailable ? `, upgrade to d${offer.next}` : ", upgrade available next round" : ", at maximum"}` +
       (offer.benched ? ", out for this round after blocking" : "");
     body = (
       <>
@@ -327,7 +338,7 @@ function CellButton({
           <span className="yard-cell-sub yard-cell-out">out this round</span>
         ) : (
           <span className="yard-cell-sub yard-cell-sub-plain">
-            {offer.next ? `upgrade → d${offer.next}` : "max ship"}
+            {offer.next ? offer.upgradeAvailable ? `upgrade → d${offer.next}` : "upgrade used" : "max ship"}
           </span>
         )}
       </>
@@ -490,13 +501,17 @@ function Drawer({
               </div>
             </div>
             <p className="yard-copy">{HULL_BLURB[offer.next]}</p>
-            <PurchaseButton
-              verb="Upgrade"
-              cost={cost}
-              energy={energy}
-              busy={busy}
-              onClick={() => onAct({ type: "shop", operation: "upgrade", shipId: offer.ship.id })}
-            />
+            {offer.upgradeAvailable ? (
+              <PurchaseButton
+                verb="Upgrade"
+                cost={cost}
+                energy={energy}
+                busy={busy}
+                onClick={() => onAct({ type: "shop", operation: "upgrade", shipId: offer.ship.id })}
+              />
+            ) : (
+              <Notice tone="info">This ship already grew one step. It can grow again after the next volley.</Notice>
+            )}
           </>
         )}
       </section>
@@ -504,32 +519,26 @@ function Drawer({
   }
 
   if (offer.kind === "empty") {
+    const sides: DieSize = 4;
+    const cost = priceOf(sides);
+    const can = cost <= energy;
     return (
       <section className="yard-drawer anim-rise">
         <DrawerHead title={`Open ${NOUN.bay} ${offer.cell + 1}`} onClose={onClose} />
         <div className="yard-hulls">
-          {HULLS.map((sides) => {
-            const cost = priceOf(sides);
-            const can = cost <= energy;
-            return (
-              <button
-                key={sides}
-                type="button"
-                className="yard-hull"
-                disabled={busy || !can}
-                onClick={() =>
-                  onAct({ type: "shop", operation: "buy", sides, slotIndex: offer.slot })
-                }
-              >
-                <span className="yard-hull-art">
-                  <HullShape sides={sides} tone={can ? "live" : "ghost"} />
-                </span>
-                <span className="yard-hull-name t-num">d{sides}</span>
-                <EnergyPrice cost={cost} affordable={can} />
-                <span className="yard-hull-blurb">{HULL_BLURB[sides]}</span>
-              </button>
-            );
-          })}
+          <button
+            type="button"
+            className="yard-hull"
+            disabled={busy || !can}
+            onClick={() => onAct({ type: "shop", operation: "buy", sides, slotIndex: offer.slot })}
+          >
+            <span className="yard-hull-art">
+              <HullShape sides={sides} tone={can ? "live" : "ghost"} />
+            </span>
+            <span className="yard-hull-name t-num">Build d{sides}</span>
+            <EnergyPrice cost={cost} affordable={can} />
+            <span className="yard-hull-blurb">Every new ship starts as a d4. Each ship can grow one step per round.</span>
+          </button>
         </div>
       </section>
     );

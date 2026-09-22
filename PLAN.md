@@ -29,6 +29,19 @@ support the game state, never obscure numbers or controls. Do not call a visual
 pass finished while a die value, resource, action, or outcome is hard to read.
 
 
+## Owner-requested hull pacing — 22 September 2026
+
+- [x] Empty bays build only a d4, and each individual ship may grow only one
+  hull step per shipyard round. Other ships may still take their own step, so
+  the rule prevents a d4-to-d10 jump without creating a dead Energy bank.
+  **Proved:** the engine rejects larger fresh hulls and a second same-round step
+  without spending Energy; the Solo opponent obeys both rules; old saves remain
+  eligible. A fleet-wide one-upgrade cap was rejected after it left Expert with
+  23.8 Energy and nearly erased d10s. The final per-ship rule kept average banks
+  within 0.5 Energy and delayed first d10s by 0.2–0.5 rounds over 1,200 seeded
+  commanders. See `BALANCE.md`.
+
+
 ## Owner-requested flagship weapons — 14 September 2026
 
 - [x] Four shipyard charges at 6 Energy each; once per weapon per match and one

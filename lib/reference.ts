@@ -380,7 +380,7 @@ function hullGain(sides: DieSize): string {
   return `Shows 1 to ${sides}. Averages ${num(avg.attack)} Attack, ${num(avg.defense)} Shields, ${num(avg.energy)} Energy, ${num(avg.repair)} repair and ${num(avg.direct)} Direct a roll.`;
 }
 
-const HULL_ROWS: ShopRow[] = HULLS.map((sides) => ({
+const HULL_ROWS: ShopRow[] = [SMALL].map((sides) => ({
   kind: "hull" as const,
   name: `Buy a ${die(sides)}`,
   cost: priceOf(sides),
@@ -653,16 +653,16 @@ export const HOW_TO_PLAY: readonly HelpSection[] = [
   {
     id: "shipyard",
     title: "The shipyard",
-    summary: `Energy buys hulls (${joinWords(HULLS.map((sides) => String(priceOf(sides))))}), upgrades (${joinWords(HULLS.map(upgradeCost).filter((cost): cost is number => cost !== null).map(String))}), bays (${slotCostAfter(TUNING.startSlots)} up to ${slotCostAfter(FLEET_CELLS - 1)}) and flagship levels (${flagshipUpgradeCost(1)} then ${flagshipUpgradeCost(2)}).`,
+    summary: `Every new ship starts as a ${die(SMALL)} for ${priceOf(SMALL)} Energy. Each ship may grow one step per round for ${joinWords(HULLS.map(upgradeCost).filter((cost): cost is number => cost !== null).map(String))} Energy. Bays cost ${slotCostAfter(TUNING.startSlots)} up to ${slotCostAfter(FLEET_CELLS - 1)}, and flagship levels cost ${flagshipUpgradeCost(1)} then ${flagshipUpgradeCost(2)}.`,
     blocks: [
       {
         kind: "text",
-        text: "The shipyard opens between rounds and there is only one purse. Every Energy you spend on a hull is an Energy you cannot spend on a reroll later.",
+        text: `The shipyard opens between rounds and there is only one purse. An empty bay can build only a ${die(SMALL)}. Each ship may grow by one hull step per round, so a new ${die(SMALL)} cannot jump straight to a capital hull in one visit.`,
       },
       SHOP_TABLE_BLOCK,
       {
         kind: "text",
-        text: `Upgrading is cheaper than buying twice. A ${die(SMALL)} costs ${priceOf(SMALL)} and a ${die(NEXT_UP)} costs ${priceOf(NEXT_UP)}, but turning the ${die(SMALL)} you already own into a ${die(NEXT_UP)} costs ${upgradeCost(SMALL)}. Opening a bay only gives you the space; the ship that stands in it is a separate bill, and each bay costs 1 more than the last.`,
+        text: `Turning a ${die(SMALL)} into a ${die(NEXT_UP)} costs ${upgradeCost(SMALL)} Energy. That ship waits until the next round before it can grow again, but you may upgrade other ships. Opening a bay only gives you the space; its new ${die(SMALL)} is a separate ${priceOf(SMALL)} Energy purchase, and each bay costs 1 more than the last.`,
       },
     ],
   },
