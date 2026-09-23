@@ -173,7 +173,7 @@ function environmentTexture(renderer: THREE.WebGLRenderer): THREE.Texture {
 /* ------------------------------------------------------------------ */
 
 function buildStarfield(): THREE.Points {
-  const count = 1400;
+  const count = 1800;
   const positions = new Float32Array(count * 3);
   const colors = new Float32Array(count * 3);
   const sizes = new Float32Array(count);
@@ -186,17 +186,22 @@ function buildStarfield(): THREE.Points {
     new THREE.Color(0x9fb8ff),
   ];
   for (let i = 0; i < count; i += 1) {
-    const radius = 60 + Math.random() * 120;
+    // Two shells. The far one is the deep field. The nearer one sits behind
+    // the dice so the home screen and the gaps around the board actually
+    // show stars, not a flat black void.
+    const near = i < 520;
+    const radius = near ? 36 + Math.random() * 48 : 78 + Math.random() * 110;
     const theta = Math.random() * Math.PI * 2;
     const phi = Math.acos(2 * Math.random() - 1);
     positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-    positions[i * 3 + 1] = radius * Math.cos(phi) * 0.55;
-    positions[i * 3 + 2] = radius * Math.sin(phi) * Math.sin(theta) - 40;
+    positions[i * 3 + 1] = radius * Math.cos(phi) * (near ? 0.72 : 0.55);
+    positions[i * 3 + 2] = radius * Math.sin(phi) * Math.sin(theta) - (near ? 18 : 46);
     const colour = palette[Math.floor(Math.random() * palette.length)]!;
     colors[i * 3] = colour.r;
     colors[i * 3 + 1] = colour.g;
     colors[i * 3 + 2] = colour.b;
-    sizes[i] = Math.random() < 0.06 ? 2.6 + Math.random() * 2 : 0.5 + Math.random() * 1.1;
+    const bright = Math.random() < (near ? 0.12 : 0.05);
+    sizes[i] = bright ? 2.4 + Math.random() * 2.2 : 0.75 + Math.random() * 1.15;
   }
 
   const geometry = new THREE.BufferGeometry();
@@ -219,7 +224,7 @@ function buildStarfield(): THREE.Points {
         vColour = color;
         vTwinkle = 0.65 + 0.35 * sin(uTime * 1.4 + position.x * 0.6 + position.y);
         vec4 mv = modelViewMatrix * vec4(position, 1.0);
-        gl_PointSize = aSize * uScale * (240.0 / -mv.z);
+        gl_PointSize = aSize * uScale * (380.0 / -mv.z);
         gl_Position = projectionMatrix * mv;
       }
     `,
@@ -230,7 +235,13 @@ function buildStarfield(): THREE.Points {
         vec2 uv = gl_PointCoord - 0.5;
         float d = length(uv);
         float core = smoothstep(0.5, 0.0, d);
-        gl_FragColor = vec4(vColour, core * core * vTwinkle);
+        // A short cross on the brighter points, so they read as stars
+        // rather than dust. Small points stay round because the arms
+        // fall under a pixel.
+        float spike = smoothstep(0.5, 0.05, abs(uv.x)) * smoothstep(0.12, 0.0, abs(uv.y));
+        spike += smoothstep(0.5, 0.05, abs(uv.y)) * smoothstep(0.12, 0.0, abs(uv.x));
+        float alpha = core * core * vTwinkle + spike * 0.22 * vTwinkle;
+        gl_FragColor = vec4(vColour, alpha);
       }
     `,
     vertexColors: true,

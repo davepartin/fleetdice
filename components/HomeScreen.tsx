@@ -12,7 +12,7 @@ import Link from "next/link";
 import { HeroStage } from "./HeroStage";
 import { Button, Chip, Notice, Panel, Rule, Sheet, Spinner } from "./ui";
 import { HowToPlaySheet } from "./HowToPlay";
-import { HULL_PATHS } from "./HullShape";
+import { HelpShipFace } from "./HelpArt";
 import { commanderName, ensurePlayerIdentity, firebaseConfigured, rememberCommanderName } from "@/lib/firebase";
 import {
   cancelRoom,
@@ -136,61 +136,45 @@ export function HomeScreen() {
             {/* Kept above the ways to play, as it was: someone who has never
                 played should not have to scroll past three ways to start a
                 match to find the rules. One quiet line is enough to do that. */}
-            <button
-              type="button"
-              onClick={() => setHelpOpen(true)}
-              className="home-help-link t-eyebrow"
-            >
-              How to play
+            <button type="button" onClick={() => setHelpOpen(true)} className="home-help-link">
+              <RulesMark />
+              <span>How to play</span>
             </button>
 
-            {/* The two ways to play */}
-            <div className="flex flex-col gap-2.5">
-              <Link href="/tutorial/" className="block">
-                <Panel className="home-mode home-mode--tutorial anim-rise flex items-center gap-4 p-4">
-                  <ModeIcon kind="tutorial" />
-                  <span className="min-w-0 flex-1">
-                    <span className="t-display block text-xl text-white">Tutorial</span>
-                    <span className="mt-0.5 block text-sm leading-snug c-dim">
-                      New here? Start with this.
-                    </span>
-                  </span>
-                  <span className="home-mode-go" aria-hidden>
-                    ›
-                  </span>
-                </Panel>
+            <nav className="home-dock" aria-label="Ways to play">
+              <Link href="/tutorial/" className="home-cmd home-cmd--tutorial">
+                <span className="home-cmd-rail" aria-hidden />
+                <ModeIcon kind="tutorial" />
+                <span className="home-cmd-copy">
+                  <span className="home-cmd-kicker">01 · Briefing</span>
+                  <span className="home-cmd-title">Tutorial</span>
+                  <span className="home-cmd-sub">New here? Start with this.</span>
+                </span>
+                <GoMark />
               </Link>
 
-              <Link href="/solo/" className="block">
-                <Panel className="home-mode home-mode--solo anim-rise flex items-center gap-4 p-4">
-                  <ModeIcon kind="solo" />
-                  <span className="min-w-0 flex-1">
-                    <span className="t-display block text-xl text-white">Play solo</span>
-                    <span className="mt-0.5 block text-sm leading-snug c-dim">
-                      Against the ship&apos;s computer.
-                    </span>
-                  </span>
-                  <span className="home-mode-go" aria-hidden>
-                    ›
-                  </span>
-                </Panel>
+              <Link href="/solo/" className="home-cmd home-cmd--solo">
+                <span className="home-cmd-rail" aria-hidden />
+                <ModeIcon kind="solo" />
+                <span className="home-cmd-copy">
+                  <span className="home-cmd-kicker">02 · Skirmish</span>
+                  <span className="home-cmd-title">Play solo</span>
+                  <span className="home-cmd-sub">Against the ship's computer.</span>
+                </span>
+                <GoMark />
               </Link>
 
-              <Link href="/versus/" className="block">
-                <Panel className="home-mode home-mode--versus anim-rise flex items-center gap-4 p-4">
-                  <ModeIcon kind="versus" />
-                  <span className="min-w-0 flex-1">
-                    <span className="t-display block text-xl text-white">Play a friend</span>
-                    <span className="mt-0.5 block text-sm leading-snug c-dim">
-                      Four digits and a link.
-                    </span>
-                  </span>
-                  <span className="home-mode-go" aria-hidden>
-                    ›
-                  </span>
-                </Panel>
+              <Link href="/versus/" className="home-cmd home-cmd--versus">
+                <span className="home-cmd-rail" aria-hidden />
+                <ModeIcon kind="versus" />
+                <span className="home-cmd-copy">
+                  <span className="home-cmd-kicker">03 · Versus</span>
+                  <span className="home-cmd-title">Play a friend</span>
+                  <span className="home-cmd-sub">Four digits and a link.</span>
+                </span>
+                <GoMark />
               </Link>
-            </div>
+            </nav>
 
             {/* Name and code together: both are only about playing someone
                 else, and as two separate panels they pushed the board and the
@@ -222,7 +206,7 @@ export function HomeScreen() {
                   aria-label="Four digit game code"
                   className="t-num min-w-0 flex-1 rounded-xl border border-white/12 bg-black/40 px-3 py-3 text-center text-xl tracking-[0.4em] text-white outline-none focus:border-white/40"
                 />
-                <Button tone="ghost" onClick={join} disabled={joining || code.length !== 4}>
+                <Button tone="ghost" className="home-join" onClick={join} disabled={joining || code.length !== 4}>
                   {joining ? "…" : "Join"}
                 </Button>
               </div>
@@ -381,101 +365,58 @@ export function HomeScreen() {
   );
 }
 
+function GoMark() {
+  return (
+    <span className="home-cmd-go" aria-hidden>
+      <svg viewBox="0 0 20 20" className="home-cmd-chevron" fill="none">
+        <path
+          d="M7.25 4.5 12.75 10l-5.5 5.5"
+          stroke="currentColor"
+          strokeWidth="1.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </span>
+  );
+}
+
+function RulesMark() {
+  return (
+    <svg viewBox="0 0 20 20" className="home-help-mark" fill="none" aria-hidden>
+      <path
+        d="M5.25 3.75h7.1c.9 0 1.65.75 1.65 1.65v10.85H6.9c-.9 0-1.65-.75-1.65-1.65V3.75Z"
+        stroke="currentColor"
+        strokeWidth="1.4"
+      />
+      <path d="M7.4 7.15h4.4M7.4 9.55h4.4M7.4 11.95h2.6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 /**
- * The three ways in, drawn with the same hull silhouettes the dice have on the
- * board (`HULL_PATHS`) rather than icons from some other game. Solo is one die;
- * Play a friend is two. Each one glows in its row's colour — gold to learn,
- * shield blue against the computer, attack red against a person — which is the
- * same colour the row's border and arrow carry, so a row reads as one thing.
- *
- * Outlines, not solid shapes: a filled square at 32px reads as a box, and the
- * dice on the board are lit edges over a dark hull.
+ * The same painted faces the board and the help screen use — resin plate,
+ * numeral, and the marks that face pays — clipped to the hull. Tutorial is
+ * the d10 on 10, solo is one d4 on 1, and versus is your blue d4 against
+ * their red d6.
  */
 function ModeIcon({ kind }: { kind: "solo" | "versus" | "tutorial" }) {
+  if (kind === "versus") {
+    return (
+      <span className="home-mode-icon home-mode-icon--pair" aria-hidden>
+        <HelpShipFace value={1} hull={4} size={34} className="home-die home-die-back" />
+        <HelpShipFace value={2} hull={6} size={36} className="home-die home-die-front" />
+      </span>
+    );
+  }
   return (
-    <span className="home-mode-icon grid h-11 w-11 shrink-0 place-items-center rounded-xl border" aria-hidden>
-      <svg viewBox="0 0 64 64" className="h-8 w-8" fill="none" stroke="currentColor">
-        {kind === "tutorial" ? (
-          /* The d10, labelled with its own size — the same thing the board
-             writes on a hull that has not rolled yet. No question mark, and
-             none of the face marks: a bolt here would give the Energy mark a
-             second meaning. */
-          <>
-            <path d={HULL_PATHS[10]} strokeWidth="3.5" strokeLinejoin="round" fill="currentColor" fillOpacity="0.12" />
-            <text
-              x="32"
-              y="34"
-              textAnchor="middle"
-              dominantBaseline="central"
-              fontSize="20"
-              fontWeight="700"
-              fill="currentColor"
-              stroke="none"
-            >
-              10
-            </text>
-          </>
-        ) : kind === "solo" ? (
-          /* One die, the d4 triangle, showing a 1: one commander. */
-          <>
-            <path d={HULL_PATHS[4]} strokeWidth="3.5" strokeLinejoin="round" fill="currentColor" fillOpacity="0.12" />
-            <text
-              x="32"
-              y="36"
-              textAnchor="middle"
-              dominantBaseline="central"
-              fontSize="22"
-              fontWeight="700"
-              fill="currentColor"
-              stroke="none"
-            >
-              1
-            </text>
-          </>
-        ) : (
-          /* Two dice, two commanders: your blue d4 as 1, theirs a red d6 as 2.
-             These two keep their own colours rather than the row's, because the
-             point of the mark is that there are two sides. */
-          <>
-            <g
-              transform="translate(-8 12) scale(0.7)"
-              stroke="var(--color-shield)"
-              fill="var(--color-shield)"
-            >
-              <path d={HULL_PATHS[4]} strokeWidth="5" strokeLinejoin="round" fillOpacity="0.14" />
-              <text
-                x="32"
-                y="36"
-                textAnchor="middle"
-                dominantBaseline="central"
-                fontSize="24"
-                fontWeight="700"
-                stroke="none"
-              >
-                1
-              </text>
-            </g>
-            <g
-              transform="translate(27 8) scale(0.7)"
-              stroke="var(--color-attack)"
-              fill="var(--color-attack)"
-            >
-              <path d={HULL_PATHS[6]} strokeWidth="5" strokeLinejoin="round" fillOpacity="0.14" />
-              <text
-                x="32"
-                y="33"
-                textAnchor="middle"
-                dominantBaseline="central"
-                fontSize="24"
-                fontWeight="700"
-                stroke="none"
-              >
-                2
-              </text>
-            </g>
-          </>
-        )}
-      </svg>
+    <span className="home-mode-icon" aria-hidden>
+      <HelpShipFace
+        value={kind === "tutorial" ? 10 : 1}
+        hull={kind === "tutorial" ? 10 : 4}
+        size={48}
+        className="home-die"
+      />
     </span>
   );
 }
