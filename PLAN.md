@@ -1233,18 +1233,19 @@ symbols. Leave out the tilted camera and stacking (numbers get harder to read),
 real reflections (every die drawn twice) and the ship (it pulls the eye off the
 numbers).
 
-### Future flagship weapon ideas (25 September 2026)
+### Future flagship weapon ideas (running tally, 25 September 2026)
 
-Ideas only, from a call with the owner. None of these is built or measured.
-Each needs a sim run (`sim/weapons.mjs`) and the owner's go-ahead before any
-work starts. The four weapons that exist today are described in `BALANCE.md`
-under "Four flagship weapons".
+Built today (4):
 
-1. **Direct Block**: blocks all Direct hits this round.
-2. **Energy Halving**: halves whatever Energy the enemy would have gained this round.
-3. **Repair ×2**: heals round number × 2, mirroring the Attack weapon's scaling.
-4. **Energy Drain**: proposed as a new flagship weapon; its effect is still to be decided.
+1. Rotate Flagship
+2. Super Shield (halves enemy Attack before own Shields)
+3. Attack (round × 2)
+4. Repair (flat 20)
 
-**Considered and dropped:** Double Energy and Double Repair, which would double
-what you roll that round. The owner decided against both because one hot roll
-could snowball. The shipyard limit of one upgrade per die per round stays as it is.
+New ideas under consideration (counting up):
+
+5. Energy Drain — halves whatever Energy the enemy would have gained this round. (Previously called "Energy Halving"; same weapon, renamed.)
+6. Direct Block — blocks all Direct hits this round.
+7. Energy Reroll Disable — disables the enemy's energy reroll.
+
+Considered and dropped: Double Energy, Double Repair, and Repair ×2. Dropped because a hot roll could snowball; the one-upgrade-per-die-per-round rule stays.
