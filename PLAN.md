@@ -1247,5 +1247,14 @@ New ideas under consideration (counting up):
 5. Energy Drain — halves whatever Energy the enemy would have gained this round. (Previously called "Energy Halving"; same weapon, renamed.)
 6. Direct Block — blocks all Direct hits this round.
 7. Energy Reroll Disable — disables the enemy's energy reroll.
+8. Energy Attack — you can add energy to this weapon throughout the game (max +5 per turn, one-to-one from your energy storehouse). Each energy added becomes +1 Attack when fired. Caps at 20. Rechargeable: after firing, you can add energy to it again. Mirrors the standard Attack weapon (round × 2) but is fueled by spent energy instead of a flat round-times-two.
+9. Energy Shield — identical mechanic to Energy Attack, but each energy added becomes +1 Shield instead of Attack. Same max +5 per turn, same one-to-one from the energy storehouse, same rechargeable-after-firing rule. Cap TBD (owner suggested matching the 5-per-turn drip; confirm with owner before locking).
+
+Layout/UI requirements for ideas 8 and 9 (owner was explicit; not built yet):
+
+- The flagship weapons screen shows all six weapons at once with no scrolling.
+- Grouping: top-left Rotate, top-right Repair, middle-left Attack, middle-right Super Shield, bottom-left Energy Attack, bottom-right Energy Shield.
+- Energy Attack and Energy Shield must use the identical mechanic and look parallel on screen — one adds to Attack, one adds to Shields.
+- Inside each energy weapon: a +1 control that adds to what's already stored and automatically deducts from the player's energy bank. Keep it compact and clear so the player instantly sees what they're doing.
 
 Considered and dropped: Double Energy, Double Repair, and Repair ×2. Dropped because a hot roll could snowball; the one-upgrade-per-die-per-round rule stays.
