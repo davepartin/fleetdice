@@ -3,20 +3,38 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
-  TUNING, FLAG_FACES, WEAPON_IDS, WEAPON_NAMES, weaponAttack, weaponEffect, weaponStatus, weaponsOf, roundWeapon,
-  type MatchAction, type PlayerState, type WeaponId, type WeaponInventory, type WeaponUse,
+  TUNING, FLAG_FACES, WEAPON_GRID_IDS, WEAPON_IDS, WEAPON_NAMES, weaponAttack, weaponChargeCostOf,
+  weaponEffect, weaponFilledThisRound, weaponStatus, weaponStored, weaponsOf, roundWeapon,
+  canFillWeapon, isEnergyWeapon,
+  type EnergyWeaponId, type MatchAction, type PlayerState, type WeaponId, type WeaponInventory, type WeaponUse,
 } from "@/lib/engine";
 import { EnergyBank, EnergyPrice } from "./ui";
 import { StatIcon } from "./StatIcon";
 
-const TONE = { rotate: "energy", shield: "shield", attack: "attack", repair: "repair" };
+const TONE: Record<WeaponId, string> = {
+  rotate: "energy",
+  shield: "shield",
+  attack: "attack",
+  repair: "repair",
+  energyAttack: "attack",
+  energyShield: "shield",
+};
 const STATE = { locked: "Locked", available: "Available", used: "Used" };
 /** Short names for the compact dock tap. Full names stay in the window. */
-const DOCK_NAME = { rotate: "Rotate", shield: "Shield", attack: "Attack", repair: "Repair" };
+const DOCK_NAME: Record<WeaponId, string> = {
+  rotate: "Rotate",
+  shield: "Shield",
+  attack: "Attack",
+  repair: "Repair",
+  energyAttack: "E-Atk",
+  energyShield: "E-Shd",
+};
 
 export function weaponUseText(use: WeaponUse): string {
   if (use.id === "rotate") return `Rotate Flagship · ${use.from ?? "?"} → ${use.to ?? "?"}`;
   if (use.id === "shield") return `Super Shield · ${use.amount} Attack stopped`;
+  if (use.id === "energyAttack") return `Energy Attack · +${use.amount} Attack`;
+  if (use.id === "energyShield") return `Energy Shield · +${use.amount} Shields`;
   return `${WEAPON_NAMES[use.id]} · +${use.amount}`;
 }
 
@@ -38,8 +56,17 @@ function WeaponIcon({ id, size = 22 }: { id: WeaponId; size?: number }) {
       </svg>
     );
   }
-  const kind = id === "shield" ? "shield" : id === "attack" ? "attack" : "repair";
-  return <StatIcon kind={kind} size={size} className="weapon-symbol" />;
+  const kind = id === "shield" || id === "energyShield" ? "shield"
+    : id === "attack" || id === "energyAttack" ? "attack"
+    : "repair";
+  const mark = <StatIcon kind={kind} size={size} className="weapon-symbol" />;
+  if (!isEnergyWeapon(id)) return mark;
+  return (
+    <span className="weapon-energy-mark" aria-hidden="true">
+      {mark}
+      <StatIcon kind="energy" size={Math.max(10, Math.round(size * 0.55))} className="weapon-energy-bolt" />
+    </span>
+  );
 }
 
 function LockMark() {
@@ -69,7 +96,7 @@ export function EnemyWeaponRow({ stock, name }: { stock: WeaponInventory; name: 
   return <div className="weapon-enemy-row" aria-label={`${name} flagship weapons`}>
     <p className="weapon-enemy-row-label">{name}</p>
     <div className="weapon-enemy-boxes" role="list">
-      {WEAPON_IDS.map(id => {
+      {WEAPON_GRID_IDS.map(id => {
         const status = weaponStatus(stock, id);
         const usedRound = stock[id].usedRound;
         const caption = status === "used" && usedRound ? `Used · R${usedRound}` : STATE[status];
@@ -78,7 +105,7 @@ export function EnemyWeaponRow({ stock, name }: { stock: WeaponInventory; name: 
           aria-label={`${WEAPON_NAMES[id]} · ${caption}`}
           title={`${WEAPON_NAMES[id]} · ${caption}`}>
           <span className="weapon-enemy-mark">
-            <WeaponIcon id={id} size={22} />
+            <WeaponIcon id={id} size={18} />
             {status === "locked" && <LockMark />}
           </span>
           {status === "used" && <span className="weapon-enemy-slash" aria-hidden="true" />}
@@ -91,12 +118,13 @@ export function EnemyWeaponRow({ stock, name }: { stock: WeaponInventory; name: 
 export function WeaponStatusList({ stock, name }: { stock: WeaponInventory; name: string }) {
   return <div className="weapon-status-list" aria-label={`${name} flagship weapons`}>
     <p className="t-eyebrow">{name}</p>
-    {WEAPON_IDS.map(id => {
+    {WEAPON_GRID_IDS.map(id => {
       const status = weaponStatus(stock, id);
       const use = stock[id].use;
+      const stored = isEnergyWeapon(id) ? weaponStored(stock, id) : 0;
       return <div key={id} className={`weapon-status-row weapon-status-${status}`}>
         <span className={`c-${TONE[id]} weapon-status-name`}><WeaponIcon id={id} size={16} />{WEAPON_NAMES[id]}</span>
-        <span>{status === "used" && stock[id].usedRound ? `Used R${stock[id].usedRound}` : STATE[status]}</span>
+        <span>{status === "used" && stock[id].usedRound ? `Used R${stock[id].usedRound}` : isEnergyWeapon(id) && status === "available" ? `${stored}/${TUNING.weaponEnergyStoreMax}` : STATE[status]}</span>
         {use && <small>{weaponUseText(use)}</small>}
       </div>;
     })}
@@ -118,7 +146,7 @@ export function WeaponReport({ yours, theirs, yourStock, enemyStock, enemyName }
   </div>;
 }
 
-function WeaponEffectLine({ id, round }: { id: WeaponId; round: number }) {
+function WeaponEffectLine({ id, round, stored = 0 }: { id: WeaponId; round: number; stored?: number }) {
   if (id === "attack") {
     return (
       <p className="weapon-effect">
@@ -129,7 +157,7 @@ function WeaponEffectLine({ id, round }: { id: WeaponId; round: number }) {
       </p>
     );
   }
-  return <p className="weapon-effect">{weaponEffect(id, round)}</p>;
+  return <p className="weapon-effect">{weaponEffect(id, round, stored)}</p>;
 }
 
 function lockedWeapons(player: PlayerState) {
@@ -148,7 +176,8 @@ export function FlagshipWeapons({ player, enemy, shop = false, busy, onAction }:
   const [open, setOpen] = useState(false);
   const used = roundWeapon(player);
   const locked = lockedWeapons(player);
-  const wait = shop && locked.length > 0 && player.energy < TUNING.weaponChargeCost;
+  const nextCost = locked.length ? Math.min(...locked.map(weaponChargeCostOf)) : TUNING.weaponChargeCost;
+  const wait = shop && locked.length > 0 && player.energy < nextCost;
   const canCharge = shop && locked.length > 0;
   const charged = shop && locked.length === 0;
   return <>
@@ -164,8 +193,8 @@ export function FlagshipWeapons({ player, enemy, shop = false, busy, onAction }:
             <span className="weapon-launcher-shop-label">Flagship Weapons</span>
             {canCharge && (
               <EnergyPrice
-                cost={TUNING.weaponChargeCost}
-                affordable={player.energy >= TUNING.weaponChargeCost}
+                cost={nextCost}
+                affordable={player.energy >= nextCost}
               />
             )}
           </span>
@@ -196,7 +225,9 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
   const canFire = player.phase === "rolling" && !used && !busy;
   const fire = (action: MatchAction) => { onAction(action); onClose(); };
   const turning = rotate && canFire && weaponStatus(stock, "rotate") === "available";
-  const shopLede = shop ? "One-time use per game and only 1 per round" : null;
+  const shopLede = shop
+    ? "One fire per round. Four once a game; energy weapons refill"
+    : null;
   return createPortal(<dialog ref={dialog} className="weapon-window" aria-labelledby="weapon-title"
     onCancel={onClose} onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
     <div className="weapon-window-inner">
@@ -208,18 +239,21 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
           </p>
           <h2 id="weapon-title" className="t-display">Flagship weapons</h2>
         </div>
-        {shop && <EnergyBank energy={player.energy} />}
-        <p className="weapon-lede">{shopLede ?? <>Each may be used <b>once</b> per game<br />and only <b>one</b> per round.</>}</p>
+        <EnergyBank energy={player.energy} />
+        <p className="weapon-lede">{shopLede ?? <>One fire per round. Four once a game;<br />Energy Attack and Energy Shield refill.</>}</p>
       </header>
       <div className="weapon-window-body">
         {tips && <div className="weapon-tips">
-          <p>Charge each weapon once in the shipyard for {TUNING.weaponChargeCost} Energy. Save it for any later volley. Firing costs no extra Energy.</p>
-          <p>Both players can see charged and used weapons. Your activation stays hidden until both lock in.</p>
+          <p>Rotate, Super Shield, Attack and Repair charge once in the shipyard for {TUNING.weaponChargeCost} Energy. Energy Attack costs {weaponChargeCostOf("energyAttack")} and Energy Shield costs {weaponChargeCostOf("energyShield")}. Those two then take Energy from your bank.</p>
+          <p>Add up to {TUNING.weaponEnergyFillPerRound} Energy per weapon each round, one for one from the bank, up to {TUNING.weaponEnergyStoreMax} stored. Adding Energy is not firing. Firing Energy Attack or Energy Shield spends that round’s weapon and empties the store so you can fill it again.</p>
+          <p>Both players can see charged and used weapons. Stored Energy and your activation stay hidden until both lock in.</p>
           <p><b>Rotate:</b> turn your flagship −1 or +1 after rolling. It can complete a straight or change your bonus.</p>
           <p><b>Super Shield:</b> halve enemy Attack before your Shields and blocking ships. An odd total rounds up after halving. Direct and War still follow their usual rules.</p>
           <p><b>Attack:</b> add Round (the current round) × {TUNING.weaponAttackPerRound} Attack. Waiting makes it stronger; enemy defenses still apply.</p>
           <p><b>Repair:</b> add {TUNING.weaponRepair} health alongside this volley’s damage. It can save your flagship and raise your health above its previous high.</p>
-          <p>Opening this window or pressing Back spends nothing. Pressing Use, or a rotation direction, spends that charge immediately.</p>
+          <p><b>Energy Attack:</b> each stored Energy becomes 1 Attack when fired.</p>
+          <p><b>Energy Shield:</b> each stored Energy becomes 1 Shield when fired. Shields stop Attack; they do not stop Direct or War.</p>
+          <p>Opening this window or pressing Back spends nothing. Pressing +1 spends 1 Energy into that store. Pressing Use, or a rotation direction, fires that weapon immediately.</p>
         </div>}
         <div className="weapon-stage">
         {turning ? (
@@ -241,25 +275,42 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
           </div>
         ) : (
         <div className="weapon-card-grid">
-          {WEAPON_IDS.map(id => {
+          {WEAPON_GRID_IDS.map(id => {
             const status = weaponStatus(stock, id);
-            const enabled = !busy && (shop
-              ? player.phase === "shop" && status === "locked" && player.energy >= TUNING.weaponChargeCost
-              : status === "available" && canFire);
-            return <section className={`weapon-card weapon-${id} weapon-card-${status}`} key={id}>
+            const cost = weaponChargeCostOf(id);
+            const stored = weaponStored(stock, id);
+            const filled = weaponFilledThisRound(stock, id, player.round);
+            const energy = isEnergyWeapon(id);
+            const canChargeThis = !busy && shop && player.phase === "shop" && status === "locked" && player.energy >= cost;
+            const canUseThis = !busy && !shop && status === "available" && canFire && (!energy || stored > 0);
+            const enabled = canChargeThis || canUseThis;
+            return <section className={`weapon-card weapon-${id} weapon-card-${status}${energy ? " weapon-card-energy" : ""}`} key={id}>
               <div className="weapon-card-top"><WeaponIcon id={id} /><span className="weapon-state">{STATE[status]}</span></div>
               <h3>{WEAPON_NAMES[id]}</h3>
-              <WeaponEffectLine id={id} round={player.round} />
+              <WeaponEffectLine id={id} round={player.round} stored={stored} />
+              {energy && status === "available" && (
+                <div className="weapon-energy-store">
+                  <p className="weapon-energy-count t-num">{stored}/{TUNING.weaponEnergyStoreMax}</p>
+                  <p className="weapon-energy-cap">{filled}/{TUNING.weaponEnergyFillPerRound} this round · 1 Energy each</p>
+                  <button type="button"
+                    className="weapon-energy-plus"
+                    disabled={busy || !canFillWeapon(player, id)}
+                    onClick={() => onAction({ type: "weapon-fill", weapon: id as EnergyWeaponId })}
+                    aria-label={`Add 1 Energy to ${WEAPON_NAMES[id]}`}>
+                    +1
+                  </button>
+                </div>
+              )}
               <button type="button" disabled={!enabled}
                 className={shop && status === "available" ? "weapon-btn-charged" : !shop && status === "available" && enabled ? "weapon-btn-ready" : undefined}
                 onClick={() => {
                   if (shop) onAction({ type: "shop", operation: "weapon", weapon: id });
                   else if (id === "rotate") setRotate(true);
-                  else fire({ type: "weapon", weapon: id });
-                }} aria-label={shop ? `Charge ${WEAPON_NAMES[id]} for ${TUNING.weaponChargeCost} Energy` : `Use ${WEAPON_NAMES[id]}`}>
+                  else fire({ type: "weapon", weapon: id as Exclude<WeaponId, "rotate"> });
+                }} aria-label={shop ? `Charge ${WEAPON_NAMES[id]} for ${cost} Energy` : `Use ${WEAPON_NAMES[id]}`}>
                 {status === "used" ? `Used${stock[id].usedRound ? ` · Round ${stock[id].usedRound}` : ""}`
-                  : shop ? status === "available" ? "Charged" : `Charge · ${TUNING.weaponChargeCost} Energy`
-                  : status === "locked" ? "Charge in shipyard" : used ? "Next volley" : "Use weapon"}
+                  : shop ? status === "available" ? energy ? "Unlocked" : "Charged" : `Charge · ${cost} Energy`
+                  : status === "locked" ? "Charge in shipyard" : used ? "Next volley" : energy && stored <= 0 ? "Add Energy first" : "Use weapon"}
               </button>
             </section>;
           })}

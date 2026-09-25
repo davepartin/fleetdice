@@ -39,7 +39,7 @@ function shopState() {
 
 function chargedState() {
   const s = shopState();
-  s.players.host.energy = 24;
+  s.players.host.energy = 40;
   for (const id of WEAPON_IDS) {
     applyAction(s, "host", { type: "shop", operation: "weapon", weapon: id });
   }
@@ -181,7 +181,7 @@ try {
         };
       });
     });
-    assert.equal(charged.length, 4, "all four weapons should show Charged");
+    assert.equal(charged.length, 4, "the four once-a-match weapons should show Charged");
     for (const btn of charged) {
       assert.equal(btn.text, "Charged");
       assert.match(btn.backgroundImage, /gradient/i, "Charged must be a coloured fill, not a flat black");

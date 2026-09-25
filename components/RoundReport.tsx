@@ -121,6 +121,8 @@ function weaponNote(use: WeaponUse | null | undefined): string | null {
   if (use.id === "rotate") return `Rotate ${use.from ?? "?"} \u2192 ${use.to ?? "?"}`;
   if (use.id === "shield") return `Super Shield \u00d7\u00bd`;
   if (use.id === "attack") return `Attack +${use.amount}`;
+  if (use.id === "energyAttack") return `Energy Attack +${use.amount}`;
+  if (use.id === "energyShield") return `Energy Shield +${use.amount}`;
   return `Repair +${use.amount}`;
 }
 

@@ -3,8 +3,9 @@ import assert from "node:assert/strict";
 import { bundlePath } from "../sim/bundle.mjs";
 const G = await import(bundlePath);
 const { newMatch, newPlayer, applyAction, previewTally, publicMatchView, weaponsOf, weaponStatus,
-  WEAPON_IDS, TUNING, tally, makeRng, setRng, parseSoloSave, newBrain, checkMove,
-  superShieldReduction, chooseCombatWeapon, nextActions, planShopping } = G;
+  WEAPON_IDS, CLASSIC_WEAPON_IDS, ENERGY_WEAPON_IDS, TUNING, tally, makeRng, setRng, parseSoloSave, newBrain, checkMove,
+  superShieldReduction, chooseCombatWeapon, nextActions, planShopping, weaponStored, weaponFilledThisRound,
+  weaponChargeCostOf, canFillWeapon, hideEnergyWeaponStores } = G;
 
 function match(round = 4) {
   setRng(makeRng(481));
@@ -39,10 +40,10 @@ function settle(s) {
   }
 }
 
-test("new battles start with four locked weapons; each charges for exactly six once", () => {
+test("new battles start with six locked weapons; the classic four still charge for exactly six once", () => {
   const s = match(); const p = s.players.host;
-  for (const id of WEAPON_IDS) {
-    assert.equal(weaponStatus(weaponsOf(p), id), "locked");
+  for (const id of WEAPON_IDS) assert.equal(weaponStatus(weaponsOf(p), id), "locked");
+  for (const id of CLASSIC_WEAPON_IDS) {
     const before = p.energy;
     charge(s, "host", id);
     assert.equal(p.energy, before - 6);
@@ -51,6 +52,9 @@ test("new battles start with four locked weapons; each charges for exactly six o
     assert.equal(p.energy, before - 6);
   }
   assert.equal(p.energy, 0);
+  assert.equal(TUNING.weaponChargeCost, 6);
+  assert.notEqual(TUNING.weaponEnergyAttackCost, 6);
+  assert.notEqual(TUNING.weaponEnergyShieldCost, 6);
 });
 
 test("charging refuses insufficient Energy and use outside the shipyard without a spend", () => {
@@ -141,7 +145,7 @@ test("rotation wraps both ways, needs charging and obeys the volley limit", () =
 });
 
 test("opponents see a charged threat but cannot see activation until the volley reveals", () => {
-  for (const id of WEAPON_IDS) {
+  for (const id of CLASSIC_WEAPON_IDS) {
     const s = match(); charge(s, "guest", id); rollBoth(s);
     const before = publicMatchView(s, "host").players.guest;
     applyAction(s, "guest", id === "rotate" ? { type: "flag-token", direction: 1 } : { type: "weapon", weapon: id });
@@ -204,7 +208,7 @@ test("Attack weapon copy is the round times two as an equation from TUNING", () 
 });
 
 test("AI weapon decisions do not depend on hidden enemy dice", () => {
-  const s = match(9); for (const id of WEAPON_IDS) charge(s, "host", id); rollBoth(s);
+  const s = match(9); for (const id of CLASSIC_WEAPON_IDS) charge(s, "host", id); rollBoth(s);
   const p = s.players.host; const enemy = s.players.guest;
   const action = chooseCombatWeapon(p, enemy, .7, 6);
   enemy.dice.forEach(d => d.value = 1);
@@ -310,7 +314,9 @@ test("a charged Rotate is spent on a modest late swing rather than held unused",
 
 test("the Enemy times weapons from the public board, never a hidden activation", () => {
   const s = match(9);
-  for (const id of WEAPON_IDS) {
+  s.players.host.energy = 40;
+  s.players.guest.energy = 40;
+  for (const id of CLASSIC_WEAPON_IDS) {
     charge(s, "guest", id);
     charge(s, "host", id);
   }
@@ -358,4 +364,204 @@ test("Formation still buys a hull with 6 Energy after weapons entered the shop",
   const buy = acts.find((a) => a.type === "shop" && a.operation === "buy");
   assert.ok(buy, "a live line still beats charging a weapon");
   assert.equal(buy.slotIndex, 1);
+});
+
+function fill(s, side, id, n = 1) {
+  for (let i = 0; i < n; i += 1) applyAction(s, side, { type: "weapon-fill", weapon: id });
+}
+
+test("Energy Attack unlocks at its own cost, fills from the bank, and fires as Attack", () => {
+  const s = match();
+  const p = s.players.host;
+  const cost = weaponChargeCostOf("energyAttack");
+  assert.notEqual(cost, TUNING.weaponChargeCost);
+  const before = p.energy;
+  charge(s, "host", "energyAttack");
+  assert.equal(p.energy, before - cost);
+  assert.equal(weaponStatus(weaponsOf(p), "energyAttack"), "available");
+  assert.equal(weaponStored(weaponsOf(p), "energyAttack"), 0);
+  fill(s, "host", "energyAttack", 3);
+  assert.equal(p.energy, before - cost - 3);
+  assert.equal(weaponStored(weaponsOf(p), "energyAttack"), 3);
+  assert.equal(weaponFilledThisRound(weaponsOf(p), "energyAttack", p.round), 3);
+  rollBoth(s);
+  const attackBefore = previewTally(p).attack;
+  applyAction(s, "host", { type: "weapon", weapon: "energyAttack" });
+  assert.equal(previewTally(p).attack, attackBefore + 3);
+  assert.equal(weaponStored(weaponsOf(p), "energyAttack"), 0);
+  assert.equal(weaponStatus(weaponsOf(p), "energyAttack"), "available");
+});
+
+test("Energy Shield fires as ordinary Shields and does not stop Direct", () => {
+  const s = match();
+  charge(s, "host", "energyShield");
+  fill(s, "host", "energyShield", 5);
+  rollBoth(s);
+  faces(s.players.host, [2, 2, 2, 2], 1); // even faces: Attack, no Shields
+  faces(s.players.guest, [10, 10, 10, 10]); // 40 Attack + 12 Direct
+  const defenseBefore = previewTally(s.players.host).defense;
+  assert.equal(defenseBefore, 0);
+  applyAction(s, "host", { type: "weapon", weapon: "energyShield" });
+  assert.equal(previewTally(s.players.host).defense, 5);
+  settle(s);
+  const r = s.players.host.report;
+  assert.equal(r.direct, 12);
+  assert.equal(r.incoming, 35); // 40 Attack - 5 Energy Shield, Direct still 12
+  assert.equal(r.weapon.id, "energyShield");
+  assert.equal(r.weapon.amount, 5);
+  assert.equal(weaponStored(weaponsOf(s.players.host), "energyShield"), 0);
+});
+
+test("energy weapons honour the 5-per-round fill cap, the 20 max, and an empty bank", () => {
+  const s = match();
+  const p = s.players.host;
+  charge(s, "host", "energyAttack");
+  fill(s, "host", "energyAttack", TUNING.weaponEnergyFillPerRound);
+  assert.equal(weaponStored(weaponsOf(p), "energyAttack"), 5);
+  assert.equal(canFillWeapon(p, "energyAttack"), false);
+  assert.throws(() => fill(s, "host", "energyAttack"), /at most/);
+  p.weapons.energyAttack.stored = TUNING.weaponEnergyStoreMax - 1;
+  p.weapons.energyAttack.filledThisRound = 0;
+  p.weapons.energyAttack.filledRound = p.round;
+  p.energy = 5;
+  fill(s, "host", "energyAttack", 1);
+  assert.equal(weaponStored(weaponsOf(p), "energyAttack"), TUNING.weaponEnergyStoreMax);
+  assert.throws(() => fill(s, "host", "energyAttack"), /at most 20|holds at most/);
+  p.weapons.energyAttack.stored = 10;
+  p.weapons.energyAttack.filledThisRound = 0;
+  p.energy = 0;
+  assert.equal(canFillWeapon(p, "energyAttack"), false);
+  assert.throws(() => fill(s, "host", "energyAttack"), /Energy/);
+});
+
+test("firing an energy weapon resets the store and does not lock it for the match", () => {
+  const s = match();
+  charge(s, "host", "energyAttack");
+  fill(s, "host", "energyAttack", 4);
+  rollBoth(s);
+  applyAction(s, "host", { type: "weapon", weapon: "energyAttack" });
+  assert.equal(weaponStored(weaponsOf(s.players.host), "energyAttack"), 0);
+  assert.equal(weaponStatus(weaponsOf(s.players.host), "energyAttack"), "available");
+  settle(s);
+  applyAction(s, "host", { type: "continue" });
+  s.players.host.energy = 8;
+  fill(s, "host", "energyAttack", 2);
+  assert.equal(weaponStored(weaponsOf(s.players.host), "energyAttack"), 2);
+  applyAction(s, "host", { type: "ready" });
+  applyAction(s, "host", { type: "roll", dice: [] });
+  applyAction(s, "host", { type: "weapon", weapon: "energyAttack" });
+  assert.equal(previewTally(s.players.host).attack, tally(s.players.host.dice, 1).attack + 2);
+});
+
+test("firing Energy Attack or Energy Shield counts as that round's only weapon", () => {
+  const s = match();
+  charge(s, "host", "energyAttack");
+  charge(s, "host", "repair");
+  fill(s, "host", "energyAttack", 2);
+  rollBoth(s);
+  applyAction(s, "host", { type: "weapon", weapon: "energyAttack" });
+  assert.throws(() => applyAction(s, "host", { type: "weapon", weapon: "repair" }), /one flagship weapon/);
+});
+
+test("adding Energy is not firing, so it can sit beside a charged classic weapon", () => {
+  const s = match();
+  charge(s, "host", "energyShield");
+  charge(s, "host", "attack");
+  fill(s, "host", "energyShield", 2);
+  rollBoth(s);
+  applyAction(s, "host", { type: "weapon", weapon: "attack" });
+  assert.equal(s.players.host.weaponThisRound.id, "attack");
+  s.players.host.energy = 3;
+  fill(s, "host", "energyShield", 1);
+  assert.equal(weaponStored(weaponsOf(s.players.host), "energyShield"), 3);
+  assert.equal(s.players.host.weaponThisRound.id, "attack");
+});
+
+test("energy stores survive a save and stay hidden from the opponent until reveal", () => {
+  const s = match();
+  charge(s, "guest", "energyAttack");
+  fill(s, "guest", "energyAttack", 4);
+  rollBoth(s);
+  const before = publicMatchView(s, "host").players.guest;
+  assert.equal(weaponStatus(before.weapons, "energyAttack"), "available");
+  assert.equal(weaponStored(before.weapons, "energyAttack"), 0);
+  assert.equal(weaponStored(s.players.guest.weapons, "energyAttack"), 4);
+  applyAction(s, "guest", { type: "weapon", weapon: "energyAttack" });
+  const after = publicMatchView(s, "host").players.guest;
+  assert.deepEqual(after.weapons, before.weapons);
+  assert.equal(after.weaponThisRound, null);
+  assert.equal(weaponStored(after.weapons, "energyAttack"), 0);
+  const own = publicMatchView(s, "guest").players.guest;
+  assert.equal(own.weaponThisRound.id, "energyAttack");
+  assert.equal(own.weaponThisRound.amount, 4);
+  const saved = parseSoloSave(JSON.stringify({ schema: 1, savedAt: Date.now(), state: s, brain: newBrain("balanced") }));
+  assert.equal(saved.state.players.guest.weaponThisRound.amount, 4);
+  assert.equal(weaponStatus(saved.state.players.guest.weapons, "energyAttack"), "available");
+  settle(s);
+  assert.equal(s.players.host.report.enemyWeapon.id, "energyAttack");
+  assert.equal(s.players.host.report.enemyWeapon.amount, 4);
+  assert.equal(weaponStored(s.players.host.report.enemyWeapons, "energyAttack"), 0);
+  assert.deepEqual(hideEnergyWeaponStores(s.players.guest.weapons).energyAttack.stored, 0);
+});
+
+test("an old save missing energy weapons still loads and treats them as locked", () => {
+  const s = match();
+  charge(s, "host", "repair");
+  delete s.players.host.weapons.energyAttack;
+  delete s.players.host.weapons.energyShield;
+  const saved = parseSoloSave(JSON.stringify({ schema: 1, savedAt: Date.now(), state: s, brain: newBrain("balanced") }));
+  assert.ok(saved);
+  assert.equal(weaponStatus(weaponsOf(saved.state.players.host), "repair"), "available");
+  assert.equal(weaponStatus(weaponsOf(saved.state.players.host), "energyAttack"), "locked");
+  assert.equal(weaponStatus(weaponsOf(saved.state.players.host), "energyShield"), "locked");
+});
+
+test("the solo brain fills and can fire an unlocked Energy Attack", () => {
+  const s = match(8);
+  const p = s.players.host;
+  charge(s, "host", "energyAttack");
+  p.energy = 8;
+  p.hp = 50;
+  s.players.guest.hp = 8;
+  const shopActs = nextActions(s, "host", newBrain("balanced", "hard"));
+  assert.ok(shopActs.some((a) => a.type === "weapon-fill" && a.weapon === "energyAttack"), "leftover Energy should fill Energy Attack");
+  for (const action of shopActs) {
+    if (s.players.host.phase !== "shop") break;
+    if (action.type === "ready" || action.type === "weapon-fill" || (action.type === "shop")) {
+      try { applyAction(s, "host", action); } catch { /* skip a move that stopped being legal */ }
+    }
+  }
+  if (p.phase === "shop") applyAction(s, "host", { type: "ready" });
+  if (s.players.guest.phase === "shop") applyAction(s, "guest", { type: "ready" });
+  if (p.phase === "ready") applyAction(s, "host", { type: "roll", dice: [] });
+  if (s.players.guest.phase === "ready") applyAction(s, "guest", { type: "roll", dice: [] });
+  const stored = weaponStored(weaponsOf(p), "energyAttack");
+  assert.ok(stored > 0, "the brain should have put Energy in the store");
+  p.weapons.energyAttack.stored = 10;
+  faces(p, [1, 1, 1, 1], 1);
+  s.players.guest.hp = 8;
+  const action = chooseCombatWeapon(p, publicMatchView(s, "host").players.guest, 0.6, 4);
+  assert.equal(action?.type, "weapon");
+  assert.equal(action?.weapon, "energyAttack");
+});
+
+test("the per-round fill cap resets when the next shipyard opens", () => {
+  const s = match();
+  charge(s, "host", "energyAttack");
+  fill(s, "host", "energyAttack", TUNING.weaponEnergyFillPerRound);
+  rollBoth(s);
+  settle(s);
+  applyAction(s, "host", { type: "continue" });
+  s.players.host.energy = 5;
+  fill(s, "host", "energyAttack", 2);
+  assert.equal(weaponStored(weaponsOf(s.players.host), "energyAttack"), 7);
+  assert.equal(weaponFilledThisRound(weaponsOf(s.players.host), "energyAttack", s.players.host.round), 2);
+});
+
+test("energy weapon charge costs live in TUNING and are not six", () => {
+  for (const id of ENERGY_WEAPON_IDS) {
+    assert.equal(weaponChargeCostOf(id), id === "energyAttack" ? TUNING.weaponEnergyAttackCost : TUNING.weaponEnergyShieldCost);
+    assert.notEqual(weaponChargeCostOf(id), 6);
+  }
+  assert.equal(weaponChargeCostOf("attack"), 6);
 });

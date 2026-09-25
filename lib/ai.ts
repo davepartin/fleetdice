@@ -43,12 +43,17 @@ import {
   upgradeTarget,
   weaponsOf,
   weaponStatus,
+  weaponStored,
+  weaponChargeCostOf,
+  canFillWeapon,
+  weaponFilledThisRound,
   roundWeapon,
   weaponAttack,
   publicMatchView,
   opponentOf,
   escalationFor,
   WEAPON_IDS,
+  type EnergyWeaponId,
   type WeaponId,
 } from "./engine";
 
@@ -613,11 +618,11 @@ function affordableBuys(player: PlayerState): Buy[] {
   }
   const flagCost = flagshipUpgradeCost(player.flag.level);
   if (flagCost !== null && flagCost <= player.energy) out.push({ kind: "flagship", cost: flagCost });
-  if (TUNING.weaponChargeCost <= player.energy) {
-    for (const id of WEAPON_IDS) {
-      if (weaponStatus(weaponsOf(player), id) === "locked") {
-        out.push({ kind: "weapon", weapon: id, cost: TUNING.weaponChargeCost });
-      }
+  const stock = weaponsOf(player);
+  for (const id of WEAPON_IDS) {
+    if (weaponStatus(stock, id) === "locked") {
+      const cost = weaponChargeCostOf(id);
+      if (cost <= player.energy) out.push({ kind: "weapon", weapon: id, cost });
     }
   }
   return out;
@@ -756,6 +761,19 @@ function weaponChargeScore(
     worth = expectedEnemyAttack(enemy, round) * 0.5 * WEIGHTS.defense * panic;
     if (hpRatio > 0.7 && round < 7) bias *= 0.45;
     if (urgency > 0) bias *= 1 + urgency * 0.25;
+  } else if (id === "energyAttack") {
+    // Unlock only. Filling is later leftover Energy, so this is "can I afford
+    // to open the tank", not the full 20. Keep it below a speculative hull so
+    // a healthy thin fleet still buys ships.
+    const remaining = Math.max(2, 14 - round);
+    worth = Math.min(TUNING.weaponEnergyStoreMax, remaining * 2) * 0.28;
+    if (player.ships.length < 5) bias *= 0.4;
+    if ((enemy?.hp ?? TUNING.hp) <= 28) bias *= 1.25;
+    if (urgency > 0) bias *= 1 + urgency * 0.3;
+  } else if (id === "energyShield") {
+    worth = expectedEnemyAttack(enemy, round) * 0.28 * panic;
+    if (hpRatio > 0.75 && round < 7) bias *= 0.35;
+    if (urgency > 0) bias *= 1 + urgency * 0.2;
   } else {
     worth = 1.6 + Math.max(0, player.ships.length - 5) * 0.55 * player.flag.level;
     if (player.ships.length < 6) bias *= 0.3;
@@ -829,6 +847,38 @@ export function planShopping(
       scratch.flag.level += 1;
     }
   }
+  actions.push(...planEnergyFills(scratch, reserve, enemy));
+  return actions;
+}
+
+/**
+ * Leftover Energy after hulls and unlocks goes into a charged energy weapon.
+ * Filling is not firing, so it can sit beside other shipyard work. Keep the
+ * reroll reserve; do not empty the bank for a store.
+ */
+function planEnergyFills(
+  player: PlayerState,
+  reserve: number,
+  enemy: PlayerState | null,
+): MatchAction[] {
+  const actions: MatchAction[] = [];
+  const scratch = player;
+  const wounded = scratch.hp / Math.max(1, scratch.maxHp) < 0.55;
+  const order: EnergyWeaponId[] = wounded
+    ? ["energyShield", "energyAttack"]
+    : ["energyAttack", "energyShield"];
+  for (const id of order) {
+    while (scratch.energy > reserve && canFillWeapon(scratch, id)) {
+      actions.push({ type: "weapon-fill", weapon: id });
+      scratch.energy -= 1;
+      scratch.weapons = structuredClone(weaponsOf(scratch));
+      const filled = weaponFilledThisRound(scratch.weapons, id, scratch.round);
+      scratch.weapons[id].stored = weaponStored(scratch.weapons, id) + 1;
+      scratch.weapons[id].filledRound = scratch.round;
+      scratch.weapons[id].filledThisRound = filled + 1;
+    }
+  }
+  void enemy;
   return actions;
 }
 
@@ -999,7 +1049,9 @@ function expectedEnemyAttack(enemy: PlayerState | null, round: number): number {
   if (!enemy) return 8;
   const fleet = fleetAverages(enemy, round);
   const charged = weaponStatus(weaponsOf(enemy), "attack") === "available";
-  return fleet.attack + (charged ? weaponAttack(round) * 0.5 : 0);
+  const chargedEnergy = weaponStatus(weaponsOf(enemy), "energyAttack") === "available";
+  // Energy Attack's store is hidden. Count a small public threat, never the real tank.
+  return fleet.attack + (charged ? weaponAttack(round) * 0.5 : 0) + (chargedEnergy ? 3 : 0);
 }
 
 /**
@@ -1012,7 +1064,9 @@ export function chooseWeaponCharge(
   plan: Plan = "balanced",
   urgency = 0,
 ): WeaponId | null {
-  if (player.energy < TUNING.weaponChargeCost) return null;
+  const locked = WEAPON_IDS.filter((id) => weaponStatus(weaponsOf(player), id) === "locked");
+  if (!locked.length) return null;
+  if (player.energy < Math.min(...locked.map(weaponChargeCostOf))) return null;
   const ranked = affordableBuys(player)
     .map((buy) => ({ buy, score: buyScore(player, buy, plan, player.round, urgency, enemy) }))
     .sort((a, b) => b.score - a.score);
@@ -1069,6 +1123,23 @@ export function chooseCombatWeapon(
   if (available("attack") && player.round >= 8 && (pressure > 0.55 || player.round >= 12 || enemyHp <= punch(attackBonus) + 10)) {
     return { type: "weapon", weapon: "attack" };
   }
+
+  const energyAttack = weaponStored(weaponsOf(player), "energyAttack");
+  if (available("energyAttack") && energyAttack > 0) {
+    const theyDieWithEnergy = punch(energyAttack) >= enemyHp;
+    if (theyDieWithEnergy && (!theyDie || weDie)) {
+      return { type: "weapon", weapon: "energyAttack" };
+    }
+    if (energyAttack >= 6 && (pressure > 0.45 || player.round >= 10 || enemyHp <= punch(energyAttack) + 8)) {
+      return { type: "weapon", weapon: "energyAttack" };
+    }
+  }
+
+  const energyShield = weaponStored(weaponsOf(player), "energyShield");
+  if (available("energyShield") && energyShield >= 4 && expected > own.defense + 6 && (hpAfter < 36 || expected > own.defense + 14)) {
+    return { type: "weapon", weapon: "energyShield" };
+  }
+
   return null;
 }
 
@@ -1174,6 +1245,8 @@ export function nextActions(state: MatchState, side: SideId, brain: Brain): Matc
               expectedValue(player.dice, new Set(), player.flag.level, ctx, knobs.samples);
         if (affordable && gain / cost >= bar) return [{ type: "roll", dice: ids }];
       }
+      const fills = planEnergyFills(structuredClone(player), 0, publicEnemy);
+      if (fills.length) return fills;
       const weapon = chooseCombatWeapon(player, publicEnemy, pressure, knobs.tokenThreshold);
       if (weapon) return [weapon];
       const take = chooseStraightTake(player, pressure);

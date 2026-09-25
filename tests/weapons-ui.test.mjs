@@ -23,7 +23,8 @@ test("Attack copy is the round times two as an equation from TUNING", () => {
 
 test("the weapons window has a FLAGSHIP WEAPONS title, two rule lines, and Back, not Cancel", () => {
   assert.match(weapons, /t-display">Flagship weapons/);
-  assert.match(weapons, /Each may be used <b>once<\/b> per game<br \/>and only <b>one<\/b> per round/);
+  assert.match(weapons, /One fire per round\. Four once a game;/);
+  assert.match(weapons, /Energy Attack and Energy Shield refill/);
   assert.doesNotMatch(weapons, /use it wisely/);
   assert.doesNotMatch(weapons, /per round —/);
   assert.doesNotMatch(weapons, /Each flagship weapon <b>once<\/b> a game/);
@@ -37,7 +38,7 @@ test("the weapons window has a FLAGSHIP WEAPONS title, two rule lines, and Back,
   assert.doesNotMatch(help, /Cancel closes the weapon window/);
 });
 
-test("enemy weapon status is a four-box row, not a disclosure", () => {
+test("enemy weapon status is a six-box row, not a disclosure", () => {
   assert.match(weapons, /EnemyWeaponRow/);
   assert.match(weapons, /weapon-enemy-row/);
   assert.match(weapons, /weapon-enemy-box/);
@@ -45,15 +46,15 @@ test("enemy weapon status is a four-box row, not a disclosure", () => {
   assert.match(weapons, /weapon-enemy-mark/);
   assert.doesNotMatch(weapons, /<details className="weapon-enemy-status"/);
   assert.doesNotMatch(weapons, /weapon status<\/summary>/);
-  assert.match(css, /\.weapon-enemy-boxes \{ display: grid; grid-template-columns: repeat\(4,/);
+  assert.match(css, /\.weapon-enemy-boxes \{ display: grid; grid-template-columns: repeat\(6,/);
   assert.match(css, /\.weapon-enemy-slash/);
   assert.match(css, /\.weapon-enemy-lock/);
   assert.match(css, /\.weapon-enemy-mark \{ display: flex/);
-  assert.match(css, /\.weapon-enemy-box\.weapon-shield \{ --weapon-color: var\(--color-shield\)/);
+  assert.match(css, /\.weapon-enemy-box\.weapon-shield, \.weapon-enemy-box\.weapon-energyShield \{ --weapon-color: var\(--color-shield\)/);
   assert.doesNotMatch(css, /\.weapon-enemy-locked \.weapon-symbol \{[^}]*opacity/);
   assert.doesNotMatch(css, /\.weapon-enemy-lock \{[^}]*position: absolute/);
   assert.match(weapons, /EnemyWeaponRow[\s\S]{0,120}<footer>/);
-  assert.match(help, /Each may be used once per game and only one per round/);
+  assert.match(help, /You may fire only one weapon per round/);
   assert.match(help, /Round \(the current round\) × \$\{TUNING\.weaponAttackPerRound\}/);
 });
 
@@ -115,7 +116,7 @@ test("the shipyard charge control is a filled top button with the upgrade Energy
   assert.match(weapons, /weapon-launcher-pad">Charge</);
   assert.match(weapons, />Flagship Weapons</);
   assert.match(weapons, /<EnergyPrice/);
-  assert.match(weapons, /cost=\{TUNING\.weaponChargeCost\}/);
+  assert.match(weapons, /cost=\{nextCost\}/);
   assert.match(ui, /export function EnergyPrice/);
   assert.match(css, /\.weapon-launcher-pad \{/);
   assert.match(css, /\.weapon-launcher-pad \{[\s\S]*?border-radius:\s*50%/);
@@ -125,7 +126,7 @@ test("the shipyard charge control is a filled top button with the upgrade Energy
   assert.doesNotMatch(css, /\.yard-done\s*>\s*\.weapon-launcher/);
   assert.doesNotMatch(css, /\.yard-board \{ width: min\(86%/);
   assert.match(css, /\.weapon-launcher-wait/);
-  assert.match(weapons, /One-time use per game and only 1 per round/);
+  assert.match(weapons, /One fire per round\. Four once a game; energy weapons refill/);
   assert.doesNotMatch(weapons, /Need \$\{TUNING\.weaponChargeCost\} Energy to charge/);
   assert.match(weapons, /Use flagship weapon/);
   assert.match(help, /Charge flagship weapons button sits below the fleet map/);
@@ -136,7 +137,7 @@ test("the shipyard charge control is a filled top button with the upgrade Energy
 test("Charged weapon controls are a coloured fill, not a dead black button", () => {
   assert.match(weapons, /weapon-btn-ready/);
   assert.match(weapons, /className=\{shop && status === "available" \? "weapon-btn-charged"/);
-  assert.match(weapons, /status === "available" \? "Charged"/);
+  assert.match(weapons, /energy \? "Unlocked" : "Charged"/);
   assert.match(css, /\.weapon-card > button\.weapon-btn-ready/);
   assert.match(css, /\.weapon-card > button\.weapon-btn-charged:disabled/);
   assert.match(css, /button\.weapon-btn-ready[\s\S]*?#090d17/);
@@ -173,6 +174,20 @@ test("weapon marks are equal-size SVGs and the enemy lock is a real padlock", ()
   assert.match(lock[0], /height: 19px/);
   assert.doesNotMatch(lock[0], /width: 11px/);
   assert.match(weapons, /viewBox="0 0 24 28"/);
+});
+
+test("the six weapons sit in the owner's grid with a compact Energy +1", () => {
+  assert.match(engine, /WEAPON_GRID_IDS = \["rotate", "repair", "attack", "shield", "energyAttack", "energyShield"\]/);
+  assert.match(weapons, /WEAPON_GRID_IDS\.map/);
+  assert.match(weapons, /weapon-energy-plus/);
+  assert.match(weapons, /Add 1 Energy to \$\{WEAPON_NAMES\[id\]\}/);
+  assert.match(weapons, /filled\}\/\{TUNING\.weaponEnergyFillPerRound\} this round/);
+  assert.match(weapons, /stored\}\/\{TUNING\.weaponEnergyStoreMax\}/);
+  assert.match(css, /\.weapon-card-grid \{ display: grid; grid-template-columns: repeat\(2,/);
+  assert.match(css, /\.weapon-energy-plus/);
+  assert.match(css, /\.weapon-energyAttack \{ --weapon-color: var\(--color-attack\)/);
+  assert.match(css, /\.weapon-energyShield \{ --weapon-color: var\(--color-shield\)/);
+  assert.doesNotMatch(css, /\.weapon-window-scroll/);
 });
 
 test("the centre flagship tile spells the level and uses the d6 square, not a star", () => {

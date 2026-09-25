@@ -1,4 +1,4 @@
-import { WEAPON_IDS, type MatchState } from "./engine";
+import { CLASSIC_WEAPON_IDS, ENERGY_WEAPON_IDS, TUNING, WEAPON_IDS, type MatchState } from "./engine";
 import { DIFFICULTIES, PLANS, type Brain, type Difficulty } from "./ai";
 
 export const SOLO_SAVE_KEY = "fd3.solo.battle.v1";
@@ -17,11 +17,20 @@ export function parseSoloSave(raw: string | null): SoloSave | null {
       if (!Array.isArray(p.ships) || !Array.isArray(p.dice) || p.open?.length !== 8 || !p.flag) return null;
       if (!["shop", "ready", "rolling", "submitted", "brace", "report", "over"].includes(p.phase)) return null;
       if (p.weapons) {
-        for (const id of WEAPON_IDS) {
+        for (const id of CLASSIC_WEAPON_IDS) {
           const charge = p.weapons[id];
           if (!charge) return null;
           if (charge.chargedRound !== null && (!Number.isInteger(charge.chargedRound) || charge.chargedRound < 0)) return null;
           if (charge.usedRound !== null && (!Number.isInteger(charge.usedRound) || charge.usedRound < 0 || charge.chargedRound === null)) return null;
+          if (charge.use && (charge.use.id !== id || charge.use.round !== charge.usedRound || !Number.isFinite(charge.use.amount))) return null;
+        }
+        for (const id of ENERGY_WEAPON_IDS) {
+          const charge = p.weapons[id];
+          if (!charge) continue;
+          if (charge.chargedRound !== null && (!Number.isInteger(charge.chargedRound) || charge.chargedRound < 0)) return null;
+          if (charge.usedRound !== null && (!Number.isInteger(charge.usedRound) || charge.usedRound < 0 || charge.chargedRound === null)) return null;
+          if (charge.stored !== undefined && (!Number.isFinite(charge.stored) || charge.stored < 0 || charge.stored > TUNING.weaponEnergyStoreMax)) return null;
+          if (charge.filledThisRound !== undefined && (!Number.isInteger(charge.filledThisRound) || charge.filledThisRound < 0)) return null;
           if (charge.use && (charge.use.id !== id || charge.use.round !== charge.usedRound || !Number.isFinite(charge.use.amount))) return null;
         }
       }

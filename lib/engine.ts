@@ -11,14 +11,34 @@
 export type SideId = "host" | "guest";
 export type DieSize = 4 | 6 | 8 | 10;
 
-export const WEAPON_IDS = ["rotate", "shield", "attack", "repair"] as const;
+export const CLASSIC_WEAPON_IDS = ["rotate", "shield", "attack", "repair"] as const;
+export const ENERGY_WEAPON_IDS = ["energyAttack", "energyShield"] as const;
+export const WEAPON_IDS = [...CLASSIC_WEAPON_IDS, ...ENERGY_WEAPON_IDS] as const;
+/** On-screen grid: top Rotate / Repair, middle Attack / Super Shield, bottom the two energy weapons. */
+export const WEAPON_GRID_IDS = ["rotate", "repair", "attack", "shield", "energyAttack", "energyShield"] as const;
+export type ClassicWeaponId = (typeof CLASSIC_WEAPON_IDS)[number];
+export type EnergyWeaponId = (typeof ENERGY_WEAPON_IDS)[number];
 export type WeaponId = (typeof WEAPON_IDS)[number];
 export type WeaponUse = { id: WeaponId; round: number; amount: number; from?: number; to?: number };
-export type WeaponInventory = Record<WeaponId, {
+export type WeaponCharge = {
   chargedRound: number | null;
   usedRound: number | null;
   use?: WeaponUse;
-}>;
+  /** Energy sitting in an energy weapon, waiting to be fired. Classic weapons ignore this. */
+  stored?: number;
+  /** How much was added during `filledRound`. Classic weapons ignore this. */
+  filledThisRound?: number;
+  filledRound?: number | null;
+};
+export type WeaponInventory = Record<WeaponId, WeaponCharge>;
+
+export function isEnergyWeapon(id: WeaponId): id is EnergyWeaponId {
+  return id === "energyAttack" || id === "energyShield";
+}
+
+export function isClassicWeapon(id: WeaponId): id is ClassicWeaponId {
+  return !isEnergyWeapon(id);
+}
 
 export type PlayerPhase =
   | "waiting"
@@ -213,6 +233,7 @@ export type MatchAction =
   | { type: "roll"; dice: string[] }
   | { type: "flag-token"; direction: -1 | 1 }
   | { type: "weapon"; weapon: Exclude<WeaponId, "rotate"> }
+  | { type: "weapon-fill"; weapon: EnergyWeaponId }
   | { type: "straight-take"; take: number }
   | { type: "submit" }
   | { type: "brace"; ships: string[] }
@@ -234,6 +255,16 @@ export const TUNING = {
   /** Energy in the bank at the start. */
   startEnergy: 0,
   weaponChargeCost: 6,
+  /**
+   * One-time shipyard unlock for Energy Attack / Energy Shield. Not the same
+   * 6 Energy the four once-a-match weapons pay. Filling the store is a
+   * separate 1-for-1 spend from the bank. These two numbers are proposals
+   * measured in `sim/energy-weapons.mjs`, awaiting the owner's approval.
+   */
+  weaponEnergyAttackCost: 4,
+  weaponEnergyShieldCost: 4,
+  weaponEnergyStoreMax: 20,
+  weaponEnergyFillPerRound: 5,
   weaponAttackPerRound: 2,
   weaponRepair: 20,
   /** Free rolls a round. */
@@ -627,21 +658,63 @@ export function activeShips(player: PlayerState, round: number): Ship[] {
   return player.ships.filter((ship) => ship.disabledRound !== round);
 }
 
-export function newWeapons(): WeaponInventory {
-  return Object.fromEntries(WEAPON_IDS.map((id) => [id, { chargedRound: null, usedRound: null }])) as WeaponInventory;
+function emptyWeaponCharge(): WeaponCharge {
+  return { chargedRound: null, usedRound: null, stored: 0, filledThisRound: 0, filledRound: null };
 }
 
-/** Old battles keep their existing free rotation; new battles charge all four. */
+export function newWeapons(): WeaponInventory {
+  return Object.fromEntries(WEAPON_IDS.map((id) => [id, emptyWeaponCharge()])) as WeaponInventory;
+}
+
+/** Old battles keep their existing free rotation; new battles charge the classic four. Missing energy weapons stay locked. */
 export function weaponsOf(player: Pick<PlayerState, "weapons" | "flag">): WeaponInventory {
-  if (player.weapons) return player.weapons;
-  const legacy = newWeapons();
-  legacy.rotate = { chargedRound: 0, usedRound: player.flag.token ? null : 0 };
-  return legacy;
+  if (!player.weapons) {
+    const legacy = newWeapons();
+    legacy.rotate = { ...emptyWeaponCharge(), chargedRound: 0, usedRound: player.flag.token ? null : 0 };
+    return legacy;
+  }
+  const stock = player.weapons;
+  if (WEAPON_IDS.every((id) => stock[id])) return stock;
+  const merged = newWeapons();
+  for (const id of WEAPON_IDS) {
+    if (stock[id]) merged[id] = { ...emptyWeaponCharge(), ...stock[id] };
+  }
+  return merged;
+}
+
+export function weaponChargeCostOf(id: WeaponId): number {
+  if (id === "energyAttack") return TUNING.weaponEnergyAttackCost;
+  if (id === "energyShield") return TUNING.weaponEnergyShieldCost;
+  return TUNING.weaponChargeCost;
+}
+
+export function weaponStored(stock: WeaponInventory, id: WeaponId): number {
+  return Math.max(0, stock[id]?.stored ?? 0);
+}
+
+export function weaponFilledThisRound(stock: WeaponInventory, id: WeaponId, round: number): number {
+  const charge = stock[id];
+  if (!charge || charge.filledRound !== round) return 0;
+  return Math.max(0, charge.filledThisRound ?? 0);
+}
+
+export function canFillWeapon(player: PlayerState, id: WeaponId): boolean {
+  if (!isEnergyWeapon(id)) return false;
+  if (player.phase !== "shop" && player.phase !== "rolling") return false;
+  const stock = weaponsOf(player);
+  if (weaponStatus(stock, id) !== "available") return false;
+  if (player.energy < 1) return false;
+  if (weaponStored(stock, id) >= TUNING.weaponEnergyStoreMax) return false;
+  if (weaponFilledThisRound(stock, id, player.round) >= TUNING.weaponEnergyFillPerRound) return false;
+  return true;
 }
 
 export function weaponStatus(stock: WeaponInventory, id: WeaponId): "locked" | "available" | "used" {
-  if (stock[id].usedRound !== null) return "used";
-  return stock[id].chargedRound === null ? "locked" : "available";
+  const charge = stock[id] ?? emptyWeaponCharge();
+  // Energy weapons unlock once, then refill. A previous fire does not lock them.
+  if (isEnergyWeapon(id)) return charge.chargedRound === null ? "locked" : "available";
+  if (charge.usedRound !== null) return "used";
+  return charge.chargedRound === null ? "locked" : "available";
 }
 
 export function roundWeapon(player: PlayerState): WeaponUse | null {
@@ -651,24 +724,50 @@ export function roundWeapon(player: PlayerState): WeaponUse | null {
 export function weaponAttack(round: number): number { return round * TUNING.weaponAttackPerRound; }
 
 export const WEAPON_NAMES: Record<WeaponId, string> = {
-  rotate: "Rotate Flagship", shield: "Super Shield", attack: "Attack", repair: "Repair",
+  rotate: "Rotate Flagship",
+  shield: "Super Shield",
+  attack: "Attack",
+  repair: "Repair",
+  energyAttack: "Energy Attack",
+  energyShield: "Energy Shield",
 };
 
-export function weaponEffect(id: WeaponId, round: number): string {
+export function weaponEffect(id: WeaponId, round: number, stored = 0): string {
   return {
     rotate: "−1 or +1 face",
     shield: "½ enemy Attack",
     attack: `Round (${round}) × ${TUNING.weaponAttackPerRound} = ${weaponAttack(round)} Attack`,
     repair: `+${TUNING.weaponRepair} Repair`,
+    energyAttack: stored > 0
+      ? `${stored} stored Attack`
+      : `Store Energy, then fire as Attack`,
+    energyShield: stored > 0
+      ? `${stored} stored Shields`
+      : `Store Energy, then fire as Shields`,
   }[id];
 }
 
 /** Preview and submitted totals share the exact same weapon bonuses. */
 function withWeapon(player: PlayerState, result: Tally): Tally {
   const used = roundWeapon(player);
-  if (used?.id === "attack") result.attack += used.amount;
+  if (used?.id === "attack" || used?.id === "energyAttack") result.attack += used.amount;
   if (used?.id === "repair") result.heal += used.amount;
+  // Energy Shield is ordinary Shields: it cancels blockable Attack and does
+  // not touch Direct or War. Same field `defense` that odd faces write.
+  if (used?.id === "energyShield") result.defense += used.amount;
   return result;
+}
+
+/** Strip the hidden store so an opponent sees readiness, not the banked amount. */
+export function hideEnergyWeaponStores(stock: WeaponInventory): WeaponInventory {
+  const copy = structuredClone(stock);
+  for (const id of ENERGY_WEAPON_IDS) {
+    if (!copy[id]) copy[id] = emptyWeaponCharge();
+    copy[id].stored = 0;
+    copy[id].filledThisRound = 0;
+    copy[id].filledRound = null;
+  }
+  return copy;
 }
 
 export function superShieldReduction(player: PlayerState, attack: number): number {
@@ -903,9 +1002,13 @@ export function applyAction(state: MatchState, side: SideId, action: MatchAction
       handleFlagToken(player, action.direction);
       break;
     case "weapon":
-      if (action.weapon === "shield" || action.weapon === "attack" || action.weapon === "repair") {
+      if (action.weapon === "shield" || action.weapon === "attack" || action.weapon === "repair"
+        || action.weapon === "energyAttack" || action.weapon === "energyShield") {
         activateWeapon(player, action.weapon);
       } else throw new Error("Choose a flagship weapon.");
+      break;
+    case "weapon-fill":
+      handleWeaponFill(player, action.weapon);
       break;
     case "straight-take":
       handleStraightTake(player, action.take);
@@ -934,7 +1037,7 @@ function handleShop(player: PlayerState, action: Extract<MatchAction, { type: "s
     if (!WEAPON_IDS.includes(action.weapon)) throw new Error("Choose a flagship weapon.");
     const stock = weaponsOf(player);
     if (weaponStatus(stock, action.weapon) !== "locked") throw new Error("Each weapon can be charged only once per match.");
-    spend(player, TUNING.weaponChargeCost);
+    spend(player, weaponChargeCostOf(action.weapon));
     player.weapons = structuredClone(stock);
     player.weapons[action.weapon].chargedRound = player.round;
     if (action.weapon === "rotate") player.flag.token = true;
@@ -1048,15 +1151,52 @@ function handleFlagToken(player: PlayerState, direction: -1 | 1) {
   player.straightTake = null;
 }
 
+function handleWeaponFill(player: PlayerState, id: EnergyWeaponId) {
+  if (!isEnergyWeapon(id)) throw new Error("Only Energy Attack and Energy Shield store Energy.");
+  if (player.phase !== "shop" && player.phase !== "rolling") {
+    throw new Error("Add Energy to this weapon in the shipyard or after you roll.");
+  }
+  const stock = weaponsOf(player);
+  if (weaponStatus(stock, id) !== "available") {
+    throw new Error("Charge this weapon in the shipyard first.");
+  }
+  if (weaponStored(stock, id) >= TUNING.weaponEnergyStoreMax) {
+    throw new Error(`This weapon holds at most ${TUNING.weaponEnergyStoreMax} Energy.`);
+  }
+  if (weaponFilledThisRound(stock, id, player.round) >= TUNING.weaponEnergyFillPerRound) {
+    throw new Error(`You can add at most ${TUNING.weaponEnergyFillPerRound} Energy to this weapon each round.`);
+  }
+  spend(player, 1);
+  const filled = weaponFilledThisRound(stock, id, player.round);
+  player.weapons = structuredClone(stock);
+  player.weapons[id].stored = weaponStored(stock, id) + 1;
+  player.weapons[id].filledRound = player.round;
+  player.weapons[id].filledThisRound = filled + 1;
+}
+
 function activateWeapon(player: PlayerState, id: WeaponId) {
   if (player.phase !== "rolling" || player.rolls < 1) throw new Error("Roll your fleet before using a flagship weapon.");
   if (roundWeapon(player)) throw new Error("Only one flagship weapon can be used per volley.");
   const stock = weaponsOf(player);
-  if (weaponStatus(stock, id) !== "available") throw new Error("Charge this weapon in the shipyard first. Used weapons cannot recharge.");
-  const use: WeaponUse = { id, round: player.round, amount: id === "attack" ? weaponAttack(player.round) : id === "repair" ? TUNING.weaponRepair : 0 };
+  if (weaponStatus(stock, id) !== "available") {
+    throw new Error(isEnergyWeapon(id)
+      ? "Charge this weapon in the shipyard first."
+      : "Charge this weapon in the shipyard first. Used weapons cannot recharge.");
+  }
+  let amount = 0;
+  if (id === "attack") amount = weaponAttack(player.round);
+  else if (id === "repair") amount = TUNING.weaponRepair;
+  else if (isEnergyWeapon(id)) {
+    amount = weaponStored(stock, id);
+    if (amount <= 0) throw new Error("Add Energy to this weapon before firing it.");
+  }
+  const use: WeaponUse = { id, round: player.round, amount };
   player.weapons = structuredClone(stock);
   player.weapons[id].usedRound = player.round;
   player.weapons[id].use = use;
+  if (isEnergyWeapon(id)) {
+    player.weapons[id].stored = 0;
+  }
   player.weaponThisRound = use;
 }
 
@@ -1271,7 +1411,7 @@ function settlePlayer(state: MatchState, player: PlayerState) {
     weapon: structuredClone(roundWeapon(player)),
     enemyWeapon: structuredClone(volley?.weapon ?? null),
     weapons: structuredClone(weaponsOf(player)),
-    enemyWeapons: structuredClone(volley?.weapons ?? newWeapons()),
+    enemyWeapons: hideEnergyWeaponStores(volley?.weapons ?? newWeapons()),
     superShieldStopped: superShieldReduction(player, volley?.tally.attack ?? 0),
   };
   player.phase = "report";
@@ -1380,7 +1520,7 @@ export function snapshotVolley(enemy: PlayerState | null | undefined): VolleySna
     ships: enemy.ships.map((ship) => ({ ...ship })),
     open: enemy.open.slice(),
     flag: { ...enemy.flag },
-    weapons: structuredClone(weaponsOf(enemy)),
+    weapons: hideEnergyWeaponStores(weaponsOf(enemy)),
     weapon: structuredClone(roundWeapon(enemy)),
   };
 }
@@ -1424,12 +1564,15 @@ export function publicMatchView(state: MatchState, viewer: SideId): MatchState {
     them.tally = null;
     // Readiness is public; spending the charge is private until this volley.
     // Hide rotation too, including its legacy token and changed face.
+    // Energy stores stay hidden the same way — the opponent sees the unlock,
+    // not how much Attack or Shields is sitting in the bank.
     if (them.phase === "rolling" || them.phase === "submitted") {
       const used = roundWeapon(them);
       if (used) {
         const stock = structuredClone(weaponsOf(them));
         stock[used.id].usedRound = null;
         delete stock[used.id].use;
+        if (isEnergyWeapon(used.id)) stock[used.id].stored = used.amount;
         them.weapons = stock;
         if (used.id === "rotate") them.flag.token = true;
       }
@@ -1437,6 +1580,7 @@ export function publicMatchView(state: MatchState, viewer: SideId): MatchState {
     }
     them.weaponThisRound = null;
   }
+  if (them) them.weapons = hideEnergyWeaponStores(weaponsOf(them));
   // The post-attack screen shows both fleets on purpose — that is this
   // volley's reveal. Once the other commander has walked on to the shipyard
   // or the next roll, their live board is next-round information. Freeze it
