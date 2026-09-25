@@ -29,7 +29,7 @@ function mixed() {
   s.players.guest = newPlayer("enemy", "Enemy", "shop");
   s.round = 6;
   for (const p of Object.values(s.players)) {
-    p.round = 6; p.energy = 24; p.phase = "shop"; p.hp = 100; p.maxHp = 100;
+    p.round = 6; p.energy = 40; p.phase = "shop"; p.hp = 100; p.maxHp = 100;
   }
   for (const id of WEAPON_IDS) applyAction(s, "host", { type: "shop", operation: "weapon", weapon: id });
   applyAction(s, "guest", { type: "shop", operation: "weapon", weapon: "shield" });

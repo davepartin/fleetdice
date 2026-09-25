@@ -1,5 +1,78 @@
 # Fleet Dice 3 — balance notes
 
+## Energy Attack and Energy Shield unlock costs — 25 September 2026
+
+Proposal, awaiting Dave's approval. The classic four still cost 6 Energy and
+still fire once a match. These two unlock once, then fill 1-for-1 from the
+bank.
+
+**Charge cost is a one-time shipyard unlock**, not a second price on each +1.
+The +1 is already one Energy out of the bank. The shipyard already has a Charge
+button per weapon. That is the reading that matches the four weapons that
+already exist.
+
+Command run:
+
+```
+node sim/energy-weapons.mjs 60
+```
+
+Printed output, copied as printed. Medium Balanced vs Balanced. A = Energy
+Attack, S = Energy Shield. Stored is Energy in the tank at the moment of fire.
+Candidates are never 6.
+
+Both commanders may unlock and fill:
+
+| cost | n | host win | charged A | fired A | stored A | charged S | fired S | stored S | length |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 3/3 | 60 | 51.7% | 90.0% | 40.0% | 5.82 | 97.5% | 45.0% | 5.59 | 13.3 ± 0.9 (6–20) |
+| 4/4 | 60 | 43.3% | 46.7% | 12.5% | 4.53 | 96.7% | 49.2% | 5.80 | 14.2 ± 0.9 (6–19) |
+| 5/5 | 60 | 50.0% | 24.2% | 15.0% | 6.55 | 77.5% | 36.7% | 5.68 | 13.7 ± 0.8 (5–20) |
+| 8/8 | 60 | 50.0% | 0.0% | 0.0% | 0.00 | 24.2% | 12.5% | 5.95 | 13.9 ± 0.8 (7–20) |
+| 10/10 | 60 | 50.0% | 0.0% | 0.0% | 0.00 | 10.0% | 4.2% | 6.29 | 13.8 ± 0.7 (7–19) |
+
+Host may use energy weapons; guest is forbidden (win rate of having them).
+Energy Attack cost sweep, Energy Shield held at 4:
+
+| cost | n | host win | charged A | fired A | stored A | charged S | fired S | stored S | length |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| A3 / S4 | 60 | 35.0% | 96.7% | 31.7% | 5.70 | 86.7% | 45.0% | 6.00 | 13.8 ± 0.7 (8–21) |
+| A4 / S4 | 60 | 45.0% | 48.3% | 18.3% | 5.38 | 90.0% | 46.7% | 5.53 | 14.1 ± 0.6 (4–18) |
+| A5 / S4 | 60 | 36.7% | 26.7% | 15.0% | 4.56 | 95.0% | 51.7% | 5.98 | 13.4 ± 0.7 (7–19) |
+| A8 / S4 | 60 | 38.3% | 0.0% | 0.0% | 0.00 | 96.7% | 63.3% | 6.14 | 13.8 ± 0.8 (4–19) |
+| A10 / S4 | 60 | 35.0% | 0.0% | 0.0% | 0.00 | 100.0% | 65.0% | 5.89 | 13.9 ± 0.8 (7–20) |
+
+Energy Shield cost sweep, Energy Attack held at 4, guest still forbidden:
+
+| cost | n | host win | charged A | fired A | stored A | charged S | fired S | stored S | length |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| A4 / S3 | 60 | 46.7% | 43.3% | 20.0% | 6.50 | 100.0% | 51.7% | 5.94 | 13.9 ± 0.8 (5–19) |
+| A4 / S4 | 60 | 36.7% | 41.7% | 13.3% | 5.82 | 91.7% | 46.7% | 5.98 | 13.9 ± 0.8 (5–19) |
+| A4 / S5 | 60 | 43.3% | 45.0% | 18.3% | 5.71 | 75.0% | 41.7% | 6.06 | 14.4 ± 0.7 (5–19) |
+| A4 / S8 | 60 | 40.0% | 51.7% | 40.0% | 5.97 | 16.7% | 10.0% | 6.83 | 13.4 ± 0.7 (7–19) |
+| A4 / S10 | 60 | 43.3% | 46.7% | 36.7% | 6.73 | 5.0% | 3.3% | 7.00 | 13.8 ± 0.8 (6–19) |
+
+**Recommended: Energy Attack 5, Energy Shield 5.** Set as
+`TUNING.weaponEnergyAttackCost` and `TUNING.weaponEnergyShieldCost`.
+
+Why these, from the printed table only:
+
+- 3 makes both almost automatic (90% / 97.5% charged when both sides have them).
+- 4 still makes Energy Shield automatic (96.7%).
+- 5 is the first pair where Energy Attack is a real choice (24.2% charged, 15.0%
+  fired, 6.55 stored when fired) and Energy Shield is common but not everyone
+  (77.5% charged, 36.7% fired, 5.68 stored). Match length 13.7 ± 0.8, same
+  neighbourhood as the other costs.
+- 8 and 10 delete Energy Attack (0% charged) and leave Energy Shield rare.
+
+The “host has them, guest does not” win rates sit between 35.0% and 46.7% at
+every cost. At 60 matches that band is noisy (about ±13 points). It does **not**
+say a cheaper unlock wins more. It does say the current brain will spend Energy
+on these stores; 5 is the first cost that stops that spend being the default
+for Energy Attack.
+
+These are proposals. Dave decides.
+
 ## War waits for the capital-ship game — 22 September 2026
 
 War Escalation now begins in round 12 instead of round 9. It still starts at

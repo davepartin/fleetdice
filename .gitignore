@@ -18,4 +18,6 @@ _to_delete/
 docs/*.png
 # The home-screen icon preview is the one PNG this folder is meant to keep.
 !docs/app-icon-preview.png
+# Energy Attack / Energy Shield phone proof for the 25 September 2026 request.
+!docs/energy-weapons-*.png
 .iconbuild/

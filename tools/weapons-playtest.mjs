@@ -19,7 +19,7 @@ function fixture(shop = false, lethal = false) {
   const s = newMatch("weapon-phone-fixture", "0000", "you", "You", "solo");
   s.players.guest = newPlayer("enemy", "Enemy", "shop");
   s.round = 6;
-  for (const p of Object.values(s.players)) { p.round = 6; p.energy = 24; p.phase = "shop"; p.hp = 100; p.maxHp = 100; }
+  for (const p of Object.values(s.players)) { p.round = 6; p.energy = 40; p.phase = "shop"; p.hp = 100; p.maxHp = 100; }
   if (shop) { s.players.guest.phase = "report"; return s; }
   for (const id of WEAPON_IDS) applyAction(s, "host", { type: "shop", operation: "weapon", weapon: id });
   applyAction(s, "guest", { type: "shop", operation: "weapon", weapon: "attack" });

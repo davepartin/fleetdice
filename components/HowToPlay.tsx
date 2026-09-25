@@ -28,7 +28,7 @@ import {
   signedHp,
   type StatKind,
 } from "@/lib/reference";
-import { TUNING, type DieSize, type Tally } from "@/lib/engine";
+import { TUNING, WEAPON_NAMES, weaponChargeCostOf, type DieSize, type Tally } from "@/lib/engine";
 import { Button, HpRail, Sheet, TallyStrip } from "./ui";
 import type { ReactNode } from "react";
 
@@ -217,13 +217,15 @@ export function HowToPlayBody() {
         <div className="help-weapon">
           <span className="help-weapon-btn">Flagship Weapon</span>
           <p>
-            Charge each of four weapons once in the shipyard with the Charge flagship weapons button
+            Charge Rotate Flagship, Super Shield, Attack and Repair once in the shipyard with the Charge flagship weapons button
             below the fleet map, {TUNING.weaponChargeCost} Energy each.
+            {WEAPON_NAMES.energyAttack} unlocks for {weaponChargeCostOf("energyAttack")} Energy and {WEAPON_NAMES.energyShield} for {weaponChargeCostOf("energyShield")}; feed them from your bank, up to {TUNING.weaponEnergyFillPerRound} Energy a round and {TUNING.weaponEnergyStoreMax} stored.
             Use one per volley after rolling: Rotate Flagship −1 or +1,
             Super Shield to halve enemy Attack before your Shields,
-            Attack for round × {TUNING.weaponAttackPerRound}, or +{TUNING.weaponRepair} Repair.
-            Repair can raise your health above its previous high. Super Shield does not reduce Direct or War.
-            Charged weapons are public; activation reveals when both players lock in.
+            Attack for round × {TUNING.weaponAttackPerRound}, +{TUNING.weaponRepair} Repair,
+            or fire stored Energy as Attack or Shields.
+            Repair can raise your health above its previous high. Super Shield and Energy Shield do not reduce Direct or War.
+            Charged weapons are public; stored Energy and activation reveal when both players lock in.
           </p>
         </div>
       </Card>

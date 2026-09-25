@@ -78,6 +78,23 @@ pass finished while a die value, resource, action, or outcome is hard to read.
   and `node sim/ladder.mjs 300` printed the rates in `BALANCE.md`. Weapon
   costs and effects unchanged.
 
+- [x] **Energy Attack and Energy Shield — owner-requested, 25 September 2026.**
+  Two new flagship weapons, nothing else. Unlock once in the shipyard at their
+  own TUNING costs (not 6). Feed up to 5 Energy a round from the bank, hold up
+  to 20, fire later as ordinary Attack or ordinary Shields, then the store
+  resets and can be filled again. One fire per round still. The classic four
+  stay once-per-match at 6 Energy. How to Play is generated from the engine.
+  Versus keeps the stores secret the same way current activations stay hidden.
+  **Proved:** 229 tests, lint on the touched files, and the production build
+  pass. New tests cover the 5-per-round fill cap, max 20, bank deduction,
+  fire-then-reset, one-weapon-per-round, save/reload and versus secrecy; the
+  solo brain fills and can fire Energy Attack. `node sim/energy-weapons.mjs 60`
+  printed the cost sweep in `BALANCE.md`. Proposed unlock is 5 Energy each,
+  awaiting Dave. Phone shots in `docs/` at 375×812, 390×620 and 360×780 show
+  all six cards with no scrolling, a mid-fill, the shipyard charge view, and a
+  round summary that names Energy Attack +3.
+
+
 **This file is the plan. If you are an AI working on Fleet Dice 3, read this before you touch anything, and check your work against it before you hand it back.**
 
 Fleet Dice 3 is a good game that does not yet look like one. The mechanics are
@@ -1235,26 +1252,29 @@ numbers).
 
 ### Future flagship weapon ideas (running tally, 25 September 2026)
 
-Built today (4):
+Built (4):
 
 1. Rotate Flagship
 2. Super Shield (halves enemy Attack before own Shields)
 3. Attack (round × 2)
 4. Repair (flat 20)
 
-New ideas under consideration (counting up):
+**Being built now (2):**
+
+8. Energy Attack — add Energy throughout the game (max +5 per round, one-to-one from the bank). Each Energy becomes +1 Attack when fired. Caps at 20. After firing the store resets and can be filled again.
+9. Energy Shield — identical mechanic, but each Energy becomes +1 Shield. Same 5-per-round fill, same one-to-one from the bank, same max 20, same refill after firing. Behaves like ordinary Shields: it stops blockable Attack and does not stop Direct or War.
+
+**Parked as a later possible plan (not this work):**
 
 5. Energy Drain — halves whatever Energy the enemy would have gained this round. (Previously called "Energy Halving"; same weapon, renamed.)
 6. Direct Block — blocks all Direct hits this round.
 7. Energy Reroll Disable — disables the enemy's energy reroll.
-8. Energy Attack — you can add energy to this weapon throughout the game (max +5 per turn, one-to-one from your energy storehouse). Each energy added becomes +1 Attack when fired. Caps at 20. Rechargeable: after firing, you can add energy to it again. Mirrors the standard Attack weapon (round × 2) but is fueled by spent energy instead of a flat round-times-two.
-9. Energy Shield — identical mechanic to Energy Attack, but each energy added becomes +1 Shield instead of Attack. Same max +5 per turn, same one-to-one from the energy storehouse, same rechargeable-after-firing rule. Cap TBD (owner suggested matching the 5-per-turn drip; confirm with owner before locking).
 
-Layout/UI requirements for ideas 8 and 9 (owner was explicit; not built yet):
+Also parked, considered and dropped earlier: Double Energy, Double Repair, and Repair ×2. Dropped because a hot roll could snowball; the one-upgrade-per-die-per-round rule stays.
+
+Layout for the two being built (owner was explicit):
 
 - The flagship weapons screen shows all six weapons at once with no scrolling.
-- Grouping: top-left Rotate, top-right Repair, middle-left Attack, middle-right Super Shield, bottom-left Energy Attack, bottom-right Energy Shield.
-- Energy Attack and Energy Shield must use the identical mechanic and look parallel on screen — one adds to Attack, one adds to Shields.
-- Inside each energy weapon: a +1 control that adds to what's already stored and automatically deducts from the player's energy bank. Keep it compact and clear so the player instantly sees what they're doing.
-
-Considered and dropped: Double Energy, Double Repair, and Repair ×2. Dropped because a hot roll could snowball; the one-upgrade-per-die-per-round rule stays.
+- Grid: top-left Rotate, top-right Repair, middle-left Attack, middle-right Super Shield, bottom-left Energy Attack, bottom-right Energy Shield.
+- Energy Attack and Energy Shield look alike and parallel — red for Attack, blue for Shields.
+- Inside each: stored out of 20, and a compact +1 that adds to the store and deducts from the bank right away.
