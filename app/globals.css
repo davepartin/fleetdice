@@ -332,18 +332,25 @@
 .weapon-report summary { cursor: pointer; color: var(--color-hull-200, #c0c8db); }
 .weapon-window button:focus-visible, .weapon-launcher:focus-visible { outline: 2px solid white; outline-offset: 3px; }
 @media (max-height: 700px) {
-  .weapon-window-head { padding: 8px 10px 6px; gap: 6px; }
-  .weapon-window-head h2 { font-size: 20px; margin-top: 2px; }
+  .weapon-window { max-height: calc(100dvh - 16px); }
+  .weapon-window-inner { max-height: calc(100dvh - 16px); }
+  .weapon-window-head { padding: 6px 8px 4px; gap: 4px; }
+  .weapon-window-head h2 { font-size: 20px; margin-top: 0; }
+  .weapon-lede { font-size: 11px; line-height: 1.2; }
   .weapon-window-body { padding: 4px 8px; }
   .weapon-card-grid { gap: 4px; }
-  .weapon-card { padding: 5px; gap: 2px; }
+  .weapon-card { padding: 4px; gap: 2px; }
   .weapon-card h3 { font-size: 12px; }
-  .weapon-card > button { min-height: 28px; padding: 3px 4px; }
-  .weapon-energy-plus { min-height: 28px; min-width: 32px; }
-  .weapon-energy-count { font-size: 14px; }
-  .weapon-enemy-row { padding: 6px 10px 8px; }
-  .weapon-enemy-box { height: 34px; }
-  .weapon-window footer { padding: 6px 10px; }
+  .weapon-card > button { min-height: 26px; padding: 2px 4px; }
+  .weapon-energy-plus { min-height: 26px; min-width: 32px; }
+  .weapon-energy-count { font-size: 13px; }
+  .weapon-energy-cap { font-size: 10px; }
+  .weapon-effect-hit { font-size: 12px; padding: 0.06rem 0.28rem; }
+  .weapon-effect { font-size: 10px; }
+  .weapon-enemy-row { padding: 4px 8px 4px; }
+  .weapon-enemy-row-label { margin: 0 0 4px; }
+  .weapon-enemy-box { height: 30px; }
+  .weapon-window footer { padding: 4px 8px; }
 }
 
 .seat-return-notice { display: block; max-width: 100%; margin: 8px auto 0; padding: 8px 12px; border: 1px solid #ffd23d55; border-radius: 8px; background: #121824; color: #f4f1e8; font-size: 13px; line-height: 1.4; text-align: center; }

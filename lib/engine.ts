@@ -261,8 +261,8 @@ export const TUNING = {
    * separate 1-for-1 spend from the bank. These two numbers are proposals
    * measured in `sim/energy-weapons.mjs`, awaiting the owner's approval.
    */
-  weaponEnergyAttackCost: 4,
-  weaponEnergyShieldCost: 4,
+  weaponEnergyAttackCost: 5,
+  weaponEnergyShieldCost: 5,
   weaponEnergyStoreMax: 20,
   weaponEnergyFillPerRound: 5,
   weaponAttackPerRound: 2,

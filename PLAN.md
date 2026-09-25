@@ -78,18 +78,21 @@ pass finished while a die value, resource, action, or outcome is hard to read.
   and `node sim/ladder.mjs 300` printed the rates in `BALANCE.md`. Weapon
   costs and effects unchanged.
 
-- [ ] **Energy Attack and Energy Shield — owner-requested, 25 September 2026.**
+- [x] **Energy Attack and Energy Shield — owner-requested, 25 September 2026.**
   Two new flagship weapons, nothing else. Unlock once in the shipyard at their
   own TUNING costs (not 6). Feed up to 5 Energy a round from the bank, hold up
   to 20, fire later as ordinary Attack or ordinary Shields, then the store
   resets and can be filled again. One fire per round still. The classic four
   stay once-per-match at 6 Energy. How to Play is generated from the engine.
   Versus keeps the stores secret the same way current activations stay hidden.
-  **DONE when:** tests cover fill cap, max 20, bank deduction, fire-then-reset,
-  one-weapon-per-round, save/reload and versus secrecy; the solo brain fills
-  and can fire them; lint, tests and production build pass; a cost sweep in
-  `sim/energy-weapons.mjs` is recorded in `BALANCE.md`; phone shots of all six
-  cards, a mid-fill, the shipyard charge view and a round summary sit in `docs/`.
+  **Proved:** 229 tests, lint on the touched files, and the production build
+  pass. New tests cover the 5-per-round fill cap, max 20, bank deduction,
+  fire-then-reset, one-weapon-per-round, save/reload and versus secrecy; the
+  solo brain fills and can fire Energy Attack. `node sim/energy-weapons.mjs 60`
+  printed the cost sweep in `BALANCE.md`. Proposed unlock is 5 Energy each,
+  awaiting Dave. Phone shots in `docs/` at 375×812, 390×620 and 360×780 show
+  all six cards with no scrolling, a mid-fill, the shipyard charge view, and a
+  round summary that names Energy Attack +3.
 
 
 **This file is the plan. If you are an AI working on Fleet Dice 3, read this before you touch anything, and check your work against it before you hand it back.**
