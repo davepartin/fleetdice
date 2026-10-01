@@ -264,6 +264,7 @@ export const TUNING = {
   weaponEnergyAttackCost: 5,
   weaponEnergyShieldCost: 5,
   weaponEnergyStoreMax: 20,
+  weaponEnergyShieldPerEnergy: 2,
   weaponEnergyFillPerRound: 5,
   weaponAttackPerRound: 2,
   weaponRepair: 20,
@@ -692,6 +693,15 @@ export function weaponStored(stock: WeaponInventory, id: WeaponId): number {
   return Math.max(0, stock[id]?.stored ?? 0);
 }
 
+/** Stores stay in Energy units so existing saved games keep their charge. */
+export function weaponPower(stored: number, id: WeaponId): number {
+  return stored * (id === "energyShield" ? TUNING.weaponEnergyShieldPerEnergy : 1);
+}
+
+export function weaponPowerMax(id: WeaponId): number {
+  return weaponPower(TUNING.weaponEnergyStoreMax, id);
+}
+
 export function weaponFilledThisRound(stock: WeaponInventory, id: WeaponId, round: number): number {
   const charge = stock[id];
   if (!charge || charge.filledRound !== round) return 0;
@@ -742,8 +752,8 @@ export function weaponEffect(id: WeaponId, round: number, stored = 0): string {
       ? `${stored} stored Attack`
       : `Store Energy, then fire as Attack`,
     energyShield: stored > 0
-      ? `${stored} stored Shields`
-      : `Store Energy, then fire as Shields`,
+      ? `${weaponPower(stored, "energyShield")} stored Shields`
+      : `1 Energy = ${TUNING.weaponEnergyShieldPerEnergy} Shields`,
   }[id];
 }
 
@@ -1187,7 +1197,7 @@ function activateWeapon(player: PlayerState, id: WeaponId) {
   if (id === "attack") amount = weaponAttack(player.round);
   else if (id === "repair") amount = TUNING.weaponRepair;
   else if (isEnergyWeapon(id)) {
-    amount = weaponStored(stock, id);
+    amount = weaponPower(weaponStored(stock, id), id);
     if (amount <= 0) throw new Error("Add Energy to this weapon before firing it.");
   }
   const use: WeaponUse = { id, round: player.round, amount };

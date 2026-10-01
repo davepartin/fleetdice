@@ -181,8 +181,8 @@ test("the six weapons sit in the owner's grid with a compact Energy +1", () => {
   assert.match(weapons, /WEAPON_GRID_IDS\.map/);
   assert.match(weapons, /weapon-energy-plus/);
   assert.match(weapons, /Add 1 Energy to \$\{WEAPON_NAMES\[id\]\}/);
-  assert.match(weapons, /filled\}\/\{TUNING\.weaponEnergyFillPerRound\} this round/);
-  assert.match(weapons, /stored\}\/\{TUNING\.weaponEnergyStoreMax\}/);
+  assert.match(weapons, /Max \{weaponPower\(TUNING\.weaponEnergyFillPerRound, id\)\}/);
+  assert.match(weapons, /power\}\/\{powerMax\}/);
   assert.match(css, /\.weapon-card-grid \{ display: grid; grid-template-columns: repeat\(2,/);
   assert.match(css, /\.weapon-energy-plus/);
   assert.match(css, /\.weapon-energyAttack \{ --weapon-color: var\(--color-attack\)/);
