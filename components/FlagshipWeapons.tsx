@@ -281,11 +281,12 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
             const stored = weaponStored(stock, id);
             const filled = weaponFilledThisRound(stock, id, player.round);
             const energy = isEnergyWeapon(id);
+            const appearance = energy && status === "available" && stored === 0 ? "empty" : status;
             const canChargeThis = !busy && shop && player.phase === "shop" && status === "locked" && player.energy >= cost;
             const canUseThis = !busy && !shop && status === "available" && canFire && (!energy || stored > 0);
             const enabled = canChargeThis || canUseThis;
-            return <section className={`weapon-card weapon-${id} weapon-card-${status}${energy ? " weapon-card-energy" : ""}`} key={id}>
-              <div className="weapon-card-top"><WeaponIcon id={id} /><span className="weapon-state">{energy ? status === "locked" ? "Not unlocked" : stored > 0 ? "Ready" : "Empty" : status === "available" ? "Charged" : STATE[status]}</span></div>
+            return <section className={`weapon-card weapon-${id} weapon-card-${appearance}${energy ? " weapon-card-energy" : ""}`} key={id}>
+              <div className="weapon-card-top"><WeaponIcon id={id} /><span className="weapon-state">{energy ? status === "locked" ? "Not unlocked" : stored > 0 ? "Ready" : "Empty" : status === "available" ? "Charged" : status === "locked" ? "Uncharged" : STATE[status]}</span></div>
               <h3>{WEAPON_NAMES[id]}</h3>
               <WeaponEffectLine id={id} round={player.round} stored={stored} />
               {energy && status === "available" && (
