@@ -241,10 +241,10 @@
 .weapon-card-used .weapon-symbol, .weapon-card-used .weapon-effect { color: var(--color-hull-300, #8996b2); filter: none; }
 /* Flagship console: distinct hardware silhouettes and readable stored power. */
 .weapon-window .weapon-card {
-  border-color: color-mix(in srgb, var(--weapon-color) 42%, #38435b);
-  background: linear-gradient(145deg, color-mix(in srgb, var(--weapon-color) 18%, #1b2434), #101725);
+  border: 2px solid #6c7890;
+  background: linear-gradient(145deg, #293346, #121a28);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / .22), inset 0 -3px 0 rgb(0 0 0 / .3), 0 3px 8px rgb(0 0 0 / .25);
-  padding: 8px; gap: 4px;
+  padding: 7px 8px; gap: 4px;
 }
 .weapon-window .weapon-attack, .weapon-window .weapon-energyAttack { border-radius: 3px 18px 3px 18px; }
 .weapon-window .weapon-shield, .weapon-window .weapon-energyShield { border-radius: 16px 16px 24px 24px; }
@@ -252,8 +252,9 @@
 .weapon-window .weapon-rotate { border-radius: 24px; }
 .weapon-window .weapon-card h3 { color: #f4f1e8; }
 .weapon-window .weapon-card-top .weapon-symbol { width: 26px; height: 26px; }
-.weapon-window .weapon-card > button:enabled {
-  min-height: 40px; color: #090d17;
+.weapon-window .weapon-card > button { min-height: 40px; }
+.weapon-window .weapon-card-available > button:enabled {
+  color: #090d17;
   background: linear-gradient(180deg, color-mix(in srgb, var(--weapon-color) 65%, white), var(--weapon-color));
   border-color: color-mix(in srgb, var(--weapon-color) 70%, white);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / .5), 0 3px 0 color-mix(in srgb, var(--weapon-color) 30%, #080d15);
@@ -262,7 +263,29 @@
 .weapon-window .weapon-rotate > button { border-radius: 20px; }
 .weapon-window .weapon-attack > button, .weapon-window .weapon-energyAttack > button { border-radius: 3px 10px 3px 10px; }
 .weapon-window .weapon-shield > button, .weapon-window .weapon-energyShield > button { border-radius: 8px 8px 16px 16px; }
-.weapon-window .weapon-card-used { background: #161c28; border-style: dashed; box-shadow: none; }
+/* The tile rim shows stored readiness, independent of whether Charge is clickable. */
+.weapon-window .weapon-card-available {
+  border-color: var(--weapon-color);
+  background: radial-gradient(circle at 50% 0, color-mix(in srgb, var(--weapon-color) 24%, transparent), transparent 70%), linear-gradient(145deg, #293346, #121a28);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--weapon-color) 28%, transparent), inset 0 2px 0 rgb(255 255 255 / .3), 0 0 12px color-mix(in srgb, var(--weapon-color) 28%, transparent), 0 3px 8px rgb(0 0 0 / .35);
+}
+.weapon-window .weapon-card-locked,
+.weapon-window .weapon-card-empty { --weapon-color: #a6afbf; }
+.weapon-window .weapon-card-locked .weapon-symbol,
+.weapon-window .weapon-card-empty .weapon-symbol { filter: none; }
+.weapon-window .weapon-card-locked > button:enabled,
+.weapon-window .weapon-card-empty > button {
+  color: #dde3ee; border-color: #6c7890;
+  background: linear-gradient(180deg, #344157, #222c3d);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .18), 0 2px 0 #080d15;
+}
+.weapon-window .weapon-card-empty .weapon-state { color: #a6afbf; }
+.weapon-window .weapon-card-used {
+  --weapon-color: #8996b2; border-color: #485367; border-style: dashed;
+  background: #111722; box-shadow: inset 0 1px 3px rgb(0 0 0 / .4);
+}
+.weapon-window .weapon-card-used h3 { color: #a6afbf; }
+.weapon-window .weapon-card-used .weapon-state { color: #a6afbf; }
 .weapon-window .weapon-energy-store { grid-template-columns: 1fr; gap: 4px; }
 .weapon-energy-count small { font: 600 10px var(--font-body); color: #c0c8db; margin-left: 3px; }
 .weapon-storage-gauge { width: 100%; height: 9px; display: block; accent-color: var(--weapon-color); }
@@ -271,8 +294,8 @@
 .weapon-storage-gauge::-moz-meter-bar { background: var(--weapon-color); }
 .weapon-window .weapon-energy-plus { grid-column: 1; grid-row: auto; min-height: 36px; font-size: 11px; }
 .weapon-window .weapon-energy-cap { grid-column: 1; }
-@media (max-height: 680px) {
-  .weapon-window .weapon-card { padding: 5px 7px; gap: 2px; }
+@media (max-height: 680px), (max-width: 370px) {
+  .weapon-window .weapon-card { padding: 3px 7px; gap: 2px; }
   .weapon-window .weapon-card-top .weapon-symbol { width: 22px; height: 22px; }
   .weapon-window .weapon-card > button:enabled { min-height: 32px; }
   .weapon-window .weapon-energy-plus { min-height: 30px; }
