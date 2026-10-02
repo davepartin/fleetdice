@@ -1277,4 +1277,6 @@ Layout for the two being built (owner was explicit):
 - The flagship weapons screen shows all six weapons at once with no scrolling.
 - Grid: top-left Rotate, top-right Repair, middle-left Attack, middle-right Super Shield, bottom-left Energy Attack, bottom-right Energy Shield.
 - Energy Attack and Energy Shield look alike and parallel — red for Attack, blue for Shields.
-- Inside each: stored out of 20, and a compact +1 that adds to the store and deducts from the bank right away.
+- Inside each: stored Attack out of 20 or Shields out of 40. Each has a gold **+ 1 Energy** button that adds to the store and deducts from the bank right away.
+- Up to 5 Energy can be added to each weapon per round. The counter shows Energy added this round; Energy Shield converts each Energy into 2 Shields.
+- The lower pair have a shared refillable heading, gold top rims, and inset storage controls, separate from the four once-per-game weapons.

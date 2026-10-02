@@ -5,7 +5,7 @@ const G = await import(bundlePath);
 const { newMatch, newPlayer, applyAction, previewTally, publicMatchView, weaponsOf, weaponStatus,
   WEAPON_IDS, CLASSIC_WEAPON_IDS, ENERGY_WEAPON_IDS, TUNING, tally, makeRng, setRng, parseSoloSave, newBrain, checkMove,
   superShieldReduction, chooseCombatWeapon, nextActions, planShopping, weaponStored, weaponFilledThisRound,
-  weaponChargeCostOf, canFillWeapon, hideEnergyWeaponStores } = G;
+  weaponChargeCostOf, weaponPower, weaponPowerMax, canFillWeapon, hideEnergyWeaponStores } = G;
 
 function match(round = 4) {
   setRng(makeRng(481));
@@ -402,13 +402,13 @@ test("Energy Shield fires as ordinary Shields and does not stop Direct", () => {
   const defenseBefore = previewTally(s.players.host).defense;
   assert.equal(defenseBefore, 0);
   applyAction(s, "host", { type: "weapon", weapon: "energyShield" });
-  assert.equal(previewTally(s.players.host).defense, 5);
+  assert.equal(previewTally(s.players.host).defense, 10);
   settle(s);
   const r = s.players.host.report;
   assert.equal(r.direct, 12);
-  assert.equal(r.incoming, 35); // 40 Attack - 5 Energy Shield, Direct still 12
+  assert.equal(r.incoming, 30); // 40 Attack - 10 Energy Shield, Direct still 12
   assert.equal(r.weapon.id, "energyShield");
-  assert.equal(r.weapon.amount, 5);
+  assert.equal(r.weapon.amount, 10);
   assert.equal(weaponStored(weaponsOf(s.players.host), "energyShield"), 0);
 });
 
@@ -564,4 +564,36 @@ test("energy weapon charge costs live in TUNING and are not six", () => {
     assert.notEqual(weaponChargeCostOf(id), 6);
   }
   assert.equal(weaponChargeCostOf("attack"), 6);
+});
+
+
+test("Energy Shield buys two Shields per Energy, caps at 40, and empties on use", () => {
+  const s = match();
+  const p = s.players.host;
+  p.energy = 100;
+  charge(s, "host", "energyShield");
+  const bank = p.energy;
+  fill(s, "host", "energyShield", 1);
+  assert.equal(p.energy, bank - 1);
+  assert.equal(weaponPower(weaponStored(weaponsOf(p), "energyShield"), "energyShield"), 2);
+  assert.equal(weaponPowerMax("energyShield"), 40);
+  assert.equal(weaponPowerMax("energyAttack"), 20);
+  fill(s, "host", "energyShield", 4);
+  assert.throws(() => fill(s, "host", "energyShield"), /at most 5/);
+  for (let round = 0; round < 3; round++) {
+    p.round++;
+    fill(s, "host", "energyShield", 5);
+  }
+  assert.equal(p.energy, bank - 20);
+  assert.equal(weaponPower(weaponStored(weaponsOf(p), "energyShield"), "energyShield"), 40);
+  p.round++;
+  assert.equal(canFillWeapon(p, "energyShield"), false);
+  assert.throws(() => fill(s, "host", "energyShield"), /holds at most/);
+  rollBoth(s);
+  const defense = previewTally(p).defense;
+  applyAction(s, "host", { type: "weapon", weapon: "energyShield" });
+  assert.equal(previewTally(p).defense, defense + 40);
+  assert.equal(p.weaponThisRound.amount, 40);
+  assert.equal(weaponStored(weaponsOf(p), "energyShield"), 0);
+  assert.equal(weaponStatus(weaponsOf(p), "energyShield"), "available");
 });

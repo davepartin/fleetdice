@@ -1135,7 +1135,7 @@ export function chooseCombatWeapon(
     }
   }
 
-  const energyShield = weaponStored(weaponsOf(player), "energyShield");
+  const energyShield = weaponStored(weaponsOf(player), "energyShield") * TUNING.weaponEnergyShieldPerEnergy;
   if (available("energyShield") && energyShield >= 4 && expected > own.defense + 6 && (hpAfter < 36 || expected > own.defense + 14)) {
     return { type: "weapon", weapon: "energyShield" };
   }

@@ -53,6 +53,7 @@ function sixOpen() {
     applyAction(s, side, { type: "ready" });
     applyAction(s, side, { type: "roll", dice: [] });
   }
+  s.players.host.energy = 12;
   return s;
 }
 
@@ -109,6 +110,11 @@ async function measureWindow(page) {
       viewH: innerHeight,
       overflowers,
       overflowX: document.documentElement.scrollWidth - innerWidth,
+      clippedControls: [...document.querySelectorAll(".weapon-card button, .weapon-window footer button")].filter((el) => {
+        const r = el.getBoundingClientRect();
+        const bounds = dialog.getBoundingClientRect();
+        return r.bottom > bounds.bottom + 1 || r.top < bounds.top || r.right > bounds.right || r.left < bounds.left;
+      }).map((el) => el.textContent),
     };
   });
 }
@@ -126,6 +132,7 @@ async function save(page, name, selector = ".weapon-window") {
 try {
   const views = [
     { width: 375, height: 812 },
+    { width: 390, height: 844 },
     { width: 390, height: 620 },
     { width: 360, height: 780 },
   ];
@@ -151,6 +158,8 @@ try {
     await page.getByRole("button", { name: /Flagship Weapon|Use flagship weapon/i }).click();
     await page.locator(".weapon-window").waitFor({ state: "visible" });
     const layout = await measureWindow(page);
+    await save(page, `energy-weapons-six-${vp.width}x${vp.height}`);
+    console.log(JSON.stringify(layout));
     assert.equal(layout.cards, 6, `${vp.width}x${vp.height} must show all six`);
     assert.deepEqual(layout.names, [
       "Rotate Flagship", "Repair", "Attack", "Super Shield", "Energy Attack", "Energy Shield",
@@ -158,10 +167,61 @@ try {
     assert.ok(layout.innerScroll <= 4, `${vp.width}x${vp.height} window scrolls by ${layout.innerScroll}px`);
     assert.ok(layout.bodyScroll <= 4, `${vp.width}x${vp.height} cards scroll by ${layout.bodyScroll}px`);
     assert.equal(layout.overflowX, 0, `${vp.width}x${vp.height} overflows horizontally`);
-    await save(page, `energy-weapons-six-${vp.width}x${vp.height}`);
+    assert.deepEqual(layout.clippedControls, [], "all weapon controls and Back must fit in the dialog");
     if (vp.width === 375) {
       await save(page, "energy-weapons-midfill-375x812", ".weapon-card-energy.weapon-energyAttack");
+      const attack = page.locator(".weapon-card-energy.weapon-energyAttack");
+      const shield = page.locator(".weapon-card-energy.weapon-energyShield");
+      const bank = () => page.locator(".weapon-window [data-energy-bank]").innerText();
+      const startBank = Number((await bank()).replace(/[^0-9]/g, ""));
+      assert.match(await attack.innerText(), /3\/5\s*this round/);
+      await attack.getByRole("button", { name: "Add 1 Energy to Energy Attack", exact: true }).click();
+      assert.match(await attack.innerText(), /4\/20/);
+      assert.match(await attack.innerText(), /4\/5\s*this round/);
+      assert.match(await shield.innerText(), /4\/40/);
+      await page.waitForTimeout(350);
+      assert.equal(Number((await bank()).replace(/[^0-9]/g, "")), startBank - 1);
+      await attack.getByRole("button", { name: "Add 1 Energy to Energy Attack", exact: true }).click();
+      assert.equal(await attack.getByRole("button", { name: "Add 1 Energy to Energy Attack", exact: true }).isDisabled(), true);
+      assert.match(await attack.innerText(), /5\/5\s*this round/);
+      assert.match(await attack.innerText(), /Round limit reached/);
+      assert.equal(await shield.getByRole("button", { name: "Add 1 Energy to Energy Shield", exact: true }).isEnabled(), true);
+      await shield.getByRole("button", { name: "Add 1 Energy to Energy Shield", exact: true }).click();
+      assert.match(await shield.innerText(), /6\/40/);
+      assert.match(await shield.innerText(), /3\/5\s*this round/);
+      await save(page, "energy-weapons-plus-limit-375x812");
+      await attack.getByRole("button", { name: "Use Energy Attack", exact: true }).click();
+      await page.getByRole("button", { name: /Use flagship weapon/i }).click();
+      assert.match(await attack.innerText(), /0\/20/);
+      assert.match(await attack.innerText(), /5\/5\s*this round/);
+      assert.equal(await attack.getByRole("button", { name: "Add 1 Energy to Energy Attack", exact: true }).isDisabled(), true);
+      assert.match(await shield.innerText(), /6\/40/);
     }
+    await ctx.close();
+  }
+
+  {
+    const state = sixOpen();
+    const stock = state.players.host.weapons;
+    stock.rotate.chargedRound = null;
+    stock.repair.usedRound = 3;
+    stock.energyAttack.stored = 0;
+    stock.energyAttack.filledThisRound = 0;
+    stock.energyShield.stored = TUNING.weaponEnergyStoreMax;
+    stock.energyShield.filledThisRound = 0;
+    const { ctx, page } = await pageWith(state, { width: 360, height: 780 });
+    await page.getByRole("button", { name: /Use flagship weapon/i }).click();
+    const attack = page.locator(".weapon-card-energy.weapon-energyAttack");
+    const shield = page.locator(".weapon-card-energy.weapon-energyShield");
+    assert.equal(await attack.getByRole("button", { name: "Use Energy Attack", exact: true }).isDisabled(), true);
+    assert.equal(await attack.getByRole("button", { name: "Add 1 Energy to Energy Attack", exact: true }).isEnabled(), true);
+    assert.equal(await shield.getByRole("button", { name: "Add 1 Energy to Energy Shield", exact: true }).isDisabled(), true);
+    assert.match(await shield.innerText(), /Store full/);
+    await save(page, "energy-weapons-empty-full-360x780");
+    await attack.getByRole("button", { name: "Add 1 Energy to Energy Attack", exact: true }).click();
+    assert.match(await attack.innerText(), /1\/20/);
+    assert.equal(await attack.getByRole("button", { name: "Use Energy Attack", exact: true }).isEnabled(), true);
+    assert.match(await shield.innerText(), /40\/40/);
     await ctx.close();
   }
 
