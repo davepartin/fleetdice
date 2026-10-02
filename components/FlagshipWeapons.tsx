@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   TUNING, FLAG_FACES, WEAPON_GRID_IDS, WEAPON_IDS, WEAPON_NAMES, weaponAttack, weaponChargeCostOf,
@@ -147,6 +147,7 @@ export function WeaponReport({ yours, theirs, yourStock, enemyStock, enemyName }
 }
 
 function WeaponEffectLine({ id, round, stored = 0 }: { id: WeaponId; round: number; stored?: number }) {
+  if (isEnergyWeapon(id)) return <p className="weapon-effect">1 Energy = {weaponPower(1, id)} {id === "energyShield" ? "Shields" : "Attack"}</p>;
   if (id === "attack") {
     return (
       <p className="weapon-effect">
@@ -240,7 +241,7 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
           <h2 id="weapon-title" className="t-display">Flagship weapons</h2>
         </div>
         <EnergyBank energy={player.energy} />
-        <p className="weapon-lede">{shopLede ?? <>One fire per round. Four once a game;<br />Energy Attack and Energy Shield refill.</>}</p>
+        <p className="weapon-lede">{shopLede ?? "One fire per round. Energy weapons refill."}</p>
       </header>
       <div className="weapon-window-body">
         {tips && <div className="weapon-tips">
@@ -287,7 +288,10 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
             const canChargeThis = !busy && shop && player.phase === "shop" && status === "locked" && player.energy >= cost;
             const canUseThis = !busy && !shop && status === "available" && canFire && (!energy || stored > 0);
             const enabled = canChargeThis || canUseThis;
-            return <section className={`weapon-card weapon-${id} weapon-card-${appearance}${energy ? " weapon-card-energy" : ""}`} key={id}>
+            return <Fragment key={id}>
+              {id === "rotate" && <p className="weapon-group-label">Once per game</p>}
+              {id === "energyAttack" && <p className="weapon-group-label weapon-group-energy"><span>Refillable · tap + to add Energy</span></p>}
+              <section className={`weapon-card weapon-${id} weapon-card-${appearance}${energy ? " weapon-card-energy" : ""}`}>
               <div className="weapon-card-top"><WeaponIcon id={id} /><span className="weapon-state">{energy ? status === "locked" ? "Not unlocked" : stored > 0 ? "Ready" : "Empty" : status === "available" ? "Charged" : status === "locked" ? "Uncharged" : STATE[status]}</span></div>
               <h3>{WEAPON_NAMES[id]}</h3>
               <WeaponEffectLine id={id} round={player.round} stored={stored} />
@@ -295,14 +299,16 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
                 <div className="weapon-energy-store">
                   <p className="weapon-energy-count t-num">{power}/{powerMax}<small> {id === "energyShield" ? "shields" : "attack"}</small></p>
                   <meter className="weapon-storage-gauge" min={0} max={powerMax} value={power} aria-label={`${WEAPON_NAMES[id]} stored ${id === "energyShield" ? "Shields" : "Attack"}`} />
-                  <p className="weapon-energy-cap"><span className="weapon-energy-limit">Max {weaponPower(TUNING.weaponEnergyFillPerRound, id)} {id === "energyShield" ? "Shields" : "Attack"} per round</span><span>{weaponPower(filled, id)} added · empties on use</span></p>
+                  <p className="weapon-energy-limit">Up to {TUNING.weaponEnergyFillPerRound} Energy per round</p>
+                  <p className="weapon-fill-progress" aria-label={`${filled} of ${TUNING.weaponEnergyFillPerRound} Energy added this round`}><b>{filled}/{TUNING.weaponEnergyFillPerRound}</b><span>this round</span></p>
                   <button type="button"
                     className="weapon-energy-plus"
                     disabled={busy || !canFillWeapon(player, id)}
                     onClick={() => onAction({ type: "weapon-fill", weapon: id as EnergyWeaponId })}
                     aria-label={`Add 1 Energy to ${WEAPON_NAMES[id]}`}>
-                    {id === "energyShield" ? `1 Energy = ${TUNING.weaponEnergyShieldPerEnergy} Shields` : "Add 1 Energy"}
+                    <span className="weapon-plus-mark" aria-hidden="true">+</span><span>1 Energy</span>
                   </button>
+                  <p className="weapon-fill-hint">{filled >= TUNING.weaponEnergyFillPerRound ? "Round limit reached" : stored >= TUNING.weaponEnergyStoreMax ? "Store full" : player.energy < 1 ? "No Energy in bank" : "Empties when fired"}</p>
                 </div>
               )}
               <button type="button" disabled={!enabled}
@@ -316,7 +322,7 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
                   : shop ? status === "available" ? energy ? "Unlocked" : "Charged" : `${energy ? "Unlock" : "Charge"} · ${cost} Energy`
                   : status === "locked" ? "Charge in shipyard" : used ? "Next volley" : energy && stored <= 0 ? "Add Energy first" : energy ? id === "energyAttack" ? `Fire ${stored} Attack` : `Activate ${power} Shields` : id === "attack" ? `Fire ${weaponAttack(player.round)} Attack` : id === "repair" ? `Repair +${TUNING.weaponRepair}` : id === "shield" ? "Activate Shield" : "Rotate flagship"}
               </button>
-            </section>;
+            </section></Fragment>;
           })}
         </div>
         )}

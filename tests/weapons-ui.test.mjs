@@ -24,7 +24,7 @@ test("Attack copy is the round times two as an equation from TUNING", () => {
 test("the weapons window has a FLAGSHIP WEAPONS title, two rule lines, and Back, not Cancel", () => {
   assert.match(weapons, /t-display">Flagship weapons/);
   assert.match(weapons, /One fire per round\. Four once a game;/);
-  assert.match(weapons, /Energy Attack and Energy Shield refill/);
+  assert.match(weapons, /Energy weapons refill/);
   assert.doesNotMatch(weapons, /use it wisely/);
   assert.doesNotMatch(weapons, /per round —/);
   assert.doesNotMatch(weapons, /Each flagship weapon <b>once<\/b> a game/);
@@ -181,7 +181,7 @@ test("the six weapons sit in the owner's grid with a compact Energy +1", () => {
   assert.match(weapons, /WEAPON_GRID_IDS\.map/);
   assert.match(weapons, /weapon-energy-plus/);
   assert.match(weapons, /Add 1 Energy to \$\{WEAPON_NAMES\[id\]\}/);
-  assert.match(weapons, /Max \{weaponPower\(TUNING\.weaponEnergyFillPerRound, id\)\}/);
+  assert.match(weapons, /Up to \{TUNING\.weaponEnergyFillPerRound\} Energy per round/);
   assert.match(weapons, /power\}\/\{powerMax\}/);
   assert.match(css, /\.weapon-card-grid \{ display: grid; grid-template-columns: repeat\(2,/);
   assert.match(css, /\.weapon-energy-plus/);
