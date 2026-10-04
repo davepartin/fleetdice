@@ -300,7 +300,7 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
                   <p className="weapon-energy-count t-num">{power}/{powerMax}<small> {id === "energyShield" ? "shields" : "attack"}</small></p>
                   <meter className="weapon-storage-gauge" min={0} max={powerMax} value={power} aria-label={`${WEAPON_NAMES[id]} stored ${id === "energyShield" ? "Shields" : "Attack"}`} />
                   <p className="weapon-energy-limit">Up to {TUNING.weaponEnergyFillPerRound} Energy per round</p>
-                  <p className="weapon-fill-progress" aria-label={`${filled} of ${TUNING.weaponEnergyFillPerRound} Energy added this round`}><b>{filled}/{TUNING.weaponEnergyFillPerRound}</b><span>this round</span></p>
+                  <p className="weapon-fill-progress" aria-label={`${filled} of ${TUNING.weaponEnergyFillPerRound} Energy added this round`}><b>{filled}/{TUNING.weaponEnergyFillPerRound}</b><span>added</span></p>
                   <button type="button"
                     className="weapon-energy-plus"
                     disabled={busy || !canFillWeapon(player, id)}

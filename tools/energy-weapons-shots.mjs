@@ -84,6 +84,40 @@ async function pageWith(state, viewport) {
 
 async function measureWindow(page) {
   return page.evaluate(() => {
+    // Test the painted button corners against the tile's curved inner rim.
+    function roundedBox(el, inset = 0) {
+      const r = el.getBoundingClientRect();
+      const style = getComputedStyle(el);
+      const corners = ["TopLeft", "TopRight", "BottomRight", "BottomLeft"].map((corner) => {
+        const values = style[`border${corner}Radius`].split(" ").map(parseFloat);
+        return [Math.max(0, values[0] - inset), Math.max(0, (values[1] ?? values[0]) - inset)];
+      });
+      const w = r.width - 2 * inset, h = r.height - 2 * inset;
+      const factor = Math.min(1, w / (corners[0][0] + corners[1][0]), w / (corners[2][0] + corners[3][0]), h / (corners[0][1] + corners[3][1]), h / (corners[1][1] + corners[2][1]));
+      const radii = corners.map(([x, y]) => [x * factor, y * factor]);
+      const left = r.left + inset, top = r.top + inset;
+      const right = r.right - inset, bottom = r.bottom - inset;
+      const centers = radii.map(([x, y], i) => [i === 0 || i === 3 ? left + x : right - x, i < 2 ? top + y : bottom - y]);
+      return { left, top, right, bottom, radii, centers };
+    }
+    function contains(box, x, y) {
+      if (x < box.left - .1 || x > box.right + .1 || y < box.top - .1 || y > box.bottom + .1) return false;
+      return box.radii.every(([rx, ry], i) => {
+        const [cx, cy] = box.centers[i];
+        const inCorner = (i === 0 || i === 3 ? x < cx : x > cx) && (i < 2 ? y < cy : y > cy);
+        return !inCorner || !rx || !ry || ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1.01;
+      });
+    }
+    const escapedCorners = [...document.querySelectorAll(".weapon-card button")].filter((button) => {
+      const tile = button.closest(".weapon-card");
+      const inset = parseFloat(getComputedStyle(tile).borderLeftWidth);
+      const outer = roundedBox(tile, inset), inner = roundedBox(button);
+      return inner.radii.some(([rx, ry], i) => {
+        const [cx, cy] = inner.centers[i];
+        const start = [Math.PI, 1.5 * Math.PI, 0, .5 * Math.PI][i];
+        return Array.from({ length: 9 }, (_, step) => start + step * Math.PI / 16).some((a) => !contains(outer, cx + rx * Math.cos(a), cy + ry * Math.sin(a)));
+      });
+    }).map((button) => button.textContent);
     const dialog = document.querySelector("dialog.weapon-window");
     const inner = document.querySelector(".weapon-window-inner");
     const body = document.querySelector(".weapon-window-body");
@@ -102,6 +136,7 @@ async function measureWindow(page) {
       return r.right > innerWidth + 1 || r.left < -1;
     }).map((el) => el.className);
     return {
+      escapedCorners,
       cards: cards.length,
       names: cards.map((c) => c.name),
       innerScroll: inner ? inner.scrollHeight - inner.clientHeight : 0,
@@ -168,32 +203,33 @@ try {
     assert.ok(layout.bodyScroll <= 4, `${vp.width}x${vp.height} cards scroll by ${layout.bodyScroll}px`);
     assert.equal(layout.overflowX, 0, `${vp.width}x${vp.height} overflows horizontally`);
     assert.deepEqual(layout.clippedControls, [], "all weapon controls and Back must fit in the dialog");
+    assert.deepEqual(layout.escapedCorners, [], "button corners must stay inside each tile rim");
     if (vp.width === 375) {
       await save(page, "energy-weapons-midfill-375x812", ".weapon-card-energy.weapon-energyAttack");
       const attack = page.locator(".weapon-card-energy.weapon-energyAttack");
       const shield = page.locator(".weapon-card-energy.weapon-energyShield");
       const bank = () => page.locator(".weapon-window [data-energy-bank]").innerText();
       const startBank = Number((await bank()).replace(/[^0-9]/g, ""));
-      assert.match(await attack.innerText(), /3\/5\s*this round/);
+      assert.match(await attack.innerText(), /3\/5\s*added/);
       await attack.getByRole("button", { name: "Add 1 Energy to Energy Attack", exact: true }).click();
       assert.match(await attack.innerText(), /4\/20/);
-      assert.match(await attack.innerText(), /4\/5\s*this round/);
+      assert.match(await attack.innerText(), /4\/5\s*added/);
       assert.match(await shield.innerText(), /4\/40/);
       await page.waitForTimeout(350);
       assert.equal(Number((await bank()).replace(/[^0-9]/g, "")), startBank - 1);
       await attack.getByRole("button", { name: "Add 1 Energy to Energy Attack", exact: true }).click();
       assert.equal(await attack.getByRole("button", { name: "Add 1 Energy to Energy Attack", exact: true }).isDisabled(), true);
-      assert.match(await attack.innerText(), /5\/5\s*this round/);
+      assert.match(await attack.innerText(), /5\/5\s*added/);
       assert.match(await attack.innerText(), /Round limit reached/);
       assert.equal(await shield.getByRole("button", { name: "Add 1 Energy to Energy Shield", exact: true }).isEnabled(), true);
       await shield.getByRole("button", { name: "Add 1 Energy to Energy Shield", exact: true }).click();
       assert.match(await shield.innerText(), /6\/40/);
-      assert.match(await shield.innerText(), /3\/5\s*this round/);
+      assert.match(await shield.innerText(), /3\/5\s*added/);
       await save(page, "energy-weapons-plus-limit-375x812");
       await attack.getByRole("button", { name: "Use Energy Attack", exact: true }).click();
       await page.getByRole("button", { name: /Use flagship weapon/i }).click();
       assert.match(await attack.innerText(), /0\/20/);
-      assert.match(await attack.innerText(), /5\/5\s*this round/);
+      assert.match(await attack.innerText(), /5\/5\s*added/);
       assert.equal(await attack.getByRole("button", { name: "Add 1 Energy to Energy Attack", exact: true }).isDisabled(), true);
       assert.match(await shield.innerText(), /6\/40/);
     }
