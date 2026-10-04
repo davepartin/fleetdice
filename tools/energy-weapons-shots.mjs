@@ -17,7 +17,7 @@ import { bundlePath } from "../sim/bundle.mjs";
 const G = await import(bundlePath);
 const {
   newMatch, newPlayer, newBrain, applyAction, makeRng, setRng, TUNING,
-  CLASSIC_WEAPON_IDS,
+  CLASSIC_WEAPON_IDS, WEAPON_NAMES,
 } = G;
 
 const DOCS = resolve("docs");
@@ -87,6 +87,42 @@ async function powerButtonPaint(card) {
     const style = getComputedStyle(button);
     return { background: style.backgroundImage, ink: style.color };
   });
+}
+
+async function checkWeaponTooltips(page, screenshot) {
+  const dialog = page.locator(".weapon-window");
+  const bank = await dialog.locator("[data-energy-bank]").innerText();
+  assert.equal(await dialog.getByRole("button", { name: "Tips", exact: true }).count(), 0);
+  for (const id of ["rotate", "repair", "attack", "shield", "energyAttack", "energyShield"]) {
+    const card = page.locator(`.weapon-card.weapon-${id}`);
+    await card.locator("h3").click();
+    const tip = page.getByRole("tooltip", { name: WEAPON_NAMES[id], exact: true });
+    await tip.waitFor({ state: "visible" });
+    assert.equal(await page.getByRole("tooltip").count(), 1);
+    assert.equal(await card.getByRole("button", { name: `About ${WEAPON_NAMES[id]}`, exact: true }).getAttribute("aria-expanded"), "true");
+    assert.ok((await tip.innerText()).split(/\s+/).length <= 45, "weapon help must stay short");
+    const bounds = await tip.boundingBox();
+    const window = await dialog.boundingBox();
+    assert.ok(bounds.x >= window.x + 10 && bounds.x + bounds.width <= window.x + window.width - 10, "tooltip must have space from both side edges");
+    assert.ok(bounds.y >= window.y + 10 && bounds.y + bounds.height <= window.y + window.height - 10, "tooltip must stay inside the window");
+    await card.locator("h3").click();
+    assert.equal(await page.getByRole("tooltip").count(), 0, "tapping the same tile dismisses its explanation");
+  }
+  await page.getByRole("button", { name: "About Energy Shield", exact: true }).click();
+  if (screenshot) await save(page, screenshot);
+  await page.keyboard.press("Escape");
+  assert.equal(await page.getByRole("tooltip").count(), 0, "Escape dismisses help first");
+  assert.equal(await dialog.isVisible(), true, "Escape from help must keep the weapon window open");
+  const rotateInfo = page.getByRole("button", { name: "About Rotate Flagship", exact: true });
+  await rotateInfo.focus();
+  await page.keyboard.press("Enter");
+  assert.equal(await page.getByRole("tooltip").count(), 1);
+  await page.keyboard.press(" ");
+  assert.equal(await page.getByRole("tooltip").count(), 0, "keyboard users can toggle tile help");
+  await rotateInfo.click();
+  await dialog.locator("h2").click();
+  assert.equal(await page.getByRole("tooltip").count(), 0, "a tap outside the tiles dismisses help");
+  assert.equal(await dialog.locator("[data-energy-bank]").innerText(), bank, "opening every tooltip must spend nothing");
 }
 
 async function measureWindow(page) {
@@ -183,6 +219,7 @@ try {
     const { ctx, page } = await pageWith(shopState(), { width: 375, height: 812 });
     await page.getByRole("button", { name: /Charge flagship weapons/i }).click();
     await page.locator(".weapon-window").waitFor({ state: "visible" });
+    await checkWeaponTooltips(page, "energy-weapons-tooltip-shipyard-375x812");
     const layout = await measureWindow(page);
     assert.equal(layout.cards, 6, "shipyard must show all six weapons");
     assert.deepEqual(layout.names, [
@@ -201,7 +238,10 @@ try {
       emptyPaint[id] = await powerButtonPaint(card);
     }
     await save(page, "energy-weapons-shipyard-charge-375x812");
+    await page.locator(".weapon-card.weapon-energyShield .weapon-energy-count").click();
+    assert.equal(await page.getByRole("tooltip").count(), 1, "the store area also opens tile help");
     await page.getByRole("button", { name: "Add 1 Energy to Energy Shield", exact: true }).click();
+    assert.equal(await page.getByRole("tooltip").count(), 0, "+ fills the store and dismisses help");
     const shield = page.locator(".weapon-card.weapon-energyShield");
     assert.match(await shield.innerText(), /2\/40/);
     assert.match(await shield.innerText(), /1\/5\s*added/);
@@ -218,6 +258,9 @@ try {
     }
     assert.notEqual(attackPaint.background, shieldPaint.background, "Attack and Shield must show different power colors");
     await save(page, "energy-weapons-shipyard-powered-375x812");
+    await page.getByRole("button", { name: "Charge Rotate Flagship for 6 Energy", exact: true }).click();
+    assert.match(await page.locator(".weapon-card.weapon-rotate").innerText(), /Charged/);
+    assert.equal(await page.getByRole("tooltip").count(), 0, "the charge control must still charge directly");
     await ctx.close();
   }
 
@@ -225,6 +268,7 @@ try {
     const { ctx, page } = await pageWith(sixOpen(), vp);
     await page.getByRole("button", { name: /Flagship Weapon|Use flagship weapon/i }).click();
     await page.locator(".weapon-window").waitFor({ state: "visible" });
+    await checkWeaponTooltips(page, vp.height === 620 ? "energy-weapons-tooltip-battle-390x620" : undefined);
     const layout = await measureWindow(page);
     await save(page, `energy-weapons-six-${vp.width}x${vp.height}`);
     console.log(JSON.stringify(layout));

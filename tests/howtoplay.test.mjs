@@ -210,7 +210,8 @@ test("How to Play is generated from the engine and never mentions a Reactor cap"
   assert.doesNotMatch(reference, /reactorCap/);
   assert.doesNotMatch(reference, /reactorOverflow/);
   assert.doesNotMatch(reference, /pays a flat/);
-  assert.doesNotMatch(reference, /up to \$\{TUNING/);
+  // The Reactor has no cap; Energy weapon stores do have a round limit.
+  assert.doesNotMatch(reference, /up to \$\{TUNING\.reactor/);
   assert.doesNotMatch(engine, /reactorCap/);
   assert.doesNotMatch(engine, /reactorOverflow/);
 });
