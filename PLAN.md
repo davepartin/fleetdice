@@ -79,9 +79,9 @@ pass finished while a die value, resource, action, or outcome is hard to read.
   costs and effects unchanged.
 
 - [x] **Energy Attack and Energy Shield — owner-requested, 25 September 2026.**
-  Two new flagship weapons, nothing else. Unlock once in the shipyard at their
-  own TUNING costs (not 6). Feed up to 5 Energy a round from the bank, hold up
-  to 20, fire later as ordinary Attack or ordinary Shields, then the store
+  Two new flagship weapons, nothing else. Both start available and empty,
+  with no unlock cost. Feed up to 5 Energy a round per weapon from the bank,
+  hold up to 20 Attack or 40 Shields, fire later, then the store
   resets and can be filled again. One fire per round still. The classic four
   stay once-per-match at 6 Energy. How to Play is generated from the engine.
   Versus keeps the stores secret the same way current activations stay hidden.
@@ -89,8 +89,8 @@ pass finished while a die value, resource, action, or outcome is hard to read.
   pass. New tests cover the 5-per-round fill cap, max 20, bank deduction,
   fire-then-reset, one-weapon-per-round, save/reload and versus secrecy; the
   solo brain fills and can fire Energy Attack. `node sim/energy-weapons.mjs 60`
-  printed the cost sweep in `BALANCE.md`. Proposed unlock is 5 Energy each,
-  awaiting Dave. Phone shots in `docs/` at 375×812, 390×620 and 360×780 show
+  originally printed an unlock-cost proposal in `BALANCE.md`. Dave corrected
+  the rule: no unlock cost; pay only for Energy added with +. Phone shots in `docs/` at 375×812, 390×620 and 360×780 show
   all six cards with no scrolling, a mid-fill, the shipyard charge view, and a
   round summary that names Energy Attack +3.
 

@@ -28,7 +28,7 @@ import {
   signedHp,
   type StatKind,
 } from "@/lib/reference";
-import { TUNING, WEAPON_NAMES, weaponChargeCostOf, type DieSize, type Tally } from "@/lib/engine";
+import { TUNING, WEAPON_NAMES, type DieSize, type Tally } from "@/lib/engine";
 import { Button, HpRail, Sheet, TallyStrip } from "./ui";
 import type { ReactNode } from "react";
 
@@ -219,7 +219,7 @@ export function HowToPlayBody() {
           <p>
             Charge Rotate Flagship, Super Shield, Attack and Repair once in the shipyard with the Charge flagship weapons button
             below the fleet map, {TUNING.weaponChargeCost} Energy each.
-            {WEAPON_NAMES.energyAttack} unlocks for {weaponChargeCostOf("energyAttack")} Energy and {WEAPON_NAMES.energyShield} for {weaponChargeCostOf("energyShield")}; feed them from your bank, up to {TUNING.weaponEnergyFillPerRound} Energy a round and {TUNING.weaponEnergyStoreMax} stored.
+            {WEAPON_NAMES.energyAttack} and {WEAPON_NAMES.energyShield} start available and empty, with no unlock cost. Press + to feed them from your bank, up to {TUNING.weaponEnergyFillPerRound} Energy a round and {TUNING.weaponEnergyStoreMax} stored.
             Use one per volley after rolling: Rotate Flagship −1 or +1,
             Super Shield to halve enemy Attack before your Shields,
             Attack for round × {TUNING.weaponAttackPerRound}, +{TUNING.weaponRepair} Repair,

@@ -17,7 +17,7 @@ import { bundlePath } from "../sim/bundle.mjs";
 const G = await import(bundlePath);
 const {
   newMatch, newPlayer, newBrain, applyAction, makeRng, setRng, TUNING,
-  CLASSIC_WEAPON_IDS, ENERGY_WEAPON_IDS,
+  CLASSIC_WEAPON_IDS,
 } = G;
 
 const DOCS = resolve("docs");
@@ -41,7 +41,7 @@ function shopState() {
 
 function sixOpen() {
   const s = shopState();
-  for (const id of [...CLASSIC_WEAPON_IDS, ...ENERGY_WEAPON_IDS]) {
+  for (const id of CLASSIC_WEAPON_IDS) {
     applyAction(s, "host", { type: "shop", operation: "weapon", weapon: id });
   }
   applyAction(s, "host", { type: "weapon-fill", weapon: "energyAttack" });
@@ -184,7 +184,20 @@ try {
     assert.ok(layout.innerScroll <= 2, `shipyard weapons window scrolls by ${layout.innerScroll}px`);
     assert.ok(layout.bodyScroll <= 2, `shipyard cards sit in a scroller (${layout.bodyScroll}px)`);
     assert.equal(layout.overflowX, 0);
+    assert.doesNotMatch(await page.locator(".weapon-window").innerText(), /Unlock/);
+    for (const id of ["energyAttack", "energyShield"]) {
+      const card = page.locator(`.weapon-card.weapon-${id}`);
+      assert.match(await card.innerText(), /Empty/);
+      assert.match(await card.innerText(), /0\/5\s*added/);
+      assert.equal(await card.getByRole("button", { name: /Add 1 Energy to/ }).isEnabled(), true);
+    }
     await save(page, "energy-weapons-shipyard-charge-375x812");
+    await page.getByRole("button", { name: "Add 1 Energy to Energy Shield", exact: true }).click();
+    const shield = page.locator(".weapon-card.weapon-energyShield");
+    assert.match(await shield.innerText(), /2\/40/);
+    assert.match(await shield.innerText(), /1\/5\s*added/);
+    await page.waitForTimeout(350);
+    assert.equal(Number((await page.locator(".weapon-window [data-energy-bank]").innerText()).replace(/[^0-9]/g, "")), 39);
     await ctx.close();
   }
 

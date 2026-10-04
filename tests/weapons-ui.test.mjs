@@ -23,7 +23,7 @@ test("Attack copy is the round times two as an equation from TUNING", () => {
 
 test("the weapons window has a FLAGSHIP WEAPONS title, two rule lines, and Back, not Cancel", () => {
   assert.match(weapons, /t-display">Flagship weapons/);
-  assert.match(weapons, /One fire per round\. Four once a game;/);
+  assert.match(weapons, /Once per game/);
   assert.match(weapons, /Energy weapons refill/);
   assert.doesNotMatch(weapons, /use it wisely/);
   assert.doesNotMatch(weapons, /per round —/);
@@ -126,7 +126,7 @@ test("the shipyard charge control is a filled top button with the upgrade Energy
   assert.doesNotMatch(css, /\.yard-done\s*>\s*\.weapon-launcher/);
   assert.doesNotMatch(css, /\.yard-board \{ width: min\(86%/);
   assert.match(css, /\.weapon-launcher-wait/);
-  assert.match(weapons, /One fire per round\. Four once a game; energy weapons refill/);
+  assert.match(weapons, /One fire per round\. Energy weapons refill/);
   assert.doesNotMatch(weapons, /Need \$\{TUNING\.weaponChargeCost\} Energy to charge/);
   assert.match(weapons, /Use flagship weapon/);
   assert.match(help, /Charge flagship weapons button sits below the fleet map/);
@@ -136,8 +136,8 @@ test("the shipyard charge control is a filled top button with the upgrade Energy
 
 test("Charged weapon controls are a coloured fill, not a dead black button", () => {
   assert.match(weapons, /weapon-btn-ready/);
-  assert.match(weapons, /className=\{shop && status === "available" \? "weapon-btn-charged"/);
-  assert.match(weapons, /energy \? "Unlocked" : "Charged"/);
+  assert.match(weapons, /className=\{shop && !energy && status === "available" \? "weapon-btn-charged"/);
+  assert.match(weapons, /status === "available" \? "Charged"/);
   assert.match(css, /\.weapon-card > button\.weapon-btn-ready/);
   assert.match(css, /\.weapon-card > button\.weapon-btn-charged:disabled/);
   assert.match(css, /button\.weapon-btn-ready[\s\S]*?#090d17/);

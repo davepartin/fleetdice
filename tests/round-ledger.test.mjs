@@ -82,7 +82,7 @@ test("the round review's column equals the health the engine settled on", () => 
   let withBlocking = 0;
   let withRepair = 0;
   let withEscalation = 0;
-  for (let seed = 1; seed <= 8; seed += 1) {
+  for (let seed = 1; seed <= 12; seed += 1) {
     for (const row of playMatch(seed)) {
       rounds += 1;
       assert.equal(

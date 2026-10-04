@@ -52,7 +52,7 @@ import {
   publicMatchView,
   opponentOf,
   escalationFor,
-  WEAPON_IDS,
+  CLASSIC_WEAPON_IDS,
   type EnergyWeaponId,
   type WeaponId,
 } from "./engine";
@@ -619,7 +619,7 @@ function affordableBuys(player: PlayerState): Buy[] {
   const flagCost = flagshipUpgradeCost(player.flag.level);
   if (flagCost !== null && flagCost <= player.energy) out.push({ kind: "flagship", cost: flagCost });
   const stock = weaponsOf(player);
-  for (const id of WEAPON_IDS) {
+  for (const id of CLASSIC_WEAPON_IDS) {
     if (weaponStatus(stock, id) === "locked") {
       const cost = weaponChargeCostOf(id);
       if (cost <= player.energy) out.push({ kind: "weapon", weapon: id, cost });
@@ -761,19 +761,6 @@ function weaponChargeScore(
     worth = expectedEnemyAttack(enemy, round) * 0.5 * WEIGHTS.defense * panic;
     if (hpRatio > 0.7 && round < 7) bias *= 0.45;
     if (urgency > 0) bias *= 1 + urgency * 0.25;
-  } else if (id === "energyAttack") {
-    // Unlock only. Filling is later leftover Energy, so this is "can I afford
-    // to open the tank", not the full 20. Keep it below a speculative hull so
-    // a healthy thin fleet still buys ships.
-    const remaining = Math.max(2, 14 - round);
-    worth = Math.min(TUNING.weaponEnergyStoreMax, remaining * 2) * 0.28;
-    if (player.ships.length < 5) bias *= 0.4;
-    if ((enemy?.hp ?? TUNING.hp) <= 28) bias *= 1.25;
-    if (urgency > 0) bias *= 1 + urgency * 0.3;
-  } else if (id === "energyShield") {
-    worth = expectedEnemyAttack(enemy, round) * 0.28 * panic;
-    if (hpRatio > 0.75 && round < 7) bias *= 0.35;
-    if (urgency > 0) bias *= 1 + urgency * 0.2;
   } else {
     worth = 1.6 + Math.max(0, player.ships.length - 5) * 0.55 * player.flag.level;
     if (player.ships.length < 6) bias *= 0.3;
@@ -852,7 +839,7 @@ export function planShopping(
 }
 
 /**
- * Leftover Energy after hulls and unlocks goes into a charged energy weapon.
+ * Leftover Energy after shipyard purchases goes into an energy store.
  * Filling is not firing, so it can sit beside other shipyard work. Keep the
  * reroll reserve; do not empty the bank for a store.
  */
@@ -1064,7 +1051,7 @@ export function chooseWeaponCharge(
   plan: Plan = "balanced",
   urgency = 0,
 ): WeaponId | null {
-  const locked = WEAPON_IDS.filter((id) => weaponStatus(weaponsOf(player), id) === "locked");
+  const locked = CLASSIC_WEAPON_IDS.filter((id) => weaponStatus(weaponsOf(player), id) === "locked");
   if (!locked.length) return null;
   if (player.energy < Math.min(...locked.map(weaponChargeCostOf))) return null;
   const ranked = affordableBuys(player)
