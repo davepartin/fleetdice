@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   TUNING, FLAG_FACES, WEAPON_GRID_IDS, WEAPON_IDS, WEAPON_NAMES, weaponAttack, weaponChargeCostOf,
@@ -10,6 +10,7 @@ import {
 } from "@/lib/engine";
 import { EnergyBank, EnergyPrice } from "./ui";
 import { StatIcon } from "./StatIcon";
+import { weaponTooltip } from "@/lib/reference";
 
 const TONE: Record<WeaponId, string> = {
   rotate: "energy",
@@ -214,26 +215,50 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
   onAction(action: MatchAction): void; onClose(): void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
-  const [tips, setTips] = useState(false);
+  const [tip, setTip] = useState<WeaponId | null>(null);
+  const tooltip = useRef<HTMLDivElement>(null);
   const [rotate, setRotate] = useState(false);
   useEffect(() => {
     const el = dialog.current!;
     el.showModal();
     return () => el.close();
   }, []);
+  useLayoutEffect(() => {
+    if (!tip) return;
+    const position = () => {
+      const popup = tooltip.current;
+      const tile = dialog.current?.querySelector(`[data-weapon="${tip}"]`);
+      if (!popup || !tile || !dialog.current) return;
+      const bounds = dialog.current.getBoundingClientRect();
+      const anchor = tile.getBoundingClientRect();
+      popup.style.maxWidth = `${bounds.width - 24}px`;
+      const { width, height } = popup.getBoundingClientRect();
+      const left = Math.max(bounds.left + 12, Math.min(anchor.left + anchor.width / 2 - width / 2, bounds.right - width - 12));
+      const preferredTop = anchor.bottom + height + 8 <= bounds.bottom - 12 ? anchor.bottom + 8 : anchor.top - height - 8;
+      popup.style.left = `${left - bounds.left - dialog.current.clientLeft}px`;
+      popup.style.top = `${Math.max(bounds.top + 12, Math.min(preferredTop, bounds.bottom - height - 12)) - bounds.top - dialog.current.clientTop}px`;
+      popup.style.visibility = "visible";
+    };
+    position();
+    window.addEventListener("resize", position);
+    return () => window.removeEventListener("resize", position);
+  }, [tip]);
   const stock = weaponsOf(player);
   const used = roundWeapon(player);
   const canFire = player.phase === "rolling" && !used && !busy;
   const fire = (action: MatchAction) => { onAction(action); onClose(); };
   const turning = rotate && canFire && weaponStatus(stock, "rotate") === "available";
   return createPortal(<dialog ref={dialog} className="weapon-window" aria-labelledby="weapon-title"
-    onCancel={onClose} onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
+    onCancel={event => { if (tip) { event.preventDefault(); setTip(null); } else onClose(); }}
+    onClick={event => {
+      if (event.target === event.currentTarget) onClose();
+      else if (!(event.target as Element).closest(".weapon-card")) setTip(null);
+    }}>
     <div className="weapon-window-inner">
       <header className="weapon-window-head">
         <div>
           <p className="t-eyebrow weapon-window-kicker">
             {shop ? "Shipyard" : `Round ${player.round}`}
-            <button type="button" className="weapon-tips-link" aria-expanded={tips} onClick={() => setTips(!tips)}>Tips</button>
           </p>
           <h2 id="weapon-title" className="t-display">Flagship weapons</h2>
         </div>
@@ -241,18 +266,6 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
         <p className="weapon-lede">One fire per round. Energy weapons refill.</p>
       </header>
       <div className="weapon-window-body">
-        {tips && <div className="weapon-tips">
-          <p>Rotate, Super Shield, Attack and Repair charge once in the shipyard for {TUNING.weaponChargeCost} Energy. Energy Attack and Energy Shield start available and empty. There is no unlock cost; press + to add Energy from your bank.</p>
-          <p>Add up to {TUNING.weaponEnergyFillPerRound} Energy per weapon each round from the bank. Store up to {weaponPowerMax("energyAttack")} Attack or {weaponPowerMax("energyShield")} Shields. Adding Energy is not firing. Firing Energy Attack or Energy Shield spends that round’s weapon and empties the store so you can fill it again.</p>
-          <p>Both players can see charged and used weapons. Stored Energy and your activation stay hidden until both lock in.</p>
-          <p><b>Rotate:</b> turn your flagship −1 or +1 after rolling. It can complete a straight or change your bonus.</p>
-          <p><b>Super Shield:</b> halve enemy Attack before your Shields and blocking ships. An odd total rounds up after halving. Direct and War still follow their usual rules.</p>
-          <p><b>Attack:</b> add Round (the current round) × {TUNING.weaponAttackPerRound} Attack. Waiting makes it stronger; enemy defenses still apply.</p>
-          <p><b>Repair:</b> add {TUNING.weaponRepair} health alongside this volley’s damage. It can save your flagship and raise your health above its previous high.</p>
-          <p><b>Energy Attack:</b> each stored Energy becomes 1 Attack when fired.</p>
-          <p><b>Energy Shield:</b> each stored Energy becomes {TUNING.weaponEnergyShieldPerEnergy} Shields when fired, up to {weaponPowerMax("energyShield")} Shields. Shields stop Attack; they do not stop Direct or War.</p>
-          <p>Opening this window or pressing Back spends nothing. Pressing +1 spends 1 Energy into that store. Pressing Use, or a rotation direction, fires that weapon immediately.</p>
-        </div>}
         <div className="weapon-stage">
         {turning ? (
           <div className="weapon-rotate-controls">
@@ -288,10 +301,23 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
             return <Fragment key={id}>
               {id === "rotate" && <p className="weapon-group-label">Once per game</p>}
               {id === "energyAttack" && <p className="weapon-group-label weapon-group-energy"><span>Refillable · tap + to add Energy</span></p>}
-              <section className={`weapon-card weapon-${id} weapon-card-${appearance}${energy ? " weapon-card-energy" : ""}`}>
+              <section data-weapon={id} className={`weapon-card weapon-${id} weapon-card-${appearance}${energy ? " weapon-card-energy" : ""}`}
+                onClick={event => {
+                  if ((event.target as Element).closest("button")) setTip(null);
+                  else setTip(current => current === id ? null : id);
+                }}>
+              <div className="weapon-card-info" role="button" tabIndex={0}
+                aria-label={`About ${WEAPON_NAMES[id]}`} aria-expanded={tip === id}
+                aria-describedby={tip === id ? `weapon-tip-${id}` : undefined}
+                onKeyDown={event => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault(); setTip(current => current === id ? null : id);
+                  }
+                }}>
               <div className="weapon-card-top"><WeaponIcon id={id} /><span className="weapon-state">{energy ? stored > 0 ? "Ready" : "Empty" : status === "available" ? "Charged" : status === "locked" ? "Uncharged" : STATE[status]}</span></div>
               <h3>{WEAPON_NAMES[id]}</h3>
               <WeaponEffectLine id={id} round={player.round} stored={stored} />
+              </div>
               {energy && (
                 <div className="weapon-energy-store">
                   <p className="weapon-energy-count t-num">{power}/{powerMax}<small> {id === "energyShield" ? "shields" : "attack"}</small></p>
@@ -328,5 +354,9 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
       {enemy && <EnemyWeaponRow stock={weaponsOf(enemy)} name={enemy.name} />}
       <footer><button type="button" className="btn btn-primary w-full" onClick={onClose}>Back</button></footer>
     </div>
+    {tip && <div ref={tooltip} id={`weapon-tip-${tip}`} role="tooltip" aria-label={WEAPON_NAMES[tip]}
+      className={`weapon-tooltip weapon-${tip}`}>
+      <b>{WEAPON_NAMES[tip]}</b><p>{weaponTooltip(tip)}</p>
+    </div>}
   </dialog>, document.body);
 }

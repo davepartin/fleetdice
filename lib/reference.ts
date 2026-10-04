@@ -29,10 +29,25 @@ import {
   FLAG_FACES,
   weaponAttack,
   WEAPON_NAMES,
+  weaponPower,
+  type WeaponId,
   type DieSize,
   type FaceRow,
   type PlayerState,
 } from "@/lib/engine";
+
+/** Short explanations shared by the shipyard and battle weapon tiles. */
+export function weaponTooltip(id: WeaponId): string {
+  const charge = `Charge for ${TUNING.weaponChargeCost} Energy; use once per game.`;
+  switch (id) {
+    case "rotate": return `Turn your flagship −1 or +1 after rolling, wrapping around at either end. ${charge}`;
+    case "repair": return `Add ${TUNING.weaponRepair} health when damage resolves, even above your previous high. ${charge}`;
+    case "attack": return `Add the round number × ${TUNING.weaponAttackPerRound} Attack. Enemy defenses still apply. ${charge}`;
+    case "shield": return `Halve enemy Attack before Shields and blocking. Does not reduce Direct or War. ${charge}`;
+    case "energyAttack": return `No unlock cost. Tap +: 1 Energy gives ${weaponPower(1, id)} Attack, up to ${TUNING.weaponEnergyFillPerRound} Energy per round. Fire stored Attack to empty the store.`;
+    case "energyShield": return `No unlock cost. Tap +: 1 Energy gives ${weaponPower(1, id)} Shields, up to ${TUNING.weaponEnergyFillPerRound} Energy per round. Activate stored Shields to empty the store. Does not stop Direct or War.`;
+  }
+}
 
 /* ------------------------------------------------------------------ */
 /* Reading the engine                                                  */
