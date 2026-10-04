@@ -221,6 +221,7 @@ function WeaponWindow({ player, enemy, shop, busy, onAction, onClose }: {
   useEffect(() => {
     const el = dialog.current!;
     el.showModal();
+    el.focus({ preventScroll: true });
     return () => el.close();
   }, []);
   useLayoutEffect(() => {
