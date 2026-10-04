@@ -82,6 +82,13 @@ async function pageWith(state, viewport) {
   return { ctx, page };
 }
 
+async function powerButtonPaint(card) {
+  return card.locator(":scope > button").evaluate(button => {
+    const style = getComputedStyle(button);
+    return { background: style.backgroundImage, ink: style.color };
+  });
+}
+
 async function measureWindow(page) {
   return page.evaluate(() => {
     // Test the painted button corners against the tile's curved inner rim.
@@ -185,11 +192,13 @@ try {
     assert.ok(layout.bodyScroll <= 2, `shipyard cards sit in a scroller (${layout.bodyScroll}px)`);
     assert.equal(layout.overflowX, 0);
     assert.doesNotMatch(await page.locator(".weapon-window").innerText(), /Unlock/);
+    const emptyPaint = {};
     for (const id of ["energyAttack", "energyShield"]) {
       const card = page.locator(`.weapon-card.weapon-${id}`);
       assert.match(await card.innerText(), /Empty/);
       assert.match(await card.innerText(), /0\/5\s*added/);
       assert.equal(await card.getByRole("button", { name: /Add 1 Energy to/ }).isEnabled(), true);
+      emptyPaint[id] = await powerButtonPaint(card);
     }
     await save(page, "energy-weapons-shipyard-charge-375x812");
     await page.getByRole("button", { name: "Add 1 Energy to Energy Shield", exact: true }).click();
@@ -198,6 +207,17 @@ try {
     assert.match(await shield.innerText(), /1\/5\s*added/);
     await page.waitForTimeout(350);
     assert.equal(Number((await page.locator(".weapon-window [data-energy-bank]").innerText()).replace(/[^0-9]/g, "")), 39);
+    const attack = page.locator(".weapon-card.weapon-energyAttack");
+    await attack.getByRole("button", { name: "Add 1 Energy to Energy Attack", exact: true }).click();
+    const attackPaint = await powerButtonPaint(attack);
+    const shieldPaint = await powerButtonPaint(shield);
+    for (const [card, paint, empty] of [[attack, attackPaint, emptyPaint.energyAttack], [shield, shieldPaint, emptyPaint.energyShield]]) {
+      assert.equal(await card.locator(":scope > button").isDisabled(), true, "stored power does not allow firing in the shipyard");
+      assert.notEqual(paint.background, empty.background, "a paid fill must light the power control immediately");
+      assert.equal(paint.ink, "rgb(9, 13, 23)", "powered controls use dark readable text on the weapon color");
+    }
+    assert.notEqual(attackPaint.background, shieldPaint.background, "Attack and Shield must show different power colors");
+    await save(page, "energy-weapons-shipyard-powered-375x812");
     await ctx.close();
   }
 
@@ -217,6 +237,9 @@ try {
     assert.equal(layout.overflowX, 0, `${vp.width}x${vp.height} overflows horizontally`);
     assert.deepEqual(layout.clippedControls, [], "all weapon controls and Back must fit in the dialog");
     assert.deepEqual(layout.escapedCorners, [], "button corners must stay inside each tile rim");
+    for (const id of ["energyAttack", "energyShield"]) {
+      assert.equal((await powerButtonPaint(page.locator(`.weapon-card.weapon-${id}`))).ink, "rgb(9, 13, 23)");
+    }
     if (vp.width === 375) {
       await save(page, "energy-weapons-midfill-375x812", ".weapon-card-energy.weapon-energyAttack");
       const attack = page.locator(".weapon-card-energy.weapon-energyAttack");
@@ -238,6 +261,8 @@ try {
       await shield.getByRole("button", { name: "Add 1 Energy to Energy Shield", exact: true }).click();
       assert.match(await shield.innerText(), /6\/40/);
       assert.match(await shield.innerText(), /3\/5\s*added/);
+      const poweredAttack = await powerButtonPaint(attack);
+      const poweredShield = await powerButtonPaint(shield);
       await save(page, "energy-weapons-plus-limit-375x812");
       await attack.getByRole("button", { name: "Use Energy Attack", exact: true }).click();
       await page.getByRole("button", { name: /Use flagship weapon/i }).click();
@@ -245,6 +270,8 @@ try {
       assert.match(await attack.innerText(), /5\/5\s*added/);
       assert.equal(await attack.getByRole("button", { name: "Add 1 Energy to Energy Attack", exact: true }).isDisabled(), true);
       assert.match(await shield.innerText(), /6\/40/);
+      assert.notEqual((await powerButtonPaint(attack)).background, poweredAttack.background, "firing empties the store and darkens its control");
+      assert.deepEqual(await powerButtonPaint(shield), poweredShield, "stored Shield power stays colored after the round's other weapon fires");
     }
     await ctx.close();
   }

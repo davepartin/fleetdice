@@ -255,7 +255,9 @@
 .weapon-window .weapon-card h3 { color: #f4f1e8; }
 .weapon-window .weapon-card-top .weapon-symbol { width: 26px; height: 26px; }
 .weapon-window .weapon-card > button { min-height: 36px; }
-.weapon-window .weapon-card-available > button:enabled {
+/* Stored Energy lights the control even when firing is unavailable in the shipyard. */
+.weapon-window .weapon-card-available > button:enabled,
+.weapon-window .weapon-card-energy.weapon-card-available > button {
   color: #090d17;
   background: linear-gradient(180deg, color-mix(in srgb, var(--weapon-color) 65%, white), var(--weapon-color));
   border-color: color-mix(in srgb, var(--weapon-color) 70%, white);
