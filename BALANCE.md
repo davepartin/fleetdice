@@ -1,6 +1,33 @@
 # Fleet Dice 3 — balance notes
 
-## Energy Attack and Energy Shield unlock costs — 25 September 2026
+## Energy weapons start available — owner correction, 3 October 2026
+
+Energy Attack and Energy Shield start available and empty. There is no unlock
+purchase. Each + transfers 1 Energy from the bank, up to 5 per weapon per round.
+Energy Attack stores up to 20 Attack; Energy Shield turns each Energy into
+2 Shields and stores up to 40 Shields. Firing empties the store. The classic
+four retain their 6-Energy, once-per-match charge.
+
+Old locked or missing energy stores become available without changing bank
+Energy or existing stored amounts. The earlier unlock-cost proposal below is
+historical and superseded. `sim/energy-weapons.mjs` now measures current AI
+usage and match completion rather than sweeping unlock prices.
+
+Current-rule check: `node sim/energy-weapons.mjs 60`, Balanced vs Balanced,
+60 seeded matches on each difficulty. All 240 completed with no illegal
+Energy purchases or round-limit finishes. This measures completion and usage,
+not fairness against the former unlock rule.
+
+| difficulty | mean rounds | range | Energy Attack fires | Energy Shield fires |
+| --- | ---: | --- | ---: | ---: |
+| Low | 15.8 | 8–21 | 131 | 110 |
+| Medium | 14.3 | 7–19 | 76 | 196 |
+| Hard | 13.7 | 7–21 | 93 | 212 |
+| Expert | 14.5 | 7–24 | 134 | 224 |
+
+The fire counts include both commanders across all 60 matches in each row.
+
+## Historical Energy weapon unlock-cost proposal — 25 September 2026
 
 Proposal, awaiting Dave's approval. The classic four still cost 6 Energy and
 still fire once a match. These two unlock once, then fill 1-for-1 from the

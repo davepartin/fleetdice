@@ -28,7 +28,6 @@ import {
   slotForCell,
   FLAG_FACES,
   weaponAttack,
-  weaponChargeCostOf,
   WEAPON_NAMES,
   type DieSize,
   type FaceRow,
@@ -587,7 +586,7 @@ export const HOW_TO_PLAY: readonly HelpSection[] = [
   {
     id: "flagship",
     title: "Your flagship",
-    summary: `Its die never fights. Its face boosts your fleet, its level sets the size of that boost (${joinWords([1, 2, 3].map((level) => String(flagBonusSize(level))))}), and six optional weapons charge in the shipyard — four at ${TUNING.weaponChargeCost} Energy each, plus ${WEAPON_NAMES.energyAttack} at ${weaponChargeCostOf("energyAttack")} and ${WEAPON_NAMES.energyShield} at ${weaponChargeCostOf("energyShield")}.`,
+    summary: `Its die never fights. Its face boosts your fleet, its level sets the size of that boost (${joinWords([1, 2, 3].map((level) => String(flagBonusSize(level))))}), and four weapons charge in the shipyard for ${TUNING.weaponChargeCost} Energy each. ${WEAPON_NAMES.energyAttack} and ${WEAPON_NAMES.energyShield} start available and empty, with no unlock cost.`,
     blocks: [
       {
         kind: "text",
@@ -600,7 +599,7 @@ export const HOW_TO_PLAY: readonly HelpSection[] = [
       },
       {
         kind: "text",
-        text: `Charge Rotate Flagship, Super Shield, Attack and Repair once per game in the shipyard for ${TUNING.weaponChargeCost} Energy each — the Charge flagship weapons button sits below the fleet map. ${WEAPON_NAMES.energyAttack} costs ${weaponChargeCostOf("energyAttack")} Energy to unlock and ${WEAPON_NAMES.energyShield} costs ${weaponChargeCostOf("energyShield")}; after that you feed them from your bank, ${TUNING.weaponEnergyFillPerRound} Energy each per round at most, and ${TUNING.weaponEnergyStoreMax} stored. Each Energy added becomes 1 Attack or ${TUNING.weaponEnergyShieldPerEnergy} Shields when you fire, with a maximum of ${TUNING.weaponEnergyStoreMax * TUNING.weaponEnergyShieldPerEnergy} Shields. Those two reset after firing and can be filled again. You may fire only one weapon per round. You can keep several weapons charged. Opponents see which are available, locked or used; stored Energy and activation stay hidden until both lock in. Back closes the weapon window without spending a charge.`,
+        text: `Charge Rotate Flagship, Super Shield, Attack and Repair once per game in the shipyard for ${TUNING.weaponChargeCost} Energy each — the Charge flagship weapons button sits below the fleet map. ${WEAPON_NAMES.energyAttack} and ${WEAPON_NAMES.energyShield} start available and empty with no unlock cost. Press + to add Energy from your bank, ${TUNING.weaponEnergyFillPerRound} Energy each per round at most, and ${TUNING.weaponEnergyStoreMax} stored. Each Energy added becomes 1 Attack or ${TUNING.weaponEnergyShieldPerEnergy} Shields when you fire, with a maximum of ${TUNING.weaponEnergyStoreMax * TUNING.weaponEnergyShieldPerEnergy} Shields. Those two reset after firing and can be filled again. You may fire only one weapon per round. You can keep several weapons charged. Opponents see which are available, locked or used; stored Energy and activation stay hidden until both lock in. Back closes the weapon window without spending a charge.`,
       },
       {
         kind: "text",
@@ -622,7 +621,7 @@ export const HOW_TO_PLAY: readonly HelpSection[] = [
         steps: [
           {
             name: "1. The shipyard",
-            text: `You decide what to spend. Hulls, upgrades, bays and flagship levels all come out of the same Energy. Charge flagship weapons is the red button below the fleet map. Rotate, Super Shield, Attack and Repair cost ${TUNING.weaponChargeCost} Energy each; ${WEAPON_NAMES.energyAttack} costs ${weaponChargeCostOf("energyAttack")} and ${WEAPON_NAMES.energyShield} costs ${weaponChargeCostOf("energyShield")}. Adding Energy to a store is not a shipyard upgrade and is not that round's weapon fire. Round one skips this, because you start with ${TUNING.startEnergy} Energy and ${TUNING.startSlots} ${die(START_HULL)}s already in place.`,
+            text: `You decide what to spend. Hulls, upgrades, bays and flagship levels all come out of the same Energy. Charge flagship weapons is the red button below the fleet map. Rotate, Super Shield, Attack and Repair cost ${TUNING.weaponChargeCost} Energy each; ${WEAPON_NAMES.energyAttack} and ${WEAPON_NAMES.energyShield} have no unlock cost; press + to fill them from your bank. Adding Energy to a store is not a shipyard upgrade and is not that round's weapon fire. Round one skips this, because you start with ${TUNING.startEnergy} Energy and ${TUNING.startSlots} ${die(START_HULL)}s already in place.`,
           },
           {
             name: "2. Roll",
@@ -630,7 +629,7 @@ export const HOW_TO_PLAY: readonly HelpSection[] = [
           },
           {
             name: "3. Flagship weapons",
-            text: `You decide whether this is the round to spend a charged flagship weapon. Rotate, Super Shield, Attack and Repair cost ${TUNING.weaponChargeCost} Energy to charge and may be used once per game. ${WEAPON_NAMES.energyAttack} and ${WEAPON_NAMES.energyShield} unlock for ${weaponChargeCostOf("energyAttack")} and ${weaponChargeCostOf("energyShield")} Energy, then refill. Only one weapon may be fired per round. Use it after rolling and before locking in. Adding Energy to a store is not firing.`,
+            text: `You decide whether this is the round to spend a charged flagship weapon. Rotate, Super Shield, Attack and Repair cost ${TUNING.weaponChargeCost} Energy to charge and may be used once per game. ${WEAPON_NAMES.energyAttack} and ${WEAPON_NAMES.energyShield} start available and empty, with no unlock cost. Press + to add Energy from your bank; they refill after firing. Only one weapon may be fired per round. Use it after rolling and before locking in. Adding Energy to a store is not firing.`,
           },
           {
             name: "4. Lock in",
